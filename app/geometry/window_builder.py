@@ -1,0 +1,1 @@
+"""Window builder placeholder."""

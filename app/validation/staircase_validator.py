@@ -1,0 +1,1 @@
+"""Staircase validator placeholder."""

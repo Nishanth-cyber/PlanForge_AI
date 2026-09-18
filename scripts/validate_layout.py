@@ -1,0 +1,1 @@
+"""Layout validation script placeholder."""

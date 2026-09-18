@@ -1,0 +1,1 @@
+"""Door builder placeholder."""

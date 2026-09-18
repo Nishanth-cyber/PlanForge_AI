@@ -1,0 +1,1 @@
+"""Architectural agent prompts placeholder."""

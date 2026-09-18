@@ -1,0 +1,1 @@
+"""Geometry models placeholder."""

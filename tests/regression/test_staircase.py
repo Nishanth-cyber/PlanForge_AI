@@ -1,0 +1,1 @@
+"""Staircase regression tests placeholder."""

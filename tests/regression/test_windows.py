@@ -1,0 +1,1 @@
+"""Window regression tests placeholder."""

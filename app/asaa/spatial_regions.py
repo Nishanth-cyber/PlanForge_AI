@@ -1,0 +1,1 @@
+"""ASAA spatial regions placeholder."""
