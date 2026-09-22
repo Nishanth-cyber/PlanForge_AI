@@ -1,0 +1,799 @@
+/**
+ * Component Styles for PlanForge AI Web Interface
+ * Minimalist Black & White Architectural Studio
+ */
+
+/* Header / Navbar */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+  background-color: var(--glass-bg);
+  border-bottom: 1px solid var(--border-default);
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand-container {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  cursor: pointer;
+}
+
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff;
+}
+
+.brand-logo svg {
+  width: 18px;
+  height: 18px;
+  stroke: #000000;
+}
+
+.brand-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand-badge {
+  font-size: 0.675rem;
+  font-weight: 600;
+  background: #141414;
+  color: var(--text-secondary);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Header Right */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.health-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+}
+
+.health-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+}
+
+.health-dot.offline {
+  background-color: #555555;
+  box-shadow: none;
+}
+
+/* Sub-Navigation Tabs */
+.subnav-container {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-default);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow-x: auto;
+}
+
+.project-title-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+
+.project-title-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nav-tab-item {
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.nav-tab-item:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.nav-tab-item.active {
+  color: #ffffff;
+  border-bottom-color: #ffffff;
+  font-weight: 600;
+}
+
+/* Cards & Containers */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-subtitle {
+  font-size: 0.825rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-success {
+  background: #141414;
+  color: #ffffff;
+  border: 1px solid var(--border-strong);
+}
+
+.badge-warning {
+  background: #141414;
+  color: #d4d4d4;
+  border: 1px solid var(--border-default);
+}
+
+.badge-danger {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ffffff;
+  font-weight: 700;
+}
+
+.badge-info {
+  background: #141414;
+  color: #e0e0e0;
+  border: 1px solid var(--border-default);
+}
+
+.badge-neutral {
+  background: #0d0d0d;
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.5rem 1.15rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: #ffffff;
+  color: #000000;
+  font-weight: 600;
+  border-color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #e5e5e5;
+  border-color: #e5e5e5;
+  color: #000000;
+}
+
+.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-strong);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-default);
+}
+
+.btn-outline:hover {
+  color: #ffffff;
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.btn-sm {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+/* Form Controls */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.15rem;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  transition: border-color 0.15s ease;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: #ffffff;
+  box-shadow: 0 0 0 1px #ffffff;
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: 0.825rem;
+  line-height: 1.6;
+}
+
+/* Tables */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.825rem;
+}
+
+.data-table th {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.data-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Floor Plan Viewer Canvas Container */
+.floorplan-viewer-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 720px;
+  min-height: 600px;
+  max-height: 82vh;
+  background: #000000;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+}
+
+.canvas-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  background: #0a0a0a;
+  border-bottom: 1px solid var(--border-default);
+  z-index: 10;
+}
+
+.canvas-viewport {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  background: #000000;
+}
+
+.canvas-viewport:active {
+  cursor: grabbing;
+}
+
+.canvas-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+}
+
+/* SVG Elements Styling — Black & White Blueprint */
+.svg-plot-boundary {
+  fill: none;
+  stroke: #777777;
+  stroke-width: 1.75px;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 6, 4;
+}
+
+.svg-buildable-boundary {
+  fill: rgba(255, 255, 255, 0.015);
+  stroke: #999999;
+  stroke-width: 1.25px;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 5, 3;
+}
+
+.svg-wall {
+  fill: #1a1a1a;
+  stroke: #888888;
+  stroke-width: 1.2px;
+  vector-effect: non-scaling-stroke;
+}
+
+.svg-wall-exterior {
+  fill: #222222;
+  stroke: #ffffff;
+  stroke-width: 2.2px;
+  vector-effect: non-scaling-stroke;
+}
+
+.svg-door-arc {
+  fill: none;
+  stroke: #aaaaaa;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 3, 2;
+}
+
+.svg-door-line {
+  stroke: #ffffff;
+  stroke-width: 1.75px;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+}
+
+.svg-window {
+  stroke: #ffffff;
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+  fill: rgba(255, 255, 255, 0.15);
+}
+
+.svg-staircase {
+  fill: rgba(255, 255, 255, 0.04);
+  stroke: #cccccc;
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.svg-staircase-tread {
+  stroke: #888888;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.svg-room-poly {
+  cursor: pointer;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  transition: opacity 0.15s ease, stroke-width 0.15s ease;
+}
+
+.svg-room-poly:hover {
+  filter: brightness(1.2);
+  stroke-width: 2px;
+}
+
+.svg-room-poly.selected {
+  stroke: #ffffff !important;
+  stroke-width: 2.75px !important;
+  fill: rgba(255, 255, 255, 0.16) !important;
+}
+
+.svg-room-label {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  fill: #ffffff;
+  text-anchor: middle;
+  pointer-events: none;
+  dominant-baseline: central;
+}
+
+.svg-room-sublabel {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  fill: #bbbbbb;
+  text-anchor: middle;
+  pointer-events: none;
+  dominant-baseline: central;
+}
+
+/* Room Inspector Panel */
+.inspector-panel {
+  width: 340px;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-default);
+  padding: 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.property-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.825rem;
+}
+
+.property-label {
+  color: var(--text-muted);
+}
+
+.property-value {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+/* Stage Progress Tracker */
+.stages-tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stage-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.stage-step.completed {
+  border-color: var(--border-strong);
+  background: #111111;
+}
+
+.stage-step.running {
+  border-color: #ffffff;
+  background: #181818;
+  box-shadow: 0 0 0 1px #ffffff;
+}
+
+.stage-step.failed {
+  border-color: #666666;
+  background: #111111;
+}
+
+/* Light Theme Architectural Studio Overrides */
+[data-theme="light"] .brand-logo {
+  background: #000000;
+  border-color: #000000;
+}
+
+[data-theme="light"] .brand-logo svg {
+  stroke: #ffffff;
+}
+
+[data-theme="light"] .brand-badge {
+  background: #f1f3f5;
+  color: #495057;
+  border-color: #ced4da;
+}
+
+[data-theme="light"] .health-badge {
+  background: #ffffff;
+  border-color: var(--border-default);
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .health-dot {
+  background-color: #000000;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .health-dot.offline {
+  background-color: #adb5bd;
+  box-shadow: none;
+}
+
+[data-theme="light"] .nav-tab-item {
+  color: #666666;
+}
+
+[data-theme="light"] .nav-tab-item:hover {
+  color: #000000;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .nav-tab-item.active {
+  color: #000000;
+  border-bottom-color: #000000;
+}
+
+[data-theme="light"] .btn-primary {
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
+}
+
+[data-theme="light"] .btn-primary:hover {
+  background: #2b2b2b;
+  border-color: #2b2b2b;
+  color: #ffffff;
+}
+
+[data-theme="light"] .btn-secondary {
+  background: #f1f3f5;
+  color: #000000;
+  border-color: #ced4da;
+}
+
+[data-theme="light"] .btn-secondary:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+[data-theme="light"] .btn-outline {
+  background: transparent;
+  color: #333333;
+  border-color: #ced4da;
+}
+
+[data-theme="light"] .btn-outline:hover {
+  color: #000000;
+  border-color: #000000;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .badge-success {
+  background: #f1f3f5;
+  color: #000000;
+  border: 1px solid #adb5bd;
+}
+
+[data-theme="light"] .badge-warning {
+  background: #f8f9fa;
+  color: #212529;
+  border: 1px solid #ced4da;
+}
+
+[data-theme="light"] .badge-danger {
+  background: #000000;
+  color: #ffffff;
+  border: 1px solid #000000;
+}
+
+[data-theme="light"] .badge-info {
+  background: #f1f3f5;
+  color: #343a40;
+  border: 1px solid #ced4da;
+}
+
+[data-theme="light"] .badge-neutral {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #e9ecef;
+}
+
+[data-theme="light"] .form-input,
+[data-theme="light"] .form-select,
+[data-theme="light"] .form-textarea {
+  background: #ffffff;
+  border: 1px solid #ced4da;
+  color: #000000;
+}
+
+[data-theme="light"] .form-input:focus,
+[data-theme="light"] .form-select:focus,
+[data-theme="light"] .form-textarea:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 1px #000000;
+}
+
+[data-theme="light"] .floorplan-viewer-wrapper {
+  background: #ffffff;
+  border-color: #dee2e6;
+}
+
+[data-theme="light"] .canvas-toolbar {
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+[data-theme="light"] .canvas-viewport {
+  background: #ffffff;
+}
+
+[data-theme="light"] .svg-plot-boundary {
+  stroke: #111111;
+  stroke-width: 2px;
+}
+
+[data-theme="light"] .svg-buildable-boundary {
+  fill: rgba(0, 0, 0, 0.015);
+  stroke: #6c757d;
+  stroke-width: 1.25px;
+}
+
+[data-theme="light"] .svg-wall {
+  fill: #dee2e6;
+  stroke: #495057;
+  stroke-width: 1.2px;
+}
+
+[data-theme="light"] .svg-wall-exterior {
+  fill: #adb5bd;
+  stroke: #000000;
+  stroke-width: 2.2px;
+}
+
+[data-theme="light"] .svg-door-arc {
+  stroke: #495057;
+  stroke-width: 1px;
+}
+
+[data-theme="light"] .svg-door-line {
+  stroke: #000000;
+  stroke-width: 1.75px;
+}
+
+[data-theme="light"] .svg-window {
+  stroke: #000000;
+  stroke-width: 1.5px;
+  fill: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .svg-staircase {
+  fill: rgba(0, 0, 0, 0.035);
+  stroke: #000000;
+  stroke-width: 1.5px;
+}
+
+[data-theme="light"] .svg-staircase-tread {
+  stroke: #6c757d;
+  stroke-width: 1px;
+}
+
+[data-theme="light"] .svg-room-poly.selected {
+  stroke: #000000 !important;
+  stroke-width: 2.75px !important;
+  fill: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .svg-room-label {
+  fill: #000000;
+  text-shadow: none;
+}
+
+[data-theme="light"] .svg-room-sublabel {
+  fill: #495057;
+  text-shadow: none;
+}
+
+[data-theme="light"] .stage-step.completed {
+  border-color: #ced4da;
+  background: #f8f9fa;
+}
+
+[data-theme="light"] .stage-step.running {
+  border-color: #000000;
+  background: #f1f3f5;
+  box-shadow: 0 0 0 1px #000000;
+}
+
+[data-theme="light"] .stage-step.failed {
+  border-color: #6c757d;
+  background: #f8f9fa;
+}

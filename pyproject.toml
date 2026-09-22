@@ -7,6 +7,24 @@ name = "planforge"
 version = "0.1.0"
 description = "AI-assisted architectural floor-plan generation"
 requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0.0",
+    "shapely>=2.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.0",
+    "httpx>=0.24.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

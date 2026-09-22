@@ -1,0 +1,17 @@
+case_id,name,total_ms,architectural_design_ms,asaa_ms,explainability_ms,export_ms,geometry_ms,multi_design_ms,planning_ms,refinement_ms,requirement_ms,validation_ms
+case_01_small_single_floor,Small Single-Floor Bungalow,104.98,0.36,56.77,0.94,0.0,8.74,0.02,0.09,0.0,34.96,3.09
+case_02_medium_single_floor,Medium Single-Floor Suburban Residence,219.47,0.34,194.87,0.67,0.0,11.32,0.02,0.07,0.0,7.7,4.47
+case_03_large_single_floor,Large Single-Floor Estate Villa,1483.72,0.39,1457.93,0.69,0.0,10.2,0.01,0.11,0.0,9.95,4.43
+case_04_two_floor_family,Two-Floor Family Residence,80.46,0.39,57.38,1.08,0.0,9.3,0.05,0.08,0.01,7.61,4.56
+case_05_three_floor_townhouse,Three-Floor Urban Townhouse,68.74,0.67,39.14,1.05,0.0,13.63,0.01,0.09,0.0,8.39,5.75
+case_06_irregular_l_plot,Irregular L-Shaped Boundary Residence,128.42,0.64,105.16,0.75,0.0,11.45,0.02,0.06,0.0,7.05,3.29
+case_07_tight_urban,Constrained Narrow Urban Infill,72.14,0.31,50.12,0.56,0.0,8.67,0.01,0.06,0.0,9.78,2.62
+case_08_multi_bedroom,Four-Bedroom Extended Family Layout,1043.97,0.31,1023.0,0.79,0.0,8.93,0.02,0.06,0.0,7.71,3.14
+case_09_attached_suite,Master Bedroom Attached Suite,127.41,0.32,102.45,0.56,0.0,12.51,0.01,0.07,0.0,7.87,3.63
+case_10_separation_heavy,Separation Heavy Acoustic Layout,124.01,0.45,97.38,0.63,0.0,11.62,0.01,0.07,0.0,9.26,4.58
+case_11_adjacency_heavy,Adjacency Heavy Social Flow,121.95,0.32,97.64,0.57,0.0,11.59,0.01,0.09,0.0,8.31,3.42
+case_12_preferred_relationships,Preferred Relationship Flexible Program,194.97,0.33,171.05,0.56,0.0,11.11,0.01,0.08,0.0,7.55,4.27
+case_13_staircase_core,Multi-Level Vertical Staircase Coordination,76.29,0.41,53.78,0.76,0.0,9.97,0.01,0.08,0.0,7.28,3.99
+case_14_orientation_east,East-Facing Solar & Entrance Orientation,141.75,0.31,118.04,0.56,0.0,10.54,0.01,0.06,0.0,8.32,3.91
+case_15_feasibility_edge,High-Density Feasibility Edge Case,151.95,0.35,127.77,0.57,0.0,12.39,0.01,0.06,0.0,7.45,3.35
+case_16_infeasible_deficit,Infeasible Room Deficit Program,10.36,0.0,3.42,0.0,0.0,0.0,0.0,0.06,0.0,6.87,0.0

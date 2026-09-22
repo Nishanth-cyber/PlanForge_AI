@@ -1,0 +1,112 @@
+{
+  "total_evaluated": 16,
+  "successful_runs": 15,
+  "unsuccessful_or_invalid_runs": 1,
+  "infeasible_negative_controls": [
+    {
+      "case_id": "case_16_infeasible_deficit",
+      "name": "Infeasible Room Deficit Program",
+      "status": "failed",
+      "error_message": "Floor 1: Total minimum room area (122.6 m\u00b2) exceeds available buildable area (12.8 m\u00b2) by deficit of 109.9 m\u00b2",
+      "classified_cause_stage": "Validation",
+      "is_intentional_negative_case": true
+    }
+  ],
+  "unexpected_failures": [],
+  "failure_details": [
+    {
+      "case_id": "case_16_infeasible_deficit",
+      "name": "Infeasible Room Deficit Program",
+      "status": "failed",
+      "error_message": "Floor 1: Total minimum room area (122.6 m\u00b2) exceeds available buildable area (12.8 m\u00b2) by deficit of 109.9 m\u00b2",
+      "classified_cause_stage": "Validation",
+      "is_intentional_negative_case": true
+    }
+  ],
+  "cases_with_advisory_warnings": [
+    {
+      "case_id": "case_01_small_single_floor",
+      "name": "Small Single-Floor Bungalow",
+      "warning_count": 3
+    },
+    {
+      "case_id": "case_02_medium_single_floor",
+      "name": "Medium Single-Floor Suburban Residence",
+      "warning_count": 3
+    },
+    {
+      "case_id": "case_03_large_single_floor",
+      "name": "Large Single-Floor Estate Villa",
+      "warning_count": 5
+    },
+    {
+      "case_id": "case_04_two_floor_family",
+      "name": "Two-Floor Family Residence",
+      "warning_count": 5
+    },
+    {
+      "case_id": "case_05_three_floor_townhouse",
+      "name": "Three-Floor Urban Townhouse",
+      "warning_count": 9
+    },
+    {
+      "case_id": "case_06_irregular_l_plot",
+      "name": "Irregular L-Shaped Boundary Residence",
+      "warning_count": 2
+    },
+    {
+      "case_id": "case_07_tight_urban",
+      "name": "Constrained Narrow Urban Infill",
+      "warning_count": 6
+    },
+    {
+      "case_id": "case_08_multi_bedroom",
+      "name": "Four-Bedroom Extended Family Layout",
+      "warning_count": 7
+    },
+    {
+      "case_id": "case_09_attached_suite",
+      "name": "Master Bedroom Attached Suite",
+      "warning_count": 8
+    },
+    {
+      "case_id": "case_10_separation_heavy",
+      "name": "Separation Heavy Acoustic Layout",
+      "warning_count": 3
+    },
+    {
+      "case_id": "case_11_adjacency_heavy",
+      "name": "Adjacency Heavy Social Flow",
+      "warning_count": 5
+    },
+    {
+      "case_id": "case_12_preferred_relationships",
+      "name": "Preferred Relationship Flexible Program",
+      "warning_count": 6
+    },
+    {
+      "case_id": "case_13_staircase_core",
+      "name": "Multi-Level Vertical Staircase Coordination",
+      "warning_count": 5
+    },
+    {
+      "case_id": "case_14_orientation_east",
+      "name": "East-Facing Solar & Entrance Orientation",
+      "warning_count": 5
+    },
+    {
+      "case_id": "case_15_feasibility_edge",
+      "name": "High-Density Feasibility Edge Case",
+      "warning_count": 9
+    }
+  ],
+  "classification_taxonomy": {
+    "Requirement": "Infeasible or incomplete user program correctly gated",
+    "Planning": "Room categorization, priority, or relational graph issues",
+    "ASAA": "Spatial envelope partitioning or geometric overlap errors",
+    "Architectural Design": "Room dimension or door/window placement intent errors",
+    "Geometry": "Polygon clipping, wall generation, or coordinate errors",
+    "Validation": "Hard geometric constraint check failures",
+    "Refinement": "Non-convergent iterative correction loops"
+  }
+}

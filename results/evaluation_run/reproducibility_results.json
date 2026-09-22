@@ -1,0 +1,52 @@
+[
+  {
+    "case_id": "case_01_small_single_floor",
+    "num_runs": 3,
+    "is_identical": true,
+    "divergence_stage": null,
+    "hashes": [
+      "469d0ddaba69dfa9",
+      "469d0ddaba69dfa9",
+      "469d0ddaba69dfa9"
+    ],
+    "details": {
+      "all_hashes": [
+        "469d0ddaba69dfa9",
+        "469d0ddaba69dfa9",
+        "469d0ddaba69dfa9"
+      ],
+      "stages_evaluated": [
+        "REQUIREMENTS",
+        "PLANNING",
+        "ASAA",
+        "GEOMETRY",
+        "VALIDATION"
+      ]
+    }
+  },
+  {
+    "case_id": "case_02_medium_single_floor",
+    "num_runs": 3,
+    "is_identical": true,
+    "divergence_stage": null,
+    "hashes": [
+      "d27a37841e6992b3",
+      "d27a37841e6992b3",
+      "d27a37841e6992b3"
+    ],
+    "details": {
+      "all_hashes": [
+        "d27a37841e6992b3",
+        "d27a37841e6992b3",
+        "d27a37841e6992b3"
+      ],
+      "stages_evaluated": [
+        "REQUIREMENTS",
+        "PLANNING",
+        "ASAA",
+        "GEOMETRY",
+        "VALIDATION"
+      ]
+    }
+  }
+]
