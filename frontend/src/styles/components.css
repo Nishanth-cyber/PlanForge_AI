@@ -3,6 +3,8 @@
  * Minimalist Black & White Architectural Studio
  */
 
+@import './chat.css';
+
 /* Header / Navbar */
 .app-header {
   position: sticky;

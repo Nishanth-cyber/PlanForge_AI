@@ -5,6 +5,7 @@ import type { ProjectDetailResponse } from '../../api/types';
 interface HomeViewProps {
   onSelectProject: (projectId: string) => void;
   onNewProject: () => void;
+  onStartAssistant?: () => void;
   onViewProjects: () => void;
   onViewBenchmarks?: () => void;
 }
@@ -12,6 +13,7 @@ interface HomeViewProps {
 export const HomeView: React.FC<HomeViewProps> = ({
   onSelectProject,
   onNewProject,
+  onStartAssistant,
   onViewProjects,
   onViewBenchmarks,
 }) => {
@@ -70,10 +72,21 @@ export const HomeView: React.FC<HomeViewProps> = ({
           AI-assisted residential floor plan generation
         </p>
 
-        {/* Two Primary Buttons */}
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.25rem' }}>
+        {/* Primary Action Buttons */}
+        <div style={{ display: 'flex', gap: '0.85rem', marginTop: '1.25rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {onStartAssistant && (
+            <button
+              className="btn btn-primary"
+              onClick={onStartAssistant}
+              style={{ padding: '0.65rem 1.4rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 600 }}
+              data-testid="home-start-assistant-btn"
+            >
+              <span>✨</span>
+              <span>Chat with AI Architect</span>
+            </button>
+          )}
           <button
-            className="btn btn-primary"
+            className="btn btn-outline"
             onClick={onNewProject}
             style={{ padding: '0.65rem 1.4rem', fontSize: '0.95rem' }}
           >

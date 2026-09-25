@@ -120,7 +120,12 @@ class RequirementPipeline:
         new_reqs = self.parser.parse(additional_input)
 
         # Merge plot
-        if new_reqs.plot_dimensions:
+        if new_reqs.plot_shape:
+            existing.plot_shape = new_reqs.plot_shape
+            existing.plot_dimensions = None
+            if new_reqs.plot_area_sqm:
+                existing.plot_area_sqm = new_reqs.plot_area_sqm
+        elif new_reqs.plot_dimensions:
             existing.plot_dimensions = new_reqs.plot_dimensions
             existing.plot_area_sqm = new_reqs.plot_area_sqm
         elif new_reqs.plot_area_sqm and not existing.plot_area_sqm:

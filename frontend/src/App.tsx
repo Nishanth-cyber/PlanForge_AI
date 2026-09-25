@@ -25,11 +25,13 @@ import type {
   FloorPlanSet,
 } from './api/types';
 
+import { ConversationalStudio } from './components/chat/ConversationalStudio';
+
 import './styles/index.css';
 import './styles/components.css';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'projects' | 'benchmarks' | 'new_project' | 'project_detail'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'assistant' | 'projects' | 'benchmarks' | 'new_project' | 'project_detail'>('home');
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
 
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -171,6 +173,10 @@ export function App() {
     <div className="app-container">
       <Header
         onNewProject={() => handleOpenNewProject()}
+        onAssistant={() => {
+          setCurrentView('assistant');
+          setErrorMessage(null);
+        }}
         onDashboard={() => setCurrentView('home')}
         onProjects={() => setCurrentView('projects')}
         onBenchmarks={() => setCurrentView('benchmarks')}
@@ -191,7 +197,7 @@ export function App() {
         />
       )}
 
-      <main className="main-content">
+      <main className={`main-content ${currentView === 'assistant' ? 'assistant-mode' : ''}`} style={currentView === 'assistant' ? { padding: 0, overflow: 'hidden' } : undefined}>
         {errorMessage && (
           <div
             style={{
@@ -201,7 +207,7 @@ export function App() {
               border: '1px solid var(--status-danger-border)',
               color: '#f87171',
               fontSize: '0.875rem',
-              marginBottom: '1rem',
+              marginBottom: currentView === 'assistant' ? 0 : '1rem',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -219,11 +225,42 @@ export function App() {
           </div>
         )}
 
+        {/* View 0: Conversational AI Assistant (Two-Panel Studio) */}
+        {currentView === 'assistant' && (
+          <ConversationalStudio
+            initialBrief={initialBrief}
+            initialProjectName={initialName}
+            isGenerating={isGenerating}
+            projectData={projectData}
+            generationResponse={generationResponse}
+            onGenerateSubmit={handleGenerateSubmit}
+            activeFloor={activeFloor}
+            onSelectFloor={setActiveFloor}
+            selectedAlternativeIndex={selectedAlternativeIndex}
+            onSelectAlternative={setSelectedAlternativeIndex}
+            selectedRoom={selectedRoom}
+            onSelectRoom={setSelectedRoom}
+            theme={theme}
+            onViewTrace={() => {
+              setCurrentView('project_detail');
+              setActiveTab('explainability');
+            }}
+            onViewExports={() => {
+              setCurrentView('project_detail');
+              setActiveTab('export');
+            }}
+          />
+        )}
+
         {/* View 1: Home Page (Section 3) */}
         {currentView === 'home' && (
           <HomeView
             onSelectProject={handleSelectProject}
             onNewProject={() => handleOpenNewProject()}
+            onStartAssistant={() => {
+              setCurrentView('assistant');
+              setErrorMessage(null);
+            }}
             onViewProjects={() => setCurrentView('projects')}
             onViewBenchmarks={() => setCurrentView('benchmarks')}
           />

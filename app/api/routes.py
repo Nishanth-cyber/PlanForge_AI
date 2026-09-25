@@ -12,16 +12,21 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import FileResponse, JSONResponse
 
 from app.api.dependencies import get_orchestrator, get_project_registry
+from app.agents.requirement_agent.conversation import ConversationalRequirementAssistant
 from app.api.errors import resolve_safe_path
 from app.api.registry import ProjectRegistry
 from app.api.schemas import (
     AlternativeSummarySchema,
+    ChatTurnRequest,
+    ChatTurnResponse,
     ExportFileItem,
     ExportResponse,
     GenerationRequest,
     GenerationResponse,
     HealthResponse,
     ProjectDetailResponse,
+    QuestionCardSchema,
+    RequirementProgressItem,
     ValidationSummarySchema,
 )
 from app.export.json_exporter import export_project_json
@@ -29,6 +34,7 @@ from app.orchestration.config import OrchestrationConfig
 from app.orchestration.orchestrator import PlanForgeOrchestrator
 
 router = APIRouter(tags=["PlanForge"])
+assistant = ConversationalRequirementAssistant()
 
 
 @router.get(
@@ -39,6 +45,36 @@ router = APIRouter(tags=["PlanForge"])
 def get_health() -> HealthResponse:
     """Return system readiness, framework versions, and execution environment."""
     return HealthResponse()
+
+
+@router.post(
+    "/chat",
+    response_model=ChatTurnResponse,
+    summary="Conversational Requirement Assistant",
+)
+def chat_turn(req: ChatTurnRequest) -> ChatTurnResponse:
+    """Execute a conversational interaction turn with the Requirement Agent.
+
+    Analyzes natural language messages or card responses, checks requirements completeness,
+    updates the structured progress checklist, and returns the next dynamic question card.
+    """
+    res = assistant.handle_turn(
+        message=req.message,
+        existing_brief=req.existing_brief,
+        project_name=req.project_name,
+    )
+    return ChatTurnResponse(
+        message=res.message,
+        question_card=QuestionCardSchema(**res.question_card.to_dict()) if res.question_card else None,
+        is_ready_for_generation=res.is_ready_for_generation,
+        requirements_text=res.requirements_text,
+        requirements_summary=res.requirements_summary,
+        progress=[RequirementProgressItem(**p.to_dict()) for p in res.progress],
+        remaining_count=res.remaining_count,
+        project_name=res.project_name,
+        status=res.status,
+    )
+
 
 
 @router.post(

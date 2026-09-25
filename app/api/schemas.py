@@ -132,3 +132,41 @@ class ProjectDetailResponse(BaseModel):
     alternatives_count: int = 0
     export_bundle_path: Optional[str] = None
     decision_trace_available: bool = False
+
+
+class QuestionCardSchema(BaseModel):
+    """Dynamic question card schema for conversational requirement prompts."""
+    question: str
+    input_type: str  # "single_choice" | "multi_choice" | "direction" | "number" | "text" | "confirmation"
+    options: List[str] = Field(default_factory=list)
+    field_key: Optional[str] = None
+    default_value: Optional[Any] = None
+
+
+class RequirementProgressItem(BaseModel):
+    """Single item in the requirement progress checklist."""
+    name: str
+    status: str  # "completed" | "current" | "pending"
+    value: Optional[str] = None
+
+
+class ChatTurnRequest(BaseModel):
+    """Client message payload for multi-turn requirement chatting."""
+    message: str = Field(default="", description="User natural language message or card selection.")
+    existing_brief: Optional[str] = Field(default=None, description="Accumulated canonical brief from previous turns.")
+    project_name: str = Field(default="PlanForge Residential Project", description="Project title.")
+    project_id: Optional[str] = Field(default=None, description="Optional project identifier.")
+
+
+class ChatTurnResponse(BaseModel):
+    """Assistant turn reply containing narrative, dynamic card, and requirement checklist."""
+    message: str
+    question_card: Optional[QuestionCardSchema] = None
+    is_ready_for_generation: bool = False
+    requirements_text: str = ""
+    requirements_summary: Optional[Dict[str, Any]] = None
+    progress: List[RequirementProgressItem] = Field(default_factory=list)
+    remaining_count: int = 0
+    project_name: str = "PlanForge Residential Project"
+    status: str = "NEEDS_CLARIFICATION"
+

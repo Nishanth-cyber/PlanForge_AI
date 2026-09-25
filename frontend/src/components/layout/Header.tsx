@@ -5,6 +5,7 @@ import type { HealthResponse } from '../../api/types';
 interface HeaderProps {
   onNewProject: () => void;
   onDashboard: () => void;
+  onAssistant?: () => void;
   onProjects?: () => void;
   onBenchmarks?: () => void;
   currentView: string;
@@ -15,6 +16,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   onNewProject,
   onDashboard,
+  onAssistant,
   onProjects,
   onBenchmarks,
   currentView,
@@ -64,6 +66,17 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="header-actions">
+        {onAssistant && (
+          <button
+            className={`btn ${currentView === 'assistant' ? 'btn-primary' : 'btn-outline'} btn-sm`}
+            onClick={onAssistant}
+            data-testid="header-assistant-btn"
+            style={{ fontWeight: 600 }}
+          >
+            ✨ AI Assistant
+          </button>
+        )}
+
         <button
           className={`btn ${currentView === 'dashboard' || currentView === 'home' ? 'btn-secondary' : 'btn-outline'} btn-sm`}
           onClick={onDashboard}

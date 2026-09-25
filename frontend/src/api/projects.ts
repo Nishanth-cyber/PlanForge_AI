@@ -12,6 +12,8 @@ import type {
   AlternativeSummarySchema,
   ExportResponse,
   DecisionTrace,
+  ChatTurnRequest,
+  ChatTurnResponse,
 } from './types';
 
 export async function getHealth(): Promise<HealthResponse> {
@@ -54,3 +56,11 @@ export async function generateFloorPlan(payload: GenerationRequest): Promise<Gen
     body: JSON.stringify(payload),
   });
 }
+
+export async function sendChatTurn(payload: ChatTurnRequest): Promise<ChatTurnResponse> {
+  return request<ChatTurnResponse>('/api/v1/chat', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+

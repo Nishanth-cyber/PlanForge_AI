@@ -83,6 +83,39 @@ export interface ExportResponse {
   files: ExportFileItem[];
 }
 
+export interface QuestionCardData {
+  question: string;
+  input_type: "single_choice" | "multi_choice" | "direction" | "number" | "text" | "confirmation" | string;
+  options: string[];
+  field_key?: string;
+  default_value?: any;
+}
+
+export interface RequirementProgressItem {
+  name: string;
+  status: "completed" | "current" | "pending" | string;
+  value?: string;
+}
+
+export interface ChatTurnRequest {
+  message: string;
+  existing_brief?: string;
+  project_name?: string;
+  project_id?: string;
+}
+
+export interface ChatTurnResponse {
+  message: string;
+  question_card?: QuestionCardData;
+  is_ready_for_generation: boolean;
+  requirements_text: string;
+  requirements_summary?: any;
+  progress: RequirementProgressItem[];
+  remaining_count: number;
+  project_name: string;
+  status: string;
+}
+
 export type Point2D = [number, number];
 
 export interface GeoWall {
