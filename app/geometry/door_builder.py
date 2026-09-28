@@ -114,7 +114,14 @@ class DoorBuilder:
             # Connecting to circulation, corridor, or general partition
             candidate_walls = []
             if source_room:
-                candidate_walls = [w for w in walls if w.id in source_room.walls and w.type == "interior"]
+                # Prefer walls shared with a corridor room if one exists
+                corridor_rooms = [r for r in rooms if r.is_corridor or r.room_type in {"circulation", "corridor"}]
+                if corridor_rooms:
+                    for corr in corridor_rooms:
+                        shared = [w for w in walls if source_room.id in w.room_ids and corr.id in w.room_ids]
+                        candidate_walls.extend(shared)
+                if not candidate_walls:
+                    candidate_walls = [w for w in walls if w.id in source_room.walls and w.type == "interior"]
             if not candidate_walls and source_room:
                 candidate_walls = [w for w in walls if w.id in source_room.walls]
 

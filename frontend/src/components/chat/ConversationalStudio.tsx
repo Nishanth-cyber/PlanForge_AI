@@ -277,11 +277,42 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
       setProgress(resp.progress || []);
       setRemainingCount(resp.remaining_count || 0);
       setIsReadyForGeneration(resp.is_ready_for_generation);
+      let updatedBrief = canonicalBrief;
       if (resp.requirements_text) {
+        updatedBrief = resp.requirements_text;
         setCanonicalBrief(resp.requirements_text);
       }
       if (resp.project_name) {
         setProjectName(resp.project_name);
+      }
+
+      // Re-generate IF a floor plan was already generated AND requirements are complete
+      const hasCompletedProject = Boolean(
+        (projectData && (projectData.floor_plan_set || projectData.alternatives?.length)) ||
+        (generationResponse && generationResponse.is_success)
+      );
+      const isComplete = resp.is_ready_for_generation || resp.remaining_count === 0;
+
+      if (hasCompletedProject && isComplete) {
+        const genAiMsg: ChatMessage = {
+          id: `ai-gen-${Date.now()}`,
+          role: 'assistant',
+          text: 'Updating requirements and re-generating your floor plan design with the requested alterations...',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, genAiMsg]);
+
+        await onGenerateSubmit({
+          brief: updatedBrief,
+          project_name: resp.project_name || projectName,
+          num_alternatives: 3,
+          enable_refinement: true,
+          max_refinement_iterations: 5,
+          enable_rendering: true,
+          enable_exports: true,
+          create_zip: false,
+          plot_shape: savedPlotData?.vertices,
+        });
       }
     } catch (err: any) {
       console.error('Chat turn failed', err);
