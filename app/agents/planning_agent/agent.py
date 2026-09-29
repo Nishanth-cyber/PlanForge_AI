@@ -188,6 +188,10 @@ class PlanningAgent:
 
     def _build_global_constraints(self, requirements: Requirements, is_multi_floor: bool) -> dict:
         """Formulate project-level architectural constraints for ASAA."""
+        raw_text = (requirements.raw_input or "").lower()
+        no_corr = any(
+            phrase in raw_text for phrase in ["no corridor", "no hallway", "without corridor", "without hallway", "no corridors", "no hallways"]
+        )
         return {
             "plot_dimensions": requirements.plot_dimensions,
             "plot_shape": requirements.plot_shape,
@@ -198,5 +202,6 @@ class PlanningAgent:
             "target_floors": requirements.target_floors,
             "staircase_aligned": is_multi_floor,
             "privacy_buffering": True,
-            "circulation_continuity": True,
+            "circulation_continuity": not no_corr,
+            "no_corridor": no_corr,
         }

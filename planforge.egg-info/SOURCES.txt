@@ -27,6 +27,7 @@ app/agents/refinement_agent/prompts.py
 app/agents/requirement_agent/__init__.py
 app/agents/requirement_agent/agent.py
 app/agents/requirement_agent/completeness_gate.py
+app/agents/requirement_agent/conversation.py
 app/agents/requirement_agent/normalizer.py
 app/agents/requirement_agent/parser.py
 app/agents/requirement_agent/pipeline.py

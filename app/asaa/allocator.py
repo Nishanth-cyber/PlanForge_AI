@@ -123,11 +123,14 @@ class ASAAAllocator:
     ) -> Tuple[Allocation, Optional[list[Tuple[float, float]]]]:
         """Allocate regions for a single floor."""
         # 1. Compute Area Budget
+        no_corr = planning_spec.global_constraints.get("no_corridor", False)
+        circ_ratio = 0.0 if no_corr else 0.12
+
         budget = AreaBudgeter.compute_budget(
             buildable_area_sqm=buildable.area_sqm,
             room_specs=floor_spec.room_specs,
             floor_number=floor_spec.floor_number,
-            circulation_ratio=0.12,
+            circulation_ratio=circ_ratio,
             has_staircase=has_staircase,
             staircase_area_sqm=8.0,
         )

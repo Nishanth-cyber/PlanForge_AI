@@ -63,8 +63,9 @@ class CandidateScorer:
                 continue
 
             item_poly = Polygon(item.polygon)
-            # Area difference with buildable
-            diff = item_poly.difference(buildable_polygon)
+            # Area difference with buildable (buffered slightly for floating-point coordinate rounding)
+            buffered_buildable = buildable_polygon.buffer(0.05)
+            diff = item_poly.difference(buffered_buildable)
             if diff.area > 0.05:  # Tolerance for float rounding
                 is_valid = False
                 rejection_reasons.append(

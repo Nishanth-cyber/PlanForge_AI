@@ -257,15 +257,72 @@ class ArchitecturalAgent:
                 })
 
             # 2. Strategy-driven connectivity
-            if strategy in ("social_centric", "open_social"):
-                # Living <-> Dining <-> Kitchen direct flow where adjacent
+            if strategy == "open_social":
+                # Open-plan flow: Living <-> Kitchen <-> Dining directly connected
                 if rtype == "living":
-                    if has_dining and "dining" in adj_types:
+                    doors.append({
+                        "connects_to": "exterior",
+                        "door_type": "entrance",
+                        "wall_orientation": "south",
+                        "recommended_width": 1.2,
+                        "recommended_height": 2.1,
+                        "rationale": "Grand main entrance into open social space",
+                    })
+                    if has_kitchen and "kitchen" in adj_types:
+                        doors.append({
+                            "connects_to": "kitchen",
+                            "door_type": "interior",
+                            "wall_orientation": "east",
+                            "recommended_width": 1.2,
+                            "recommended_height": 2.1,
+                            "rationale": "Open flow link to kitchen",
+                        })
+                    elif has_dining:
                         doors.append({
                             "connects_to": "dining",
                             "door_type": "interior",
                             "wall_orientation": "east",
-                            "recommended_width": 1.2 if strategy == "open_social" else 0.9,
+                            "recommended_width": 1.2,
+                            "recommended_height": 2.1,
+                            "rationale": "Open plan connection to dining",
+                        })
+                elif rtype == "kitchen":
+                    doors.append({
+                        "connects_to": "dining" if has_dining else "living",
+                        "door_type": "interior",
+                        "wall_orientation": "north",
+                        "recommended_width": 1.0,
+                        "recommended_height": 2.1,
+                        "rationale": "Open kitchen dining interface",
+                    })
+                elif rtype == "dining":
+                    doors.append({
+                        "connects_to": "living",
+                        "door_type": "interior",
+                        "wall_orientation": "west",
+                        "recommended_width": 1.0,
+                        "recommended_height": 2.1,
+                        "rationale": "Direct dining to living connection",
+                    })
+                elif rcat == "private":
+                    doors.append({
+                        "connects_to": "circulation",
+                        "door_type": "interior",
+                        "wall_orientation": "south",
+                        "recommended_width": 0.9,
+                        "recommended_height": 2.1,
+                        "rationale": "Private room corridor access",
+                    })
+
+            elif strategy == "social_centric":
+                # Living <-> Dining <-> Kitchen direct flow where adjacent
+                if rtype == "living":
+                    if has_dining:
+                        doors.append({
+                            "connects_to": "dining",
+                            "door_type": "interior",
+                            "wall_orientation": "east",
+                            "recommended_width": 0.9,
                             "recommended_height": 2.1,
                             "rationale": "Direct social connection to dining",
                         })
@@ -468,6 +525,17 @@ class ArchitecturalAgent:
                         "recommended_height": 2.1,
                         "rationale": "Access door",
                     })
+
+            # Fallback: ensure every room has at least one door
+            if not doors:
+                doors.append({
+                    "connects_to": "circulation",
+                    "door_type": "interior",
+                    "wall_orientation": "south" if rcat == "private" else "north",
+                    "recommended_width": 0.9,
+                    "recommended_height": 2.1,
+                    "rationale": f"Default circulation access for {rtype}",
+                })
 
             # Respect explicit user required adjacencies
             for target_type in user_adjs:

@@ -79,14 +79,15 @@ class SpatialPartitioner:
                 results.append(entrance_item)
                 current_space = remaining
 
-        # 3. Allocate Central Circulation Spine / Corridor zone (if budgeted)
-        if circulation_area_sqm >= 4.0 and current_space.area > 30.0:
-            circ_item, remaining = SpatialPartitioner._carve_circulation_spine(
+        # 3. Allocate Central Circulation Spine / Corridor zone (if budgeted and at least 3 rooms)
+        sub_polys: list[Polygon] = [current_space]
+        if circulation_area_sqm >= 4.0 and current_space.area > 30.0 and len(room_specs) >= 3:
+            circ_item, carved_polys = SpatialPartitioner._carve_circulation_spine(
                 current_space, circulation_area_sqm
             )
             if circ_item:
                 results.append(circ_item)
-                current_space = remaining
+                sub_polys = carved_polys
 
         # 4. Prepare room partition items
         items_to_partition: list[PartitionItem] = []
@@ -119,11 +120,41 @@ class SpatialPartitioner:
             items_to_partition, zoning_strategy
         )
 
-        # 6. Recursive Orthogonal Bisection to partition current_space among rooms
-        allocated_rooms = SpatialPartitioner._recursive_bisection(
-            current_space, ordered_items, zoning_strategy
-        )
-        results.extend(allocated_rooms)
+        # 6. Partition space across available sub-polygons
+        if len(sub_polys) == 1:
+            allocated_rooms = SpatialPartitioner._recursive_bisection(
+                sub_polys[0], ordered_items, zoning_strategy
+            )
+            results.extend(allocated_rooms)
+        else:
+            sub_polys.sort(key=lambda p: (p.centroid.y, p.centroid.x))
+            total_sub_area = sum(p.area for p in sub_polys)
+            total_requested = sum(it.allocated_area_sqm for it in ordered_items)
+
+            item_cursor = 0
+            allocated_rooms = []
+            for i, sub_p in enumerate(sub_polys):
+                if i == len(sub_polys) - 1:
+                    group_items = ordered_items[item_cursor:]
+                else:
+                    target_group_area = total_requested * (sub_p.area / total_sub_area if total_sub_area > 0 else 0.5)
+                    cum = 0.0
+                    split_end = item_cursor + 1
+                    for idx in range(item_cursor, len(ordered_items) - 1):
+                        cum += ordered_items[idx].allocated_area_sqm
+                        split_end = idx + 1
+                        if cum >= target_group_area * 0.8:
+                            break
+                    group_items = ordered_items[item_cursor:split_end]
+                    item_cursor = split_end
+
+                if group_items:
+                    res_sub = SpatialPartitioner._recursive_bisection(
+                        sub_p, group_items, zoning_strategy
+                    )
+                    allocated_rooms.extend(res_sub)
+
+            results.extend(allocated_rooms)
 
         return results
 
@@ -231,7 +262,7 @@ class SpatialPartitioner:
     @staticmethod
     def _carve_circulation_spine(
         poly: Polygon, target_area: float
-    ) -> Tuple[Optional[PartitionItem], Polygon]:
+    ) -> Tuple[Optional[PartitionItem], list[Polygon]]:
         """Carve a central circulation corridor strip connecting zones."""
         min_x, min_y, max_x, max_y = poly.bounds
         w = max_x - min_x
@@ -251,9 +282,20 @@ class SpatialPartitioner:
 
         carved = extract_largest_polygon(poly.intersection(spine_box))
         if carved.is_empty or carved.area < 3.0:
-            return None, poly
+            return None, [poly]
 
-        remaining = extract_largest_polygon(poly.difference(carved))
+        diff = poly.difference(carved)
+        remaining_polys: list[Polygon] = []
+        if isinstance(diff, Polygon):
+            if not diff.is_empty and diff.area >= 1.0:
+                remaining_polys.append(diff)
+        elif isinstance(diff, MultiPolygon):
+            for p in diff.geoms:
+                if isinstance(p, Polygon) and not p.is_empty and p.area >= 1.0:
+                    remaining_polys.append(p)
+
+        if not remaining_polys:
+            remaining_polys = [poly]
 
         coords = [(round(float(x), 4), round(float(y), 4)) for x, y in carved.exterior.coords[:-1]]
         item = PartitionItem(
@@ -268,7 +310,7 @@ class SpatialPartitioner:
             polygon=coords,
             centroid=(round(carved.centroid.x, 4), round(carved.centroid.y, 4)),
         )
-        return item, remaining
+        return item, remaining_polys
 
     @staticmethod
     def _order_rooms_by_strategy(
