@@ -42,7 +42,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
   const handleMultiSubmit = () => {
     if (disabled || selectedMulti.length === 0) return;
-    const answer = selectedMulti.join(', ');
+    const baseAnswer = selectedMulti.join(', ');
+    const floorMatch = card.field_key?.match(/^floor_(\d+)_rooms$/);
+    const answer =
+      floorMatch && Number(floorMatch[1]) > 1
+        ? `Floor ${floorMatch[1]}: ${baseAnswer}`
+        : baseAnswer;
     onAnswer(answer);
   };
 

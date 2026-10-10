@@ -29,16 +29,49 @@ import { ConversationalStudio } from './components/chat/ConversationalStudio';
 
 import './styles/index.css';
 import './styles/components.css';
+import { getValidationDisplayStatus } from './utils/validationStatus';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'assistant' | 'projects' | 'benchmarks' | 'new_project' | 'project_detail'>('home');
-  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+  const [currentView, setCurrentView] = useState<'home' | 'assistant' | 'projects' | 'benchmarks' | 'new_project' | 'project_detail'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const v = params.get('view');
+      if (v === 'assistant' || v === 'projects' || v === 'benchmarks' || v === 'new_project' || v === 'project_detail') {
+        return v;
+      }
+      if (params.get('project')) return 'project_detail';
+    }
+    return 'home';
+  });
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const t = params.get('tab') as ActiveTab;
+      if (t && ['overview', 'plot', 'alternatives', 'validation', 'refinement', 'explainability', 'export'].includes(t)) {
+        return t;
+      }
+    }
+    return 'overview';
+  });
 
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('project') || null;
+    }
+    return null;
+  });
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [generationResponse, setGenerationResponse] = useState<GenerationResponse | null>(null);
 
-  const [activeFloor, setActiveFloor] = useState<number>(1);
+  const [activeFloor, setActiveFloor] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const f = parseInt(params.get('floor') || '1', 10);
+      return isNaN(f) ? 1 : f;
+    }
+    return 1;
+  });
   const [selectedAlternativeIndex, setSelectedAlternativeIndex] = useState<number>(1);
   const [selectedRoom, setSelectedRoom] = useState<GeoRoom | null>(null);
 
@@ -122,13 +155,15 @@ export function App() {
         return;
       }
 
-      if (!resp.is_success && resp.error_message) {
-        setErrorMessage(`Generation stopped: ${resp.error_message}`);
-        setIsGenerating(false);
-        return;
+      if (!resp.is_success) {
+        if (resp.status === 'failed' || (resp.error_message && resp.error_message.toLowerCase().includes('infeasible'))) {
+          setErrorMessage(`Requirements are infeasible: ${resp.error_message || 'Room requirements exceed buildable plot boundaries'}`);
+        } else {
+          setErrorMessage(`Plan could not be validated: ${resp.error_message || `${resp.validation_summary?.total_errors || 'Hard'} building code violations found.`}`);
+        }
       }
 
-      // Success -> navigate to project detail
+      // Navigate to project detail
       setActiveProjectId(resp.project_id);
       setCurrentView('project_detail');
       setActiveTab('overview');
@@ -169,6 +204,12 @@ export function App() {
   const availableFloors = activeFloorPlanSet?.floor_plans || [];
   const alternativesList = projectData?.alternatives || [];
 
+  const validationStatus = getValidationDisplayStatus(
+    validationReport,
+    projectData?.refinement_result,
+    projectData?.status || generationResponse?.status
+  );
+
   return (
     <div className="app-container">
       <Header
@@ -190,6 +231,8 @@ export function App() {
           projectName={projectName}
           projectId={activeProjectId}
           isValid={isOverallValid}
+          statusLabel={validationStatus.label}
+          statusBadgeClass={validationStatus.badgeClass}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           hasTrace={projectData?.decision_trace !== undefined}
@@ -403,8 +446,8 @@ export function App() {
                       <div className="card" style={{ padding: '1.25rem', height: '100%' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
                           <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Validation Summary</h3>
-                          <span style={{ fontWeight: 700, fontSize: '0.875rem', letterSpacing: '0.04em', color: totalErrors === 0 ? 'var(--status-success)' : '#f87171' }}>
-                            {totalErrors === 0 ? 'VALID' : 'INVALID'}
+                          <span style={{ fontWeight: 700, fontSize: '0.825rem', letterSpacing: '0.03em', color: validationStatus.type === 'valid' || validationStatus.type === 'refined' ? 'var(--status-success)' : '#f87171' }}>
+                            {validationStatus.label}
                           </span>
                         </div>
 

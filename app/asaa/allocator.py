@@ -70,6 +70,8 @@ class ASAAAllocator:
 
         allocation_set = AllocationSet(
             planning_spec_id=planning_spec.id,
+            plot_boundary=list(buildable.plot_polygon),
+            buildable_boundary=list(buildable.polygon),
         )
 
         is_multi_floor = len(planning_spec.floors) >= 2

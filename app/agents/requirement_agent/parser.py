@@ -31,7 +31,12 @@ class RequirementParser:
     def __init__(self) -> None:
         self.normalizer = RequirementNormalizer()
 
-    def parse(self, text: str, project_name: str = "PlanForge Project") -> Requirements:
+    def parse(
+        self,
+        text: str,
+        project_name: str = "PlanForge Project",
+        active_floor: Optional[int] = None,
+    ) -> Requirements:
         """Parse raw text into a Requirements instance.
 
         Never invents unspecified fields or rooms.
@@ -43,15 +48,9 @@ class RequirementParser:
         )
 
         # 1. Plot
-        reqs.plot_dimensions = self.extract_plot_dimensions(raw_text)
-        if reqs.plot_dimensions:
-            w, d = reqs.plot_dimensions
-            reqs.plot_area_sqm = round(w * d, 4)
-        else:
-            reqs.plot_area_sqm = self.extract_standalone_area(raw_text)
-
         reqs.plot_shape = self.extract_plot_shape(raw_text)
-        if reqs.plot_shape and (reqs.plot_dimensions is None or reqs.plot_area_sqm is None):
+        if reqs.plot_shape:
+            reqs.plot_dimensions = None
             try:
                 from shapely.geometry import Polygon
                 poly = Polygon(reqs.plot_shape)
@@ -59,6 +58,13 @@ class RequirementParser:
                     reqs.plot_area_sqm = round(poly.area, 4)
             except Exception:
                 pass
+        else:
+            reqs.plot_dimensions = self.extract_plot_dimensions(raw_text)
+            if reqs.plot_dimensions:
+                w, d = reqs.plot_dimensions
+                reqs.plot_area_sqm = round(w * d, 4)
+            else:
+                reqs.plot_area_sqm = self.extract_standalone_area(raw_text)
         reqs.orientation = self.extract_orientation(raw_text)
         reqs.entrance_facing = self.extract_entrance_facing(raw_text)
         reqs.entrance_room_type = self.extract_entrance_room_type(raw_text)
@@ -68,7 +74,12 @@ class RequirementParser:
         reqs.target_floors = self.extract_target_floors(raw_text)
 
         # 3. Floors & Rooms
-        floors = self.extract_floors(raw_text, reqs.target_floors)
+        floors = self.extract_floors(
+            raw_text,
+            reqs.target_floors,
+            active_floor=active_floor,
+            project_name=project_name,
+        )
         reqs.floors = floors
         reqs.floor_requirements = floors
 
@@ -81,11 +92,10 @@ class RequirementParser:
     def extract_plot_dimensions(self, text: str) -> Optional[tuple[float, float]]:
         """Extract plot width and depth in metres.
 
-        Matches:
-        - 20 x 30 plot, 20 by 30 feet, 15m x 20m, 30' x 40', 30 feet by 40 feet
+        Strictly distinguishes plot dimensions from room dimensions (Task 8).
+        Room dimensions like 'Bedroom 12ft x 14ft' will NEVER be extracted as plot dimensions.
         """
         dim_pair = re.compile(
-            r"(?:plot|site|land|ground)?(?:\s+size|\s+dimensions?)?[:\s]*"
             r"([\d]+(?:\.\d+)?)\s*"
             r"(m|meters?|metres?|ft|feet|foot|'|\u2019)?\s*"
             r"(?:x|×|\*|by)\s*"
@@ -93,24 +103,61 @@ class RequirementParser:
             r"(m|meters?|metres?|ft|feet|foot|'|\u2019)?",
             re.I,
         )
-        for m in dim_pair.finditer(text):
-            raw_w = m.group(1)
-            raw_d = m.group(3)
-            unit_w = m.group(2)
-            unit_d = m.group(4)
 
-            # Suffix priority: if one unit given at the end, applies to both
-            common_unit = unit_d or unit_w or ""
+        def to_m(val: str, unit: str) -> float:
+            token = f"{val} {unit}".strip()
+            res = parse_dimension_m(token)
+            return res if res is not None else float(val)
 
-            def to_m(val: str, unit: str) -> float:
-                token = f"{val} {unit}".strip()
-                res = parse_dimension_m(token)
-                return res if res is not None else float(val)
+        # Room indicators that disqualify a clause or prefix from being a plot specification
+        room_keywords = set(ROOM_SYNONYMS.keys()) | {
+            "room", "rooms", "hall", "closet", "balcony", "toilet", "bath", "passage",
+            "corridor", "kitchen", "bedroom", "living", "dining", "study", "foyer", "pantry",
+            "master", "veranda", "porch", "laundry", "office", "stair", "staircase",
+        }
 
-            w = to_m(raw_w, unit_w or common_unit)
-            d = to_m(raw_d, unit_d or common_unit)
-            if w > 0 and d > 0:
-                return (round(w, 4), round(d, 4))
+        clauses = re.split(r"[\n;]|(?<!\d)\.(?!\d)", text)
+
+        # Pass 1: Look for explicitly marked plot clauses containing plot, site, land, ground, property, lot
+        for clause in clauses:
+            clean_clause = clause.strip()
+            if not clean_clause:
+                continue
+            is_explicit_plot = bool(re.search(r"\b(?:plot|site|land|ground|property|lot)\b", clean_clause, re.I))
+            if is_explicit_plot:
+                for m in dim_pair.finditer(clean_clause):
+                    prefix = clean_clause[:m.start()].lower()
+                    # If a room keyword immediately precedes the dimension within the clause, skip it
+                    if any(re.search(rf"\b{re.escape(kw)}\b", prefix) for kw in room_keywords):
+                        continue
+                    raw_w = m.group(1)
+                    raw_d = m.group(3)
+                    unit_w = m.group(2)
+                    unit_d = m.group(4)
+                    common_unit = unit_d or unit_w or ""
+                    w = to_m(raw_w, unit_w or common_unit)
+                    d = to_m(raw_d, unit_d or common_unit)
+                    if w > 0 and d > 0:
+                        return (round(w, 4), round(d, 4))
+
+        # Pass 2: Generic bare dimension if NO room keyword appears anywhere in the clause
+        for clause in clauses:
+            clean_clause = clause.strip()
+            if not clean_clause:
+                continue
+            # If the clause contains any room keyword, it is describing a room, not a plot
+            if any(re.search(rf"\b{re.escape(kw)}\b", clean_clause, re.I) for kw in room_keywords):
+                continue
+            for m in dim_pair.finditer(clean_clause):
+                raw_w = m.group(1)
+                raw_d = m.group(3)
+                unit_w = m.group(2)
+                unit_d = m.group(4)
+                common_unit = unit_d or unit_w or ""
+                w = to_m(raw_w, unit_w or common_unit)
+                d = to_m(raw_d, unit_d or common_unit)
+                if w > 0 and d > 0:
+                    return (round(w, 4), round(d, 4))
 
         return None
 
@@ -132,10 +179,10 @@ class RequirementParser:
     def extract_plot_shape(self, text: str) -> Optional[tuple[tuple[float, float], ...]]:
         """Extract explicit boundary polygon vertices if given like:
 
-        (0, 0), (15, 0), (15, 20), (0, 20)
+        (0, 0), (15, 0), (15, 20), (0, 20) or [(0,0), (40,0), (40,20), (25,20), (25,40), (0,40)]
         """
-        # Look for parenthesised coordinate pairs: (x, y)
-        coord_pat = re.compile(r"\(\s*([\d]+(?:\.\d+)?)\s*,\s*([\d]+(?:\.\d+)?)\s*\)")
+        # Look for coordinate pairs: (x, y) or [x, y]
+        coord_pat = re.compile(r"[\(\[]\s*([\-+]?[\d]+(?:\.\d+)?)\s*,\s*([\-+]?[\d]+(?:\.\d+)?)\s*[\)\]]")
         matches = coord_pat.findall(text)
         if len(matches) >= 3:
             coords = tuple((float(x), float(y)) for x, y in matches)
@@ -228,18 +275,24 @@ class RequirementParser:
                     return val
         return None
 
-    def extract_floors(self, text: str, target_floors: Optional[int]) -> list[FloorRequirement]:
+    def extract_floors(
+        self,
+        text: str,
+        target_floors: Optional[int],
+        active_floor: Optional[int] = None,
+        project_name: Optional[str] = None,
+    ) -> list[FloorRequirement]:
         """Extract per-floor room requirements cleanly without cross-floor pollution."""
         floors: dict[int, FloorRequirement] = {}
 
         # 1. Split text into floor sections
-        floor_sections = self._split_floor_sections(text)
+        floor_sections = self._split_floor_sections(text, project_name=project_name)
 
         bhk_rooms = self._expand_bhk(text)
 
         if floor_sections:
             for fn, section_text in sorted(floor_sections.items()):
-                rooms = self._extract_rooms_from_text(section_text)
+                rooms = self._extract_rooms_from_text(section_text, project_name=project_name)
                 # If Floor 1 has BHK mention and no explicit rooms, add BHK rooms
                 if fn == 1 and bhk_rooms and not rooms:
                     rooms = bhk_rooms
@@ -253,8 +306,9 @@ class RequirementParser:
                     source="user",
                 )
         else:
-            # Single or unified description — all rooms go to Floor 1
-            rooms = self._extract_rooms_from_text(text)
+            # Single or unified description — respect active_floor if provided (e.g. from floor 2 card)
+            target_fn = active_floor if (active_floor and active_floor > 1) else 1
+            rooms = self._extract_rooms_from_text(text, project_name=project_name)
             if bhk_rooms and not rooms:
                 rooms = bhk_rooms
                 bhk_rooms = []
@@ -263,10 +317,10 @@ class RequirementParser:
                 for br in bhk_rooms:
                     if br.room_type not in existing_types:
                         rooms.append(br)
-            staircase_req = self._detect_staircase(text, 1, target_floors)
-            floors[1] = FloorRequirement(
-                floor_number=1,
-                floor_name=self._floor_name(1),
+            staircase_req = self._detect_staircase(text, target_fn, target_floors)
+            floors[target_fn] = FloorRequirement(
+                floor_number=target_fn,
+                floor_name=self._floor_name(target_fn),
                 room_requirements=rooms,
                 staircase_required=staircase_req,
                 source="user",
@@ -295,7 +349,7 @@ class RequirementParser:
 
         return sorted(floors.values(), key=lambda f: f.floor_number)
 
-    def _split_floor_sections(self, text: str) -> dict[int, str]:
+    def _split_floor_sections(self, text: str, project_name: Optional[str] = None) -> dict[int, str]:
         """Split text into floor-labeled sections.
 
         Supports:
@@ -303,7 +357,8 @@ class RequirementParser:
         'Floor 2:', '2nd Floor:', 'Second Floor:', 'Upper Floor:', 'Upstairs:', etc.
         Fixes regression bugs:
         - Ordinal floors ('1st floor', '2nd floor') do not crash.
-        - Text before the first floor header is preserved as Floor 1 if not explicitly labeled.
+        - Text before the first floor header is preserved as Floor 1 ONLY if it contains actual rooms
+          and is not just project metadata (e.g. project title, plot dimensions).
         """
         # Header regex matching various floor labels at start of line or sentence
         header_pat = re.compile(
@@ -324,12 +379,14 @@ class RequirementParser:
 
         sections: dict[int, str] = {}
 
-        # If text precedes the first match, and contains rooms, treat as Floor 1
+        # If text precedes the first match, verify it contains actual room requirements before assigning to Floor 1
         first_match = matches[0]
         if first_match.start() > 0:
             pre_text = text[:first_match.start()].strip()
             if pre_text:
-                sections[1] = pre_text
+                candidate_rooms = self._extract_rooms_from_text(pre_text, project_name=project_name)
+                if candidate_rooms:
+                    sections[1] = pre_text
 
         for i, m in enumerate(matches):
             fn = self._match_floor_number(m)
@@ -376,17 +433,21 @@ class RequirementParser:
     # Room Extraction & Area Isolation
     # ------------------------------------------------------------------
 
-    def _extract_rooms_from_text(self, text: str) -> list[RoomRequirement]:
+    def _extract_rooms_from_text(
+        self,
+        text: str,
+        project_name: Optional[str] = None,
+    ) -> list[RoomRequirement]:
         """Extract rooms with isolated area, counts, attachments, and adjacencies.
 
         Fixes Bug 2: Multiple rooms do NOT inherit the first room's area!
         Each room's area is extracted strictly within its own sentence/line/clause.
+        Separates project metadata (e.g. project title) from actual room requirements.
         """
         rooms: dict[str, RoomRequirement] = {}
 
-        # Split text into lines/clauses to prevent area bleeding across lines (do not split on decimal numbers like 3.5)
+        # Split text into lines/clauses to prevent area bleeding across lines
         clauses = re.split(r"[\n;]|(?<!\d)\.(?!\d)", text)
-
 
         # Build sorted list of synonym phrases (longer first)
         sorted_synonyms = sorted(ROOM_SYNONYMS.keys(), key=len, reverse=True)
@@ -396,12 +457,22 @@ class RequirementParser:
             if not clause_str:
                 continue
 
+            # Task 7: Separate project metadata from actual room requirements
+            clean_clause = clause_str.strip().lower()
+            if re.match(r"^(?:project(?:\s*name)?\s*:|title\s*:)", clean_clause):
+                continue
+            if project_name:
+                p_lower = project_name.strip().lower()
+                if clean_clause == p_lower or clean_clause == f"project: {p_lower}":
+                    continue
+
             # Check for attached bathroom pattern within this clause
             attached_bath = False
             if re.search(r"\battached\s+(?:bath(?:room)?|toilet|washroom|wc)\b", clause_str, re.I):
                 attached_bath = True
 
             occupied_spans: list[tuple[int, int]] = []
+            clause_extracted_types: list[str] = []
 
             for phrase in sorted_synonyms:
                 canonical = ROOM_SYNONYMS[phrase]
@@ -430,6 +501,8 @@ class RequirementParser:
 
                     # Extract area and explicit dimensions ONLY within this specific clause/line
                     min_a, pref_a, max_a, user_d = self._extract_room_areas_from_clause(clause_str, m.start(), m.end())
+
+                    clause_extracted_types.append(canonical)
 
                     if canonical in rooms:
                         # Increment or take max count if mentioned again
@@ -462,6 +535,29 @@ class RequirementParser:
                     if canonical == "master_bedroom" and attached_bath:
                         rr.adjacency.append("bathroom")
 
+            # Check explicit in-clause parenthesized relationships (e.g. "- 1 Bedroom (adjacent to Bathroom)")
+            if clause_extracted_types and "(" in clause_str and ")" in clause_str:
+                paren_content = clause_str[clause_str.find("(")+1 : clause_str.rfind(")")]
+                for cr_type in clause_extracted_types:
+                    rr = rooms[cr_type]
+                    # Adjacency
+                    for adj_m in re.finditer(r"(?:adjacent\s+to|next\s+to|near)\s+([A-Za-z_\s]+?)(?:[,\.;]|$|\band\b)", paren_content, re.I):
+                        target = self.normalizer.canonical_room_type(adj_m.group(1).strip().strip("()-_"))
+                        if target and target != cr_type and target not in rr.adjacency:
+                            rr.adjacency.append(target)
+                    # Separation
+                    for sep_m in re.finditer(r"(?:separate\s+from|away\s+from|far\s+from)\s+([A-Za-z_\s]+?)(?:[,\.;]|$|\band\b)", paren_content, re.I):
+                        target = self.normalizer.canonical_room_type(sep_m.group(1).strip().strip("()-_"))
+                        if target and target != cr_type and target not in rr.separation:
+                            rr.separation.append(target)
+                    # Attached to
+                    for att_m in re.finditer(r"attached\s+to\s+([A-Za-z_\s]+?)(?:[,\.;]|$|\band\b)", paren_content, re.I):
+                        target = self.normalizer.canonical_room_type(att_m.group(1).strip().strip("()-_"))
+                        if target and target != cr_type:
+                            rr.attached_to = target
+                            if target in rooms and cr_type not in rooms[target].adjacency:
+                                rooms[target].adjacency.append(cr_type)
+
         # Second pass: If attached bath was mentioned, create or update bathroom with attached_to
         if re.search(r"\battached\s+(?:bath(?:room)?|toilet|washroom)\b", text, re.I):
             # Find parent room (default master_bedroom or bedroom)
@@ -481,7 +577,7 @@ class RequirementParser:
                 if parent and "bathroom" not in rooms[parent].adjacency:
                     rooms[parent].adjacency.append("bathroom")
 
-        # Third pass: Adjacency and separation
+        # Third pass: Adjacency and separation across clauses
         self._apply_relationships(text, rooms)
 
         return list(rooms.values())
@@ -565,30 +661,30 @@ class RequirementParser:
 
         return (min_val, pref_val, max_val, user_dims)
 
-
     def _expand_bhk(self, text: str) -> list[RoomRequirement]:
-        """Expand BHK notation (e.g. 3BHK) without inventing non-BHK rooms."""
+        """Expand BHK shorthand notation (e.g. 3BHK) without inventing non-BHK rooms."""
         m = re.search(r"\b(\d+)\s*[-\s]?BHK\b", text, re.I)
         if not m:
             return []
         count = int(m.group(1))
+        desc = f"Expanded from {count}BHK shorthand: {count} bedrooms, 1 living room, 1 kitchen"
         return [
-            RoomRequirement(room_type="bedroom", min_count=count, max_count=count, source="user"),
-            RoomRequirement(room_type="living", min_count=1, max_count=1, source="user"),
-            RoomRequirement(room_type="kitchen", min_count=1, max_count=1, source="user"),
+            RoomRequirement(room_type="bedroom", min_count=count, max_count=count, description=desc, source="user"),
+            RoomRequirement(room_type="living", min_count=1, max_count=1, description=desc, source="user"),
+            RoomRequirement(room_type="kitchen", min_count=1, max_count=1, description=desc, source="user"),
         ]
 
     def _apply_relationships(self, text: str, rooms: dict[str, RoomRequirement]) -> None:
         """Extract required/preferred adjacency and separation."""
         # Adjacency
         adj_pattern = re.compile(
-            r"(\w[\w\s]*?)\s+(?:next\s+to|adjacent\s+to|near|connected?\s+to|beside|alongside|attached\s+to)\s+"
-            r"(?:the\s+)?(\w[\w\s]*?)(?:[,\.;]|$|\band\b)",
+            r"(\w[\w\s]*?)\s+(?:(?:must\s+be|should\s+be|is|needs\s+to\s+be)\s+)?(?:next\s+to|adjacent\s+to|near|connected?\s+to|beside|alongside|attached\s+to)\s+"
+            r"(?:the\s+)?(\w[\w\s]*?)(?:[,\.;\)]|$|\band\b)",
             re.I,
         )
         for m in adj_pattern.finditer(text):
-            r1 = self.normalizer.canonical_room_type(m.group(1))
-            r2 = self.normalizer.canonical_room_type(m.group(2))
+            r1 = self.normalizer.canonical_room_type(m.group(1).strip().strip("()-_"))
+            r2 = self.normalizer.canonical_room_type(m.group(2).strip().strip("()-_"))
             if r1 and r2 and r1 != r2:
                 if r1 in rooms and r2 not in rooms[r1].adjacency:
                     rooms[r1].adjacency.append(r2)
@@ -597,13 +693,13 @@ class RequirementParser:
 
         # Separation
         sep_pattern = re.compile(
-            r"(\w[\w\s]*?)\s+(?:away\s+from|separate\s+from|not\s+near|far\s+from|separated?\s+from)\s+"
-            r"(?:the\s+)?(\w[\w\s]*?)(?:[,\.;]|$|\band\b)",
+            r"(\w[\w\s]*?)\s+(?:(?:must\s+be|should\s+be|is|needs\s+to\s+be)\s+)?(?:away\s+from|separate\s+from|not\s+near|far\s+from|separated?\s+from)\s+"
+            r"(?:the\s+)?(\w[\w\s]*?)(?:[,\.;\)]|$|\band\b)",
             re.I,
         )
         for m in sep_pattern.finditer(text):
-            r1 = self.normalizer.canonical_room_type(m.group(1))
-            r2 = self.normalizer.canonical_room_type(m.group(2))
+            r1 = self.normalizer.canonical_room_type(m.group(1).strip().strip("()-_"))
+            r2 = self.normalizer.canonical_room_type(m.group(2).strip().strip("()-_"))
             if r1 and r2 and r1 != r2:
                 if r1 in rooms and r2 not in rooms[r1].separation:
                     rooms[r1].separation.append(r2)

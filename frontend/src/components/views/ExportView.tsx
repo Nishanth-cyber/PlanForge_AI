@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { ExportResponse, FloorPlanSet } from '../../api/types';
 import { getExportInventory } from '../../api/projects';
-import { getExportFileUrl } from '../../api/client';
+import { getExportFileUrl, getExportDxfUrl, getExportSvgUrl, getExportZipUrl } from '../../api/client';
 
 interface ExportViewProps {
   projectId: string;
@@ -34,6 +34,14 @@ export const ExportView: React.FC<ExportViewProps> = ({ projectId, floorPlanSet 
   const projectJsonUrl = getExportFileUrl(projectId, 'project.json');
   const summaryMdUrl = getExportFileUrl(projectId, 'summary.md');
   const traceJsonUrl = getExportFileUrl(projectId, 'decision_trace.json');
+  const dxfUrl = getExportDxfUrl(projectId);
+  const zipUrl = getExportZipUrl(projectId);
+
+  const dxfFile = inventory?.files.find((f) => f.filename.endsWith('.dxf'));
+  const dxfFilename = dxfFile?.filename || (floorCount > 1 ? 'floorplans.dxf' : 'floorplan.dxf');
+  const isFloorPlanValid = floorPlanSet
+    ? floorPlanSet.floor_plans.every((fp) => fp.is_valid !== false)
+    : true;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -50,7 +58,7 @@ export const ExportView: React.FC<ExportViewProps> = ({ projectId, floorPlanSet 
         </div>
 
         {/* Primary Download Buttons Grid */}
-        <div className="grid grid-cols-4 gap-4" style={{ marginTop: '0.5rem' }}>
+        <div style={{ marginTop: '0.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
           {/* Floor Plans PNG */}
           <div
             style={{
@@ -89,6 +97,88 @@ export const ExportView: React.FC<ExportViewProps> = ({ projectId, floorPlanSet 
                 );
               })}
             </div>
+          </div>
+
+          {/* Floor Plans SVG */}
+          <div
+            style={{
+              padding: '1.25rem',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+            }}
+          >
+            <div>
+              <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '0.95rem' }}>
+                Vector Drawings (SVG)
+              </strong>
+              <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
+                Clean XML vector graphics
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginTop: 'auto' }}>
+              {Array.from({ length: floorCount }, (_, i) => i + 1).map((fn) => {
+                const url = getExportSvgUrl(projectId, fn);
+                return (
+                  <a
+                    key={fn}
+                    href={url}
+                    download={`floor_${fn}.svg`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-secondary btn-sm"
+                    style={{ justifyContent: 'center' }}
+                  >
+                    Download Floor {fn} SVG ↗
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* CAD Drawing (DXF) */}
+          <div
+            style={{
+              padding: '1.25rem',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+            }}
+          >
+            <div>
+              <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '0.95rem' }}>
+                CAD Drawing (DXF)
+              </strong>
+              <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
+                Publication-ready CAD geometry
+              </span>
+            </div>
+            {isFloorPlanValid ? (
+              <a
+                href={dxfUrl}
+                download={dxfFilename}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-secondary btn-sm"
+                style={{ marginTop: 'auto', justifyContent: 'center' }}
+              >
+                Download DXF ↗
+              </a>
+            ) : (
+              <span
+                className="badge badge-warning"
+                style={{ marginTop: 'auto', justifyContent: 'center', textAlign: 'center', padding: '0.45rem' }}
+                title="DXF export is only permitted for validated designs"
+              >
+                Requires Valid Plan
+              </span>
+            )}
           </div>
 
           {/* Project JSON */}
@@ -184,6 +274,38 @@ export const ExportView: React.FC<ExportViewProps> = ({ projectId, floorPlanSet 
               style={{ marginTop: 'auto', justifyContent: 'center' }}
             >
               Download trace.json ↗
+            </a>
+          </div>
+
+          {/* Complete ZIP Archive */}
+          <div
+            style={{
+              padding: '1.25rem',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+            }}
+          >
+            <div>
+              <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '0.95rem' }}>
+                ZIP Archive Bundle
+              </strong>
+              <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
+                All drawings, JSON, and reports
+              </span>
+            </div>
+            <a
+              href={zipUrl}
+              download={`${projectId}.zip`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-secondary btn-sm"
+              style={{ marginTop: 'auto', justifyContent: 'center' }}
+            >
+              Download Complete ZIP ↗
             </a>
           </div>
         </div>

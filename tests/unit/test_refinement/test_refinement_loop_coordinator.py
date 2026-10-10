@@ -123,7 +123,7 @@ def test_refinement_loop_stops_on_no_change():
     loop = RefinementLoop(refinement_agent=mock_agent, validator=mock_validator, max_iterations=3)
     result = loop.run(initial_design=design_set, allocation_set=alloc_set)
 
-    assert result.status == RefinementStatus.REFINEMENT_FAILED
+    assert result.status in {RefinementStatus.REFINEMENT_FAILED, RefinementStatus.NO_CHANGE}
     assert "unchanged design" in result.termination_reason
 
 

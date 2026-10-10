@@ -1,3 +1,4 @@
+
 """Central PlanForge pipeline orchestrator coordinating all 10 generation stages."""
 
 from __future__ import annotations
@@ -261,6 +262,8 @@ class PlanForgeOrchestrator:
                 planning_spec=state.planning_spec,
                 allocation_set=state.allocation_set,
                 architectural_design_set=state.architectural_design_set,
+                plot_boundary=p_bound,
+                buildable_boundary=b_bound,
             )
             state.floor_plan_set.validation_report = state.validation_report
             state.complete_stage(
@@ -290,33 +293,29 @@ class PlanForgeOrchestrator:
                     initial_report=state.validation_report,
                     max_iterations=cfg.max_refinement_iterations,
                     requirements=state.requirements,
+                    plot_boundary=p_bound,
+                    buildable_boundary=b_bound,
                 )
                 state.refinement_result = ref_res
 
-                # Reconstruct and revalidate refined design
-                if ref_res.status == RefinementStatus.CONVERGED and ref_res.final_design:
+                # Sync refined design, geometry, and validation report directly from the loop
+                if ref_res.final_design:
                     state.architectural_design_set = ref_res.final_design
-                    state.floor_plan_set = self.geometry_engine.construct(
-                        ref_res.final_design,
-                        state.allocation_set,
-                        plot_boundary=p_bound,
-                        buildable_boundary=b_bound,
-                    )
-                    state.validation_report = self.validator.validate(
-                        state.floor_plan_set,
-                        requirements=state.requirements,
-                        planning_spec=state.planning_spec,
-                        allocation_set=state.allocation_set,
-                        architectural_design_set=state.architectural_design_set,
-                    )
-                    state.floor_plan_set.validation_report = state.validation_report
+                if ref_res.final_floor_plan_set:
+                    state.floor_plan_set = ref_res.final_floor_plan_set
+                if ref_res.final_report:
+                    state.validation_report = ref_res.final_report
+                    if state.floor_plan_set:
+                        state.floor_plan_set.validation_report = ref_res.final_report
 
+                status_val = ref_res.status.value if hasattr(ref_res.status, "value") else str(ref_res.status)
                 state.complete_stage(
                     StageName.REFINEMENT,
                     metadata={
-                        "refinement_status": str(ref_res.status),
+                        "refinement_status": status_val,
                         "iterations": ref_res.iteration,
                         "changes_count": len(ref_res.applied_changes),
+                        "stop_reason": getattr(ref_res, "stop_reason", status_val),
                     },
                 )
             else:
@@ -438,6 +437,7 @@ class PlanForgeOrchestrator:
                     expected_alternatives=alt_count,
                     check_images=cfg.enable_rendering,
                     check_trace=state.decision_trace is not None,
+                    check_dxf=True,
                 )
                 state.complete_stage(
                     StageName.EXPORT,
@@ -452,7 +452,15 @@ class PlanForgeOrchestrator:
             logger.exception("Error in EXPORT stage")
             state.fail_stage(StageName.EXPORT, str(e))
 
-        return self._create_result(state, status="completed")
+        # Determine overall execution status based on final validator authority
+        final_status = "completed"
+        if cfg.enable_refinement and state.validation_report and not state.validation_report.overall_valid:
+            if state.refinement_result and state.refinement_result.status == RefinementStatus.INFEASIBLE_UNDER_CONSTRAINTS:
+                final_status = "failed"
+            else:
+                final_status = "unresolved"
+
+        return self._create_result(state, status=final_status)
 
     def _create_result(
         self,

@@ -82,6 +82,8 @@ class AllocationSet:
     allocations: list[Allocation] = field(default_factory=list)
     planning_spec_id: Optional[str] = None
     staircase_aligned: bool = False  # Confirmed vertical alignment of staircase region
+    plot_boundary: list[tuple[float, float]] = field(default_factory=list)
+    buildable_boundary: list[tuple[float, float]] = field(default_factory=list)
 
     def get_allocation(self, floor_number: int) -> Optional[Allocation]:
         """Retrieve allocation for a specific floor."""

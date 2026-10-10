@@ -30,11 +30,18 @@ from app.api.schemas import (
     ValidationSummarySchema,
 )
 from app.export.json_exporter import export_project_json
+from app.export.dxf import DXFExporter, get_dxf_filename
 from app.orchestration.config import OrchestrationConfig
 from app.orchestration.orchestrator import PlanForgeOrchestrator
 
+from app.chat.orchestrator import ChatOrchestrator
+
+# Ensure standard CAD DXF MIME type is mapped
+mimetypes.add_type("application/dxf", ".dxf")
+
 router = APIRouter(tags=["PlanForge"])
 assistant = ConversationalRequirementAssistant()
+chat_orchestrator = ChatOrchestrator(assistant=assistant)
 
 
 @router.get(
@@ -52,17 +59,27 @@ def get_health() -> HealthResponse:
     response_model=ChatTurnResponse,
     summary="Conversational Requirement Assistant",
 )
-def chat_turn(req: ChatTurnRequest) -> ChatTurnResponse:
-    """Execute a conversational interaction turn with the Requirement Agent.
+def chat_turn(
+    req: ChatTurnRequest,
+    registry: ProjectRegistry = Depends(get_project_registry),
+) -> ChatTurnResponse:
+    """Execute a conversational interaction turn with the Requirement Agent and configured LLM.
 
-    Analyzes natural language messages or card responses, checks requirements completeness,
-    updates the structured progress checklist, and returns the next dynamic question card.
+    Analyzes natural language messages or card responses, invokes the LLM when configured,
+    updates structured requirements, checks completeness, and returns the next dynamic question card.
     """
-    res = assistant.handle_turn(
+    chat_orchestrator.registry = registry
+    result = chat_orchestrator.handle(
         message=req.message,
         existing_brief=req.existing_brief,
         project_name=req.project_name,
+        project_id=req.project_id,
+        history=[h.model_dump() for h in req.history] if req.history else None,
+        active_floor=req.active_floor,
+        alternative_index=req.alternative_index,
+        input_source=req.input_source,
     )
+    res = result.turn
     return ChatTurnResponse(
         message=res.message,
         question_card=QuestionCardSchema(**res.question_card.to_dict()) if res.question_card else None,
@@ -73,6 +90,13 @@ def chat_turn(req: ChatTurnRequest) -> ChatTurnResponse:
         remaining_count=res.remaining_count,
         project_name=res.project_name,
         status=res.status,
+        route=result.route,
+        llm_used=result.llm_used,
+        llm_provider=result.llm_provider,
+        llm_model=result.llm_model,
+        llm_latency_ms=result.llm_latency_ms,
+        turn_id=result.turn_id,
+        plan_modified=result.plan_modified,
     )
 
 
@@ -356,7 +380,7 @@ def get_project_data(
     """Retrieve full structured project dictionary (requirements, floor plans, geometry, validation)."""
     res = registry.get_result(project_id)
     if res:
-        return export_project_json(
+        data = export_project_json(
             project_id=res.project_id,
             project_name=res.project_name,
             requirements=res.requirements,
@@ -369,6 +393,10 @@ def get_project_data(
             alternative_set=res.alternative_set,
             decision_trace=res.decision_trace,
         )
+        data["status"] = res.status
+        data["is_valid"] = res.is_valid
+        data["is_success"] = res.is_success
+        return data
 
     # Fallback to loading project.json from disk bundle
     pjson_path = Path("outputs") / project_id / "project.json"
@@ -476,7 +504,18 @@ def get_project_export(
 
     # If specific file is requested, resolve safely and stream
     if file:
-        safe_target = resolve_safe_path(bundle_root, file)
+        norm_file = file.replace("\\", "/")
+        try:
+            safe_target = resolve_safe_path(bundle_root, norm_file)
+        except HTTPException as exc:
+            if exc.status_code == status.HTTP_404_NOT_FOUND and "/" not in norm_file:
+                alt_target = bundle_root / "alternatives" / "alternative_1" / norm_file
+                if alt_target.exists() and alt_target.is_file():
+                    safe_target = alt_target
+                else:
+                    raise exc
+            else:
+                raise exc
         mime_type, _ = mimetypes.guess_type(str(safe_target))
         mime_type = mime_type or "application/octet-stream"
         return FileResponse(
@@ -506,3 +545,253 @@ def get_project_export(
         total_files=len(files_list),
         files=files_list,
     )
+
+
+@router.get(
+    "/projects/{project_id}/export/dxf",
+    summary="Download CAD Drawing (DXF)",
+    response_class=FileResponse,
+)
+@router.get(
+    "/projects/{project_id}/exports/dxf",
+    summary="Download CAD Drawing (DXF) - Alias",
+    response_class=FileResponse,
+)
+def download_project_dxf(
+    project_id: str,
+    floor: Optional[int] = Query(
+        default=None,
+        description="Optional specific floor number to export (defaults to all floors)",
+    ),
+    registry: ProjectRegistry = Depends(get_project_registry),
+):
+    """Download publication-ready CAD drawing (DXF) generated from validated PlanForge geometry.
+
+    Adheres strictly to the authoritative Geometry Engine:
+    - Verifies the floor plan passed validation (Requirement 15)
+    - Rejects invalid floor plans with HTTP 400
+    - Returns FileResponse with media_type='application/dxf'
+    """
+    res = registry.get_result(project_id)
+
+    # Fallback path if registry was cleared
+    candidate_bundle = Path("outputs") / project_id
+    bundle_path_str = res.export_bundle_path if res else (str(candidate_bundle) if candidate_bundle.exists() else None)
+
+    if not res and not bundle_path_str:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project '{project_id}' not found.",
+        )
+
+    # Validation check (Requirement 15)
+    if res:
+        if res.floor_plan_set:
+            if res.floor_plan_set.validation_report and not res.floor_plan_set.all_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Floor plan failed validation. CAD DXF export is strictly available only for valid, passing floor plans.",
+                )
+        elif res.status != "completed":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Project is not completed or valid. CAD DXF export is unavailable.",
+            )
+
+    bundle_root = Path(bundle_path_str or (Path("outputs") / project_id)).resolve()
+    bundle_root.mkdir(parents=True, exist_ok=True)
+
+    target_dxf: Optional[Path] = None
+
+    # Check for existing DXF in bundle directory
+    existing_dxfs = sorted(list(bundle_root.glob("*.dxf")), key=lambda p: p.stat().st_size, reverse=True)
+    if existing_dxfs and floor is None:
+        target_dxf = existing_dxfs[0]
+
+    # If floor-specific or not yet on disk, generate on the fly from authoritative geometry
+    if target_dxf is None or floor is not None:
+        primary_fps = None
+        if res and res.floor_plan_set:
+            primary_fps = res.floor_plan_set
+        elif res and res.alternative_set and res.alternative_set.alternatives:
+            primary_fps = res.alternative_set.alternatives[0].floor_plan_set
+
+        if not primary_fps or not primary_fps.floor_plans:
+            if existing_dxfs:
+                target_dxf = existing_dxfs[0]
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"No valid floor plan geometry available to generate DXF for project '{project_id}'.",
+                )
+        else:
+            proj_title = (res.project_name if res else "") or primary_fps.project_name or project_id
+            exporter = DXFExporter()
+
+            if floor is not None:
+                single_fp = primary_fps.get_floor_plan(floor)
+                if not single_fp:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Floor {floor} not found in project '{project_id}'.",
+                    )
+                target_dxf = bundle_root / f"floor_{floor}.dxf"
+                exporter.export_floor_plan(
+                    floor_plan=single_fp,
+                    output_path=target_dxf,
+                    fallback_plot_boundary=primary_fps.plot_boundary,
+                    fallback_buildable_boundary=primary_fps.buildable_boundary,
+                    project_name=f"{proj_title} (Floor {floor})",
+                )
+            else:
+                is_mf = len(primary_fps.floor_plans) > 1
+                dxf_name = get_dxf_filename(proj_title, is_multi_floor=is_mf)
+                target_dxf = bundle_root / dxf_name
+                exporter.export_floor_plan_set(
+                    floor_plan_set=primary_fps,
+                    output_path=target_dxf,
+                    project_name=proj_title,
+                )
+
+    if not target_dxf or not target_dxf.exists() or target_dxf.stat().st_size == 0:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate or locate valid CAD DXF file for project '{project_id}'.",
+        )
+
+    return FileResponse(
+        path=str(target_dxf),
+        media_type="application/dxf",
+        filename=target_dxf.name,
+        headers={"Content-Disposition": f'attachment; filename="{target_dxf.name}"'},
+    )
+
+
+@router.get(
+    "/projects/{project_id}/export/svg",
+    summary="Download Vector Floor Plan (SVG)",
+    response_class=FileResponse,
+)
+@router.get(
+    "/projects/{project_id}/exports/svg",
+    summary="Download Vector Floor Plan (SVG) - Alias",
+    response_class=FileResponse,
+)
+def download_project_svg(
+    project_id: str,
+    floor: int = Query(default=1, description="Floor number to export as SVG"),
+    registry: ProjectRegistry = Depends(get_project_registry),
+):
+    """Download publication-grade vector drawing (SVG) for a floor."""
+    res = registry.get_result(project_id)
+    candidate_bundle = Path("outputs") / project_id
+    bundle_path_str = res.export_bundle_path if res else (str(candidate_bundle) if candidate_bundle.exists() else None)
+
+    if not bundle_path_str or not Path(bundle_path_str).exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project '{project_id}' not found.",
+        )
+
+    bundle_root = Path(bundle_path_str).resolve()
+    target_svg: Optional[Path] = None
+
+    # Check in alternatives or bundle root
+    for candidate in [
+        bundle_root / "alternatives" / "alternative_1" / f"floor_{floor}.svg",
+        bundle_root / "floors" / f"floor_{floor}.svg",
+        bundle_root / f"floor_{floor}.svg",
+    ]:
+        if candidate.exists() and candidate.stat().st_size > 0:
+            target_svg = candidate
+            break
+
+    # If not on disk, generate on the fly using FloorPlanRenderer
+    if target_svg is None:
+        primary_fps = None
+        if res and res.floor_plan_set:
+            primary_fps = res.floor_plan_set
+        elif res and res.alternative_set and res.alternative_set.alternatives:
+            primary_fps = res.alternative_set.alternatives[0].floor_plan_set
+
+        if primary_fps and primary_fps.floor_plans:
+            single_fp = primary_fps.get_floor_plan(floor)
+            if not single_fp:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Floor {floor} not found in project '{project_id}'.",
+                )
+            from app.rendering.floor_renderer import FloorPlanRenderer
+            renderer = FloorPlanRenderer()
+            target_svg = bundle_root / f"floor_{floor}.svg"
+            renderer.render_floor_plan(
+                floor_plan=single_fp,
+                output_path=target_svg,
+                orientation=res.requirements.orientation if res and res.requirements else None,
+                project_name=res.project_name if res else primary_fps.project_name,
+                fallback_plot_boundary=primary_fps.plot_boundary,
+                fallback_buildable_boundary=primary_fps.buildable_boundary,
+            )
+
+    if not target_svg or not target_svg.exists() or target_svg.stat().st_size == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"SVG drawing for floor {floor} in project '{project_id}' could not be located or generated.",
+        )
+
+    return FileResponse(
+        path=str(target_svg),
+        media_type="image/svg+xml",
+        filename=target_svg.name,
+        headers={"Content-Disposition": f'attachment; filename="{target_svg.name}"'},
+    )
+
+
+@router.get(
+    "/projects/{project_id}/export/zip",
+    summary="Download Complete Project ZIP Archive",
+    response_class=FileResponse,
+)
+@router.get(
+    "/projects/{project_id}/exports/zip",
+    summary="Download Complete Project ZIP Archive - Alias",
+    response_class=FileResponse,
+)
+def download_project_zip(
+    project_id: str,
+    registry: ProjectRegistry = Depends(get_project_registry),
+):
+    """Package and stream complete project export bundle as a ZIP archive."""
+    res = registry.get_result(project_id)
+    candidate_bundle = Path("outputs") / project_id
+    bundle_path_str = res.export_bundle_path if res else (str(candidate_bundle) if candidate_bundle.exists() else None)
+
+    if not bundle_path_str or not Path(bundle_path_str).exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project '{project_id}' not found or has no export bundle.",
+        )
+
+    bundle_root = Path(bundle_path_str).resolve()
+    zip_path = bundle_root.parent / f"{project_id}.zip"
+
+    # Package into ZIP archive
+    import zipfile
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for file_path in bundle_root.rglob("*"):
+            if file_path.is_file() and not file_path.name.endswith(".zip"):
+                arcname = file_path.relative_to(bundle_root.parent)
+                zipf.write(file_path, arcname)
+
+    proj_name = (res.project_name if res else "") or project_id
+    from app.export.dxf.exporter import sanitize_project_name
+    slug = sanitize_project_name(proj_name) or project_id
+    out_filename = f"{slug}_bundle.zip"
+
+    return FileResponse(
+        path=str(zip_path),
+        media_type="application/zip",
+        filename=out_filename,
+        headers={"Content-Disposition": f'attachment; filename="{out_filename}"'},
+    )
+

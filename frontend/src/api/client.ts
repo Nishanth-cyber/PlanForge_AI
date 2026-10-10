@@ -47,3 +47,17 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 export function getExportFileUrl(projectId: string, relativePath: string): string {
   return `${BASE_URL}/projects/${encodeURIComponent(projectId)}/export?file=${encodeURIComponent(relativePath)}`;
 }
+
+export function getExportDxfUrl(projectId: string, floor?: number): string {
+  const query = floor !== undefined ? `?floor=${encodeURIComponent(floor)}` : '';
+  return `${BASE_URL}/projects/${encodeURIComponent(projectId)}/export/dxf${query}`;
+}
+
+export function getExportSvgUrl(projectId: string, floor: number = 1): string {
+  return `${BASE_URL}/projects/${encodeURIComponent(projectId)}/export/svg?floor=${encodeURIComponent(floor)}`;
+}
+
+export function getExportZipUrl(projectId: string): string {
+  return `${BASE_URL}/projects/${encodeURIComponent(projectId)}/export/zip`;
+}
+

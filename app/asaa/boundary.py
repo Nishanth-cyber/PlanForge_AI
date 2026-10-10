@@ -158,20 +158,30 @@ class BuildableBoundaryCalculator:
 
     @staticmethod
     def _normalize_setbacks(setbacks: Optional[dict[str, Any]]) -> dict[str, float]:
-        """Normalize setbacks to standard front/rear/left/right floats."""
+        """Normalize setbacks to standard front/rear/left/right/side floats."""
         if not setbacks:
             return {}
 
         result: dict[str, float] = {}
         if "all" in setbacks:
-            val = float(setbacks["all"])
-            return {"front": val, "rear": val, "left": val, "right": val}
+            val = max(0.0, float(setbacks["all"]))
+            return {"front": val, "rear": val, "left": val, "right": val, "side": val}
+
+        # Side setback applies to both left and right if not individually specified (Task 3 & 4)
+        side_val = float(setbacks["side"]) if ("side" in setbacks and setbacks["side"] is not None) else None
 
         for side in ("front", "rear", "left", "right"):
             if side in setbacks and setbacks[side] is not None:
                 result[side] = max(0.0, float(setbacks[side]))
+            elif side in ("left", "right") and side_val is not None:
+                result[side] = max(0.0, side_val)
             else:
                 result[side] = 0.0
+
+        if side_val is not None:
+            result["side"] = max(0.0, side_val)
+        elif result.get("left") == result.get("right") and result.get("left", 0.0) > 0:
+            result["side"] = result["left"]
 
         return result
 

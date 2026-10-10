@@ -97,11 +97,20 @@ export interface RequirementProgressItem {
   value?: string;
 }
 
+export interface ChatHistoryItem {
+  role: string;
+  text: string;
+}
+
 export interface ChatTurnRequest {
   message: string;
   existing_brief?: string;
   project_name?: string;
   project_id?: string;
+  history?: ChatHistoryItem[];
+  active_floor?: number;
+  alternative_index?: number;
+  input_source?: string;
 }
 
 export interface ChatTurnResponse {
@@ -114,6 +123,13 @@ export interface ChatTurnResponse {
   remaining_count: number;
   project_name: string;
   status: string;
+  route?: string;
+  llm_used?: boolean;
+  llm_provider?: string;
+  llm_model?: string;
+  llm_latency_ms?: number;
+  turn_id?: string;
+  plan_modified?: boolean;
 }
 
 export type Point2D = [number, number];
@@ -342,6 +358,9 @@ export interface DecisionTrace {
 
 export interface ProjectData {
   project_id: string;
+  status?: string;
+  is_valid?: boolean;
+  is_success?: boolean;
   project_metadata?: {
     project_id: string;
     project_name: string;

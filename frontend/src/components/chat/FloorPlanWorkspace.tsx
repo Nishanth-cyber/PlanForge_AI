@@ -1,6 +1,7 @@
 import React from 'react';
 import { FloorPlanCanvas } from '../floorplan/FloorPlanCanvas';
 import { RoomInspector } from '../floorplan/RoomInspector';
+import { getValidationDisplayStatus } from '../../utils/validationStatus';
 import type {
   FloorPlan,
   FloorPlanSet,
@@ -58,8 +59,12 @@ export const FloorPlanWorkspace: React.FC<FloorPlanWorkspaceProps> = ({
   })();
 
   const validationReport = projectData?.validation_report || activeFloorPlanSet?.validation_report;
-  const totalErrors = validationReport?.total_errors || (validationReport?.results?.reduce((acc, r) => acc + (r.issues?.filter((i) => i.severity === 'error').length || 0), 0) ?? 0);
-  const isOverallValid = validationReport?.overall_valid ?? (totalErrors === 0);
+
+  const validationStatus = getValidationDisplayStatus(
+    validationReport,
+    projectData?.refinement_result,
+    projectData?.status || generationResponse?.status
+  );
 
   const availableFloors = activeFloorPlanSet?.floor_plans || [];
   const alternativesList = projectData?.alternatives || [];
@@ -182,12 +187,12 @@ export const FloorPlanWorkspace: React.FC<FloorPlanWorkspaceProps> = ({
                   fontWeight: 700,
                   padding: '0.2rem 0.6rem',
                   borderRadius: 'var(--radius-full)',
-                  backgroundColor: isOverallValid ? 'var(--status-success-bg)' : 'var(--status-danger-bg)',
-                  color: isOverallValid ? 'var(--status-success)' : 'var(--status-danger)',
-                  border: `1px solid ${isOverallValid ? 'var(--status-success-border)' : 'var(--status-danger-border)'}`,
+                  backgroundColor: validationStatus.type === 'valid' || validationStatus.type === 'refined' ? 'var(--status-success-bg)' : 'var(--status-danger-bg)',
+                  color: validationStatus.type === 'valid' || validationStatus.type === 'refined' ? 'var(--status-success)' : 'var(--status-danger)',
+                  border: `1px solid ${validationStatus.type === 'valid' || validationStatus.type === 'refined' ? 'var(--status-success-border)' : 'var(--status-danger-border)'}`,
                 }}
               >
-                {isOverallValid ? '✓ VALID LAYOUT' : `${totalErrors} CODE ISSUES`}
+                {validationStatus.label}
               </span>
 
               {projectId && (

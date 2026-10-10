@@ -387,6 +387,21 @@ class FloorPlanRenderer:
             )
             results.append(rendered)
 
+            # Generate publication-grade vector SVG from authoritative geometry
+            try:
+                out_file_svg = out_d / f"floor_{fn}.svg"
+                self.render_floor_plan(
+                    floor_plan=fp,
+                    output_path=out_file_svg,
+                    options=options,
+                    orientation=orientation,
+                    project_name=proj,
+                    fallback_plot_boundary=floor_plan_set.plot_boundary,
+                    fallback_buildable_boundary=floor_plan_set.buildable_boundary,
+                )
+            except Exception:
+                pass
+
         return results
 
 

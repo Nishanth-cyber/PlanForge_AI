@@ -258,3 +258,89 @@ def test_delete_project_endpoint(client: TestClient, tmp_path: Path):
     # 5. Confirm it no longer exists (404)
     assert client.get(f"/api/v1/projects/{pid}").status_code == 404
 
+
+def test_generate_endpoint_plot_only_without_rooms_does_not_infer_rooms(client: TestClient):
+    """Verify that a plot-only brief without rooms is rejected at CompletenessGate and does not invent rooms."""
+    payload = {
+        "brief": """
+        Residential plot of 40 feet by 60 feet.
+        East facing, front setback: 2m, rear setback: 2m, side setback: 1.5m.
+        Number of floors: 2.
+        """,
+        "project_name": "Plot Only Brief Test",
+    }
+    resp = client.post("/api/v1/generate", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["status"] == "incomplete_requirements"
+    assert data["is_success"] is False
+    assert "floors_with_rooms" in data["missing_fields"]
+    assert 1 in data["missing_floors"]
+    # Ensure system does not proceed to planning or geometry with invented rooms
+    assert data["stage_statuses"]["PLANNING"] == "SKIPPED"
+    assert data["stage_statuses"]["GEOMETRY"] == "SKIPPED"
+    assert len(data.get("alternatives", [])) == 0
+
+
+def test_dxf_download_endpoint_success_and_inventory(client: TestClient, tmp_path: Path):
+    """Verify GET /projects/{project_id}/export/dxf downloads valid DXF with application/dxf media type."""
+    import ezdxf
+    import io
+
+    payload = {
+        "brief": """
+        Single floor house on a 40 feet by 50 feet plot with front setback: 2m, rear setback: 2m, side setback: 2m.
+        Floor 1:
+        - 1 living room of 300 sq ft
+        - 1 kitchen of 150 sq ft
+        """,
+        "project_name": "DXF API Test Project",
+        "enable_exports": True,
+        "output_dir": str(tmp_path / "outputs_dxf"),
+    }
+    gen_resp = client.post("/api/v1/generate", json=payload)
+    assert gen_resp.status_code == 200
+    pid = gen_resp.json()["project_id"]
+
+    # 1. Verify DXF appears in file inventory with media_type application/dxf
+    inv_resp = client.get(f"/api/v1/projects/{pid}/export")
+    assert inv_resp.status_code == 200
+    inv_data = inv_resp.json()
+    dxf_items = [f for f in inv_data["files"] if f["filename"].endswith(".dxf")]
+    assert len(dxf_items) >= 1
+    assert dxf_items[0]["media_type"] == "application/dxf"
+    assert dxf_items[0]["size_bytes"] > 0
+
+    # 2. Download DXF via primary endpoint
+    dxf_resp = client.get(f"/api/v1/projects/{pid}/export/dxf")
+    assert dxf_resp.status_code == 200
+    assert dxf_resp.headers["content-type"].startswith("application/dxf")
+    assert "floorplan" in dxf_resp.headers.get("content-disposition", "").lower()
+    assert len(dxf_resp.content) > 0
+
+    # 3. Read back downloaded DXF content using ezdxf.readfile
+    dl_path = tmp_path / "downloaded.dxf"
+    dl_path.write_bytes(dxf_resp.content)
+    doc = ezdxf.readfile(str(dl_path))
+    assert doc is not None
+    msp = doc.modelspace()
+    assert len(list(msp)) > 0
+    # Verify entity layers
+    entity_layers = {e.dxf.layer for e in msp}
+    assert "WALLS_EXTERIOR" in entity_layers or "WALLS_INTERIOR" in entity_layers
+    assert "DOORS" in entity_layers
+
+    # 4. Verify alias endpoint /exports/dxf works identically
+    alias_resp = client.get(f"/api/v1/projects/{pid}/exports/dxf")
+    assert alias_resp.status_code == 200
+    assert alias_resp.headers["content-type"].startswith("application/dxf")
+
+
+def test_dxf_download_nonexistent_and_invalid(client: TestClient):
+    """Verify 404 for nonexistent project and error handling for invalid floor plans."""
+    # 1. 404 for nonexistent project
+    resp_404 = client.get("/api/v1/projects/non_existent_project_123/export/dxf")
+    assert resp_404.status_code == 404
+
+

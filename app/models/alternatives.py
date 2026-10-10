@@ -31,6 +31,7 @@ class AlternativeStatus(str, Enum):
     VALIDATED = "validated"
     REFINED_AND_VALID = "refined_and_valid"
     INVALID = "invalid"
+    FAILED_VALIDATION = "failed_validation"
     DUPLICATE = "duplicate"
     INSUFFICIENT_DIVERSITY = "insufficient_diversity"
     REFINEMENT_FAILED = "refinement_failed"

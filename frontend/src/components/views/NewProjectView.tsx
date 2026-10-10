@@ -91,6 +91,152 @@ const ROOM_TYPES = [
   'Study Room',
 ];
 
+export const ROOM_PRESETS: Record<
+  string,
+  { label: string; description: string; rooms: Omit<RoomItem, 'id'>[] }
+> = {
+  '2bhk': {
+    label: '2BHK Preset',
+    description: 'Living, Dining, Kitchen, Master Bedroom, Bedroom, 2 Bathrooms',
+    rooms: [
+      { type: 'Living Room', targetArea: 24, count: 1, floor: 1 },
+      { type: 'Dining Room', targetArea: 14, count: 1, floor: 1 },
+      { type: 'Kitchen', targetArea: 12, count: 1, floor: 1 },
+      { type: 'Master Bedroom', targetArea: 18, count: 1, floor: 1 },
+      { type: 'Bedroom', targetArea: 14, count: 1, floor: 1 },
+      { type: 'Bathroom', targetArea: 6, count: 2, floor: 1 },
+    ],
+  },
+  '3bhk': {
+    label: '3BHK Preset',
+    description: 'Living, Dining, Kitchen, Master Bedroom, 2 Bedrooms, 3 Bathrooms, Balcony',
+    rooms: [
+      { type: 'Living Room', targetArea: 28, count: 1, floor: 1 },
+      { type: 'Dining Room', targetArea: 16, count: 1, floor: 1 },
+      { type: 'Kitchen', targetArea: 14, count: 1, floor: 1 },
+      { type: 'Master Bedroom', targetArea: 20, count: 1, floor: 1 },
+      { type: 'Bedroom', targetArea: 14, count: 2, floor: 1 },
+      { type: 'Bathroom', targetArea: 6, count: 3, floor: 1 },
+      { type: 'Balcony', targetArea: 8, count: 1, floor: 1 },
+    ],
+  },
+  'compact_studio': {
+    label: 'Compact Studio',
+    description: 'Living Room, Kitchen, Bedroom, Bathroom',
+    rooms: [
+      { type: 'Living Room', targetArea: 20, count: 1, floor: 1 },
+      { type: 'Kitchen', targetArea: 10, count: 1, floor: 1 },
+      { type: 'Bedroom', targetArea: 14, count: 1, floor: 1 },
+      { type: 'Bathroom', targetArea: 6, count: 1, floor: 1 },
+    ],
+  },
+};
+
+export function parseRoomsFromBrief(brief: string): RoomItem[] {
+  if (!brief) return [];
+  const lines = brief.split('\n');
+  const parsedRooms: RoomItem[] = [];
+  let currentFloor = 1;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const floorMatch = trimmed.match(/^floor\s+(\d+)[:.]?/i);
+    if (floorMatch) {
+      currentFloor = parseInt(floorMatch[1], 10);
+      continue;
+    }
+
+    if (trimmed.startsWith('-')) {
+      const itemText = trimmed.replace(/^[-\s*]+/, '').trim();
+      const match = itemText.match(
+        /^(\d+)?\s*([a-zA-Z\s]+?)(?:\s+of\s+(\d+(?:\.\d+)?)\s*(?:sq\s*ft|sqm|m²))?(?:\s+(?:adjacent|attached|near|separate).*|$)/i
+      );
+      if (match) {
+        const count = match[1] ? parseInt(match[1], 10) : 1;
+        const rawType = match[2].trim();
+        const area = match[3] ? parseFloat(match[3]) : 0;
+
+        const matchedType =
+          ROOM_TYPES.find(
+            (t) =>
+              t.toLowerCase() === rawType.toLowerCase() ||
+              t.toLowerCase().replace(/\s+/g, '') === rawType.toLowerCase().replace(/\s+/g, '')
+          ) ||
+          rawType
+            .split(' ')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join(' ');
+
+        parsedRooms.push({
+          id: `r_init_${parsedRooms.length + 1}`,
+          type: matchedType,
+          targetArea: area,
+          count: count,
+          floor: currentFloor,
+        });
+      }
+    }
+  }
+
+  return parsedRooms;
+}
+
+export function parseFloorsFromBrief(brief: string): number {
+  if (!brief) return 1;
+  const match = brief.match(/target\s+floors:\s*(\d+)/i) || brief.match(/(\d+)\s+floor/i);
+  if (match) {
+    return parseInt(match[1], 10) || 1;
+  }
+  const floorMatches = Array.from(brief.matchAll(/floor\s+(\d+)[:.]?/gi));
+  if (floorMatches.length > 0) {
+    const floorNums = floorMatches.map((m) => parseInt(m[1], 10));
+    return Math.max(...floorNums, 1);
+  }
+  return 1;
+}
+
+export function parsePlotFromBrief(brief: string): Partial<PlotData> | null {
+  if (!brief) return null;
+  const polyMatch = brief.match(/polygon:\s*([^\n\r]+)/i);
+  if (polyMatch) {
+    const rawCoords = polyMatch[1];
+    const coordMatches = Array.from(rawCoords.matchAll(/\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)/g));
+    if (coordMatches.length >= 3) {
+      const vertices: Point2D[] = coordMatches.map((m) => [parseFloat(m[1]), parseFloat(m[2])]);
+      return {
+        mode: 'irregular',
+        vertices,
+        isClosed: true,
+      };
+    }
+  }
+
+  const rectMatch = brief.match(
+    /(\d+(?:\.\d+)?)\s*(?:feet|ft|meter|meters|m)?\s*(?:by|x|×)\s*(\d+(?:\.\d+)?)\s*(feet|ft|meter|meters|m)/i
+  );
+  if (rectMatch) {
+    const w = parseFloat(rectMatch[1]);
+    const l = parseFloat(rectMatch[2]);
+    const rawUnit = rectMatch[3].toLowerCase();
+    const unit: 'm' | 'ft' = rawUnit === 'feet' || rawUnit === 'ft' ? 'ft' : 'm';
+    return {
+      mode: 'rectangle',
+      width: w,
+      length: l,
+      unit,
+      vertices: [
+        [0, 0],
+        [unit === 'ft' ? w * 0.3048 : w, 0],
+        [unit === 'ft' ? w * 0.3048 : w, unit === 'ft' ? l * 0.3048 : l],
+        [0, unit === 'ft' ? l * 0.3048 : l],
+      ],
+      isClosed: true,
+    };
+  }
+
+  return null;
+}
+
 export const NewProjectView: React.FC<NewProjectViewProps> = ({
   initialBrief,
   initialName,
@@ -107,48 +253,70 @@ export const NewProjectView: React.FC<NewProjectViewProps> = ({
   const [enableRefinement, setEnableRefinement] = useState<boolean>(true);
 
   // Step 1: Plot Data
-  const [plotData, setPlotData] = useState<PlotData>({
-    mode: 'irregular',
-    vertices: [
-      [0, 0],
-      [20, 0],
-      [20, 10],
-      [10, 10],
-      [10, 20],
-      [0, 20],
-    ],
-    width: 20,
-    length: 20,
-    unit: 'm',
-    frontSetback: 2,
-    rearSetback: 2,
-    sideSetback: 2,
-    orientation: 'north',
-    isClosed: true,
+  const [plotData, setPlotData] = useState<PlotData>(() => {
+    if (initialBrief) {
+      const parsed = parsePlotFromBrief(initialBrief);
+      if (parsed) {
+        return {
+          mode: parsed.mode || 'irregular',
+          vertices: parsed.vertices || [
+            [0, 0],
+            [20, 0],
+            [20, 10],
+            [10, 10],
+            [10, 20],
+            [0, 20],
+          ],
+          width: parsed.width || 20,
+          length: parsed.length || 20,
+          unit: parsed.unit || 'm',
+          frontSetback: parsed.frontSetback ?? 2,
+          rearSetback: parsed.rearSetback ?? 2,
+          sideSetback: parsed.sideSetback ?? 2,
+          orientation: parsed.orientation || 'north',
+          isClosed: true,
+        };
+      }
+    }
+    return {
+      mode: 'irregular',
+      vertices: [
+        [0, 0],
+        [20, 0],
+        [20, 10],
+        [10, 10],
+        [10, 20],
+        [0, 20],
+      ],
+      width: 20,
+      length: 20,
+      unit: 'm',
+      frontSetback: 2,
+      rearSetback: 2,
+      sideSetback: 2,
+      orientation: 'north',
+      isClosed: true,
+    };
   });
   const [isPlotValid, setIsPlotValid] = useState<boolean>(true);
 
   // Step 2: Floors
-  const [targetFloors, setTargetFloors] = useState<number>(1);
+  const [targetFloors, setTargetFloors] = useState<number>(() => {
+    if (initialBrief) return parseFloorsFromBrief(initialBrief);
+    return 1;
+  });
 
-  // Step 3: Rooms Schedule
-  const [rooms, setRooms] = useState<RoomItem[]>([
-    { id: 'r1', type: 'Living Room', targetArea: 24, count: 1, floor: 1 },
-    { id: 'r2', type: 'Dining Room', targetArea: 14, count: 1, floor: 1 },
-    { id: 'r3', type: 'Kitchen', targetArea: 12, count: 1, floor: 1 },
-    { id: 'r4', type: 'Master Bedroom', targetArea: 18, count: 1, floor: 1 },
-    { id: 'r5', type: 'Bedroom', targetArea: 14, count: 1, floor: 1 },
-    { id: 'r6', type: 'Bathroom', targetArea: 6, count: 1, floor: 1 },
-  ]);
+  // Step 3: Rooms Schedule — STRICTLY EMPTY initially for new projects. Never pre-populated.
+  const [rooms, setRooms] = useState<RoomItem[]>(() => {
+    if (initialBrief) return parseRoomsFromBrief(initialBrief);
+    return [];
+  });
 
-  // Step 4: Relationships
-  const [relationships, setRelationships] = useState<RelationshipItem[]>([
-    { id: 'rel1', type: 'required', room1: 'Living Room', room2: 'Dining Room' },
-    { id: 'rel2', type: 'required', room1: 'Living Room', room2: 'Main Entrance' },
-    { id: 'rel3', type: 'preferred', room1: 'Bedroom', room2: 'Bathroom' },
-    { id: 'rel4', type: 'separation', room1: 'Kitchen', room2: 'Bedroom' },
-    { id: 'rel5', type: 'attached', room1: 'Master Bedroom', room2: 'Bathroom' },
-  ]);
+  // Step 4: Relationships — STRICTLY EMPTY initially.
+  const [relationships, setRelationships] = useState<RelationshipItem[]>([]);
+
+  // Validation error to gate wizard progression if room schedule is empty
+  const [roomValidationError, setRoomValidationError] = useState<string | null>(null);
 
   // Step 5: Brief (Auto-compiled)
   const [briefText, setBriefText] = useState<string>(initialBrief || '');
@@ -231,16 +399,64 @@ export const NewProjectView: React.FC<NewProjectViewProps> = ({
     setBriefText(lines.join('\n'));
   }, [plotData, targetFloors, rooms, relationships]);
 
-  // Handler for adding a room
+  // Handler for adding a room explicitly
   const handleAddRoom = () => {
     const newRoom: RoomItem = {
-      id: `r_${Date.now()}`,
-      type: 'Bedroom',
+      id: `r_${Date.now()}_${rooms.length}`,
+      type: rooms.length === 0 ? 'Living Room' : 'Bedroom',
       targetArea: plotData.unit === 'm' ? 14 : 150,
       count: 1,
       floor: 1,
     };
     setRooms([...rooms, newRoom]);
+    setRoomValidationError(null);
+  };
+
+  const handleLoadPreset = (presetKey: string) => {
+    const preset = ROOM_PRESETS[presetKey];
+    if (!preset) return;
+    const isFt = plotData.unit === 'ft';
+    const newRooms: RoomItem[] = preset.rooms.map((r, i) => {
+      const flr = targetFloors > 1 && (r.type === 'Bedroom' || r.type === 'Master Bedroom' || r.type === 'Balcony') ? 2 : 1;
+      return {
+        id: `r_${Date.now()}_${i}`,
+        type: r.type,
+        targetArea: isFt ? Math.round(r.targetArea * 10.7639) : r.targetArea,
+        count: r.count,
+        floor: Math.min(flr, targetFloors),
+      };
+    });
+    setRooms(newRooms);
+    setRoomValidationError(null);
+  };
+
+  const handleClearRooms = () => {
+    setRooms([]);
+    setRelationships([]);
+    setRoomValidationError(null);
+  };
+
+  const handleStepChange = (targetStep: number) => {
+    // Cannot skip Step 3 without defining rooms
+    if (targetStep > 3 && rooms.length === 0) {
+      setRoomValidationError('Please add at least one room requirement before continuing.');
+      setCurrentStep(3);
+      return;
+    }
+    setRoomValidationError(null);
+    setCurrentStep(targetStep);
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 1 && !isPlotValid) {
+      return;
+    }
+    if (currentStep === 3 && rooms.length === 0) {
+      setRoomValidationError('Please add at least one room requirement before continuing.');
+      return;
+    }
+    setRoomValidationError(null);
+    setCurrentStep((prev) => Math.min(prev + 1, 5));
   };
 
   const handleUpdateRoom = (id: string, field: keyof RoomItem, val: any) => {
@@ -253,11 +469,14 @@ export const NewProjectView: React.FC<NewProjectViewProps> = ({
 
   // Handler for relationships
   const handleAddRelationship = (type: RelationshipItem['type']) => {
+    const availableTypes = rooms.length > 0 ? Array.from(new Set(rooms.map((r) => r.type))) : ROOM_TYPES;
+    const defaultR1 = availableTypes[0] || 'Living Room';
+    const defaultR2 = availableTypes[1] || (type === 'required' ? 'Main Entrance' : availableTypes[0] || 'Kitchen');
     const newRel: RelationshipItem = {
-      id: `rel_${Date.now()}`,
+      id: `rel_${Date.now()}_${relationships.length}`,
       type,
-      room1: rooms[0]?.type || 'Living Room',
-      room2: rooms[1]?.type || 'Kitchen',
+      room1: defaultR1,
+      room2: defaultR2,
     };
     setRelationships([...relationships, newRel]);
   };
@@ -272,6 +491,12 @@ export const NewProjectView: React.FC<NewProjectViewProps> = ({
 
   // Generate Submission
   const handleGenerate = () => {
+    if (rooms.length === 0) {
+      setRoomValidationError('Please add at least one room requirement before continuing.');
+      setCurrentStep(3);
+      return;
+    }
+
     let finalShape: Point2D[] | undefined = undefined;
     if (plotData.mode === 'irregular' && plotData.vertices.length >= 3) {
       finalShape = plotData.vertices;
@@ -401,7 +626,7 @@ export const NewProjectView: React.FC<NewProjectViewProps> = ({
             <React.Fragment key={step.id}>
               <div
                 data-testid={`wizard-step-tab-${step.id}`}
-                onClick={() => setCurrentStep(step.id)}
+                onClick={() => handleStepChange(step.id)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -504,100 +729,213 @@ export const NewProjectView: React.FC<NewProjectViewProps> = ({
         {/* STEP 3: ROOMS (Section 6) */}
         {currentStep === 3 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Rooms</h2>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0' }}>
                   Define the functional room schedule and target floor levels
                 </p>
               </div>
-              <button className="btn btn-outline btn-sm" onClick={handleAddRoom}>
-                + Add Room
-              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <select
+                  data-testid="room-preset-select"
+                  className="form-select form-select-sm"
+                  style={{ width: 'auto', fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
+                  onChange={(e) => {
+                    if (e.target.value) handleLoadPreset(e.target.value);
+                    e.target.value = '';
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Load Room Preset...
+                  </option>
+                  <option value="2bhk">2BHK Preset (6 rooms)</option>
+                  <option value="3bhk">3BHK Preset (7 rooms)</option>
+                  <option value="compact_studio">Compact Studio (4 rooms)</option>
+                </select>
+
+                <button
+                  type="button"
+                  data-testid="add-room-btn"
+                  className="btn btn-primary btn-sm"
+                  onClick={handleAddRoom}
+                >
+                  + Add Room
+                </button>
+
+                {rooms.length > 0 && (
+                  <button
+                    type="button"
+                    data-testid="clear-rooms-btn"
+                    className="btn btn-outline btn-sm"
+                    onClick={handleClearRooms}
+                    style={{ color: 'var(--text-muted)' }}
+                    title="Clear all rooms to empty state"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Editable Room Table (Section 6) */}
-            <div className="table-container" style={{ border: '1px solid var(--border-default)' }}>
-              <table className="data-table" style={{ width: '100%', fontSize: '0.875rem' }}>
-                <thead>
-                  <tr>
-                    <th style={{ textAlign: 'left', padding: '0.65rem 0.75rem' }}>Room</th>
-                    <th style={{ textAlign: 'center', padding: '0.65rem 0.75rem', width: '100px' }}>Count</th>
-                    <th style={{ textAlign: 'center', padding: '0.65rem 0.75rem', width: '100px' }}>Floor</th>
-                    <th style={{ textAlign: 'right', padding: '0.65rem 0.75rem', width: '140px' }}>
-                      Min Area ({plotData.unit === 'm' ? 'm²' : 'sq ft'})
-                    </th>
-                    <th style={{ textAlign: 'center', padding: '0.65rem 0.75rem', width: '60px' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rooms.map((room) => (
-                    <tr key={room.id}>
-                      <td style={{ padding: '0.5rem 0.75rem' }}>
-                        <select
-                          className="form-select"
-                          value={room.type}
-                          onChange={(e) => handleUpdateRoom(room.id, 'type', e.target.value)}
-                          style={{ padding: '0.3rem 0.5rem', fontSize: '0.875rem', width: '100%' }}
-                        >
-                          {ROOM_TYPES.map((t) => (
-                            <option key={t} value={t}>
-                              {t}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
-                        <input
-                          type="number"
-                          className="form-input"
-                          min={1}
-                          max={10}
-                          value={room.count}
-                          onChange={(e) => handleUpdateRoom(room.id, 'count', parseInt(e.target.value) || 1)}
-                          style={{ width: '60px', textAlign: 'center', padding: '0.3rem' }}
-                        />
-                      </td>
-                      <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
-                        <select
-                          className="form-select"
-                          value={room.floor}
-                          onChange={(e) => handleUpdateRoom(room.id, 'floor', parseInt(e.target.value) || 1)}
-                          style={{ padding: '0.3rem', width: '70px', textAlign: 'center' }}
-                        >
-                          {Array.from({ length: targetFloors }, (_, i) => i + 1).map((f) => (
-                            <option key={f} value={f}>
-                              Floor {f}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
-                        <input
-                          type="number"
-                          className="form-input"
-                          min={0}
-                          value={room.targetArea || ''}
-                          placeholder="Auto"
-                          onChange={(e) => handleUpdateRoom(room.id, 'targetArea', parseFloat(e.target.value) || 0)}
-                          style={{ width: '90px', textAlign: 'right', padding: '0.3rem' }}
-                        />
-                      </td>
-                      <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
-                        <button
-                          className="btn btn-outline btn-sm"
-                          onClick={() => handleDeleteRoom(room.id)}
-                          style={{ padding: '0.2rem 0.5rem', color: '#f87171' }}
-                          title="Remove Room"
-                        >
-                          ✕
-                        </button>
-                      </td>
+            {/* Validation gate warning message */}
+            {roomValidationError && (
+              <div
+                data-testid="room-validation-error"
+                style={{
+                  padding: '0.65rem 1rem',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid #ef4444',
+                  borderRadius: 'var(--radius-sm)',
+                  color: '#f87171',
+                  fontSize: '0.85rem',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                <span>⚠️</span>
+                <span>{roomValidationError}</span>
+              </div>
+            )}
+
+            {/* Empty State when no rooms are defined */}
+            {rooms.length === 0 ? (
+              <div
+                data-testid="rooms-empty-state"
+                style={{
+                  border: '2px dashed var(--border-default)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '3rem 2rem',
+                  textAlign: 'center',
+                  background: 'var(--bg-secondary)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                }}
+              >
+                <div style={{ fontSize: '2rem', opacity: 0.7 }}>🏠</div>
+                <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                  No rooms added yet
+                </div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '420px', margin: 0 }}>
+                  Define your project's room requirements before proceeding. Add rooms individually or choose an architectural preset.
+                </p>
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    data-testid="add-first-room-btn"
+                    className="btn btn-primary btn-sm"
+                    onClick={handleAddRoom}
+                  >
+                    + Add Room
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => handleLoadPreset('2bhk')}
+                  >
+                    Load 2BHK Preset
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => handleLoadPreset('3bhk')}
+                  >
+                    Load 3BHK Preset
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Editable Room Table (Section 6) */
+              <div className="table-container" style={{ border: '1px solid var(--border-default)' }}>
+                <table className="data-table" data-testid="room-table" style={{ width: '100%', fontSize: '0.875rem' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '0.65rem 0.75rem' }}>Room</th>
+                      <th style={{ textAlign: 'center', padding: '0.65rem 0.75rem', width: '100px' }}>Count</th>
+                      <th style={{ textAlign: 'center', padding: '0.65rem 0.75rem', width: '100px' }}>Floor</th>
+                      <th style={{ textAlign: 'right', padding: '0.65rem 0.75rem', width: '140px' }}>
+                        Min Area ({plotData.unit === 'm' ? 'm²' : 'sq ft'})
+                      </th>
+                      <th style={{ textAlign: 'center', padding: '0.65rem 0.75rem', width: '60px' }}>Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {rooms.map((room) => (
+                      <tr key={room.id}>
+                        <td style={{ padding: '0.5rem 0.75rem' }}>
+                          <select
+                            className="form-select"
+                            value={room.type}
+                            onChange={(e) => handleUpdateRoom(room.id, 'type', e.target.value)}
+                            style={{ padding: '0.3rem 0.5rem', fontSize: '0.875rem', width: '100%' }}
+                          >
+                            {ROOM_TYPES.map((t) => (
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                          <input
+                            type="number"
+                            className="form-input"
+                            min={1}
+                            max={10}
+                            value={room.count}
+                            onChange={(e) => handleUpdateRoom(room.id, 'count', parseInt(e.target.value) || 1)}
+                            style={{ width: '60px', textAlign: 'center', padding: '0.3rem' }}
+                          />
+                        </td>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                          <select
+                            className="form-select"
+                            value={room.floor}
+                            onChange={(e) => handleUpdateRoom(room.id, 'floor', parseInt(e.target.value) || 1)}
+                            style={{ padding: '0.3rem', width: '70px', textAlign: 'center' }}
+                          >
+                            {Array.from({ length: targetFloors }, (_, i) => i + 1).map((f) => (
+                              <option key={f} value={f}>
+                                Floor {f}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
+                          <input
+                            type="number"
+                            className="form-input"
+                            min={0}
+                            value={room.targetArea || ''}
+                            placeholder="Auto"
+                            onChange={(e) => handleUpdateRoom(room.id, 'targetArea', parseFloat(e.target.value) || 0)}
+                            style={{ width: '90px', textAlign: 'right', padding: '0.3rem' }}
+                          />
+                        </td>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            data-testid="delete-room-btn"
+                            className="btn btn-outline btn-sm"
+                            onClick={() => handleDeleteRoom(room.id)}
+                            style={{ padding: '0.2rem 0.5rem', color: '#f87171' }}
+                            title="Remove Room"
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -626,72 +964,93 @@ export const NewProjectView: React.FC<NewProjectViewProps> = ({
 
             {/* Compact Relationship Rows (Section 7) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {relationships.map((rel) => {
-                const badgeClass =
-                  rel.type === 'required'
-                    ? 'badge-info'
-                    : rel.type === 'attached'
-                    ? 'badge-success'
-                    : rel.type === 'separation'
-                    ? 'badge-danger'
-                    : 'badge-neutral';
-                const symbol = rel.type === 'separation' ? '↔ (separate)' : '→ (adjacent)';
+              {relationships.length === 0 ? (
+                <div
+                  style={{
+                    padding: '2rem 1rem',
+                    textAlign: 'center',
+                    border: '1px dashed var(--border-default)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text-muted)',
+                    background: 'var(--bg-secondary)',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  <p style={{ margin: '0 0 0.35rem 0', fontWeight: 500, color: 'var(--text-primary)' }}>
+                    No custom spatial relationships defined
+                  </p>
+                  <span style={{ fontSize: '0.775rem' }}>
+                    Standard architectural adjacencies will be applied automatically (e.g. social core proximity, acoustic separation between social and private zones). Use the buttons above to specify constraints.
+                  </span>
+                </div>
+              ) : (
+                relationships.map((rel) => {
+                  const badgeClass =
+                    rel.type === 'required'
+                      ? 'badge-info'
+                      : rel.type === 'attached'
+                      ? 'badge-success'
+                      : rel.type === 'separation'
+                      ? 'badge-danger'
+                      : 'badge-neutral';
+                  const symbol = rel.type === 'separation' ? '↔ (separate)' : '→ (adjacent)';
 
-                return (
-                  <div
-                    key={rel.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.5rem 0.75rem',
-                      background: 'var(--bg-secondary)',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-subtle)',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span className={`badge ${badgeClass}`} style={{ width: '85px', textAlign: 'center' }}>
-                        {rel.type}
-                      </span>
-                      <select
-                        className="form-select"
-                        value={rel.room1}
-                        onChange={(e) => handleUpdateRelationship(rel.id, 'room1', e.target.value)}
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
-                      >
-                        {ROOM_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                      <span style={{ color: 'var(--text-muted)' }}>{symbol}</span>
-                      <select
-                        className="form-select"
-                        value={rel.room2}
-                        onChange={(e) => handleUpdateRelationship(rel.id, 'room2', e.target.value)}
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
-                      >
-                        <option value="Main Entrance">Main Entrance</option>
-                        {ROOM_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      className="btn btn-outline btn-sm"
-                      onClick={() => handleDeleteRelationship(rel.id)}
-                      style={{ padding: '0.15rem 0.45rem', fontSize: '0.75rem' }}
+                  return (
+                    <div
+                      key={rel.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.5rem 0.75rem',
+                        background: 'var(--bg-secondary)',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border-subtle)',
+                        fontSize: '0.875rem',
+                      }}
                     >
-                      ✕
-                    </button>
-                  </div>
-                );
-              })}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span className={`badge ${badgeClass}`} style={{ width: '85px', textAlign: 'center' }}>
+                          {rel.type}
+                        </span>
+                        <select
+                          className="form-select"
+                          value={rel.room1}
+                          onChange={(e) => handleUpdateRelationship(rel.id, 'room1', e.target.value)}
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
+                        >
+                          {ROOM_TYPES.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                        <span style={{ color: 'var(--text-muted)' }}>{symbol}</span>
+                        <select
+                          className="form-select"
+                          value={rel.room2}
+                          onChange={(e) => handleUpdateRelationship(rel.id, 'room2', e.target.value)}
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
+                        >
+                          <option value="Main Entrance">Main Entrance</option>
+                          {ROOM_TYPES.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => handleDeleteRelationship(rel.id)}
+                        style={{ padding: '0.15rem 0.45rem', fontSize: '0.75rem' }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         )}
@@ -838,7 +1197,7 @@ export const NewProjectView: React.FC<NewProjectViewProps> = ({
                 type="button"
                 className="btn btn-outline"
                 data-testid="wizard-prev-btn"
-                onClick={() => setCurrentStep(currentStep - 1)}
+                onClick={() => handleStepChange(currentStep - 1)}
               >
                 ← Back
               </button>
@@ -855,7 +1214,7 @@ export const NewProjectView: React.FC<NewProjectViewProps> = ({
                 type="button"
                 className="btn btn-primary"
                 data-testid="wizard-next-btn"
-                onClick={() => setCurrentStep(currentStep + 1)}
+                onClick={handleNextStep}
               >
                 Next →
               </button>
@@ -865,7 +1224,14 @@ export const NewProjectView: React.FC<NewProjectViewProps> = ({
                 className="btn btn-primary"
                 data-testid="generate-plan-btn"
                 onClick={handleGenerate}
-                style={{ padding: '0.65rem 1.75rem', fontSize: '0.95rem', fontWeight: 600 }}
+                disabled={rooms.length === 0}
+                style={{
+                  padding: '0.65rem 1.75rem',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  opacity: rooms.length === 0 ? 0.6 : 1,
+                  cursor: rooms.length === 0 ? 'not-allowed' : 'pointer',
+                }}
               >
                 Generate Floor Plans
               </button>

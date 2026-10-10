@@ -24,6 +24,12 @@ from app.export.integrity import (
     ExportIntegrityReport,
     verify_export_integrity,
 )
+from app.export.dxf import (
+    DXFExporter,
+    export_floor_plan_set_to_dxf,
+    get_dxf_filename,
+    sanitize_project_name,
+)
 
 __all__ = [
     "ExportError",
@@ -40,4 +46,8 @@ __all__ = [
     "export_project_bundle",
     "ExportIntegrityReport",
     "verify_export_integrity",
+    "DXFExporter",
+    "export_floor_plan_set_to_dxf",
+    "get_dxf_filename",
+    "sanitize_project_name",
 ]

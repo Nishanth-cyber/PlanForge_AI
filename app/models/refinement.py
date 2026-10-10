@@ -24,6 +24,9 @@ class RefinementStatus(str, Enum):
     CONVERGED = "valid_after_refinement"  # Alias for valid_after_refinement
     MAX_ITERATIONS_REACHED = "max_iterations_reached"
     REFINEMENT_FAILED = "refinement_failed"
+    NO_CHANGE = "no_change"
+    OSCILLATION = "oscillation"
+    OSCILLATION_DETECTED = "oscillation"  # Alias
     REFINEMENT_OUTPUT_INVALID = "refinement_output_invalid"
     INFEASIBLE_UNDER_CONSTRAINTS = "infeasible_under_constraints"
 
@@ -85,4 +88,29 @@ class RefinementResult:
             RefinementStatus.VALID_ON_INITIAL_PASS,
             RefinementStatus.VALID_AFTER_REFINEMENT,
         }
+
+    @property
+    def iteration(self) -> int:
+        """Alias for total_iterations."""
+        return self.total_iterations
+
+    @property
+    def applied_changes(self) -> list[RefinementChange]:
+        """Alias for changes."""
+        return self.changes
+
+    @property
+    def stop_reason(self) -> str:
+        """Categorical stop reason distinguishing no_change, oscillation, max_iterations, infeasible, valid, failed."""
+        if self.status in {RefinementStatus.VALID_ON_INITIAL_PASS, RefinementStatus.VALID_AFTER_REFINEMENT}:
+            return "valid"
+        if self.status == RefinementStatus.NO_CHANGE or "unchanged" in self.termination_reason.lower():
+            return "no_change"
+        if self.status in {RefinementStatus.OSCILLATION, RefinementStatus.OSCILLATION_DETECTED} or "oscillat" in self.termination_reason.lower():
+            return "oscillation"
+        if self.status == RefinementStatus.MAX_ITERATIONS_REACHED:
+            return "max_iterations"
+        if self.status == RefinementStatus.INFEASIBLE_UNDER_CONSTRAINTS:
+            return "infeasible"
+        return "failed"
 

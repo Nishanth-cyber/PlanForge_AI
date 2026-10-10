@@ -40,24 +40,32 @@ class RequirementAgent:
         self.completeness_gate = self.pipeline.completeness_gate
         self.validator = self.pipeline.validator
 
-    def parse(self, user_input: str, project_name: str = "PlanForge Project") -> Requirements:
+    def parse(
+        self,
+        user_input: str,
+        project_name: str = "PlanForge Project",
+        active_floor: Optional[int] = None,
+    ) -> Requirements:
         """Parse *user_input* into a structured ``Requirements`` object.
 
         Args:
             user_input:   Raw, unprocessed text from the user.
             project_name: Optional project label stored on the result.
+            active_floor: Optional target floor number for room requirements.
 
         Returns:
             ``Requirements`` containing only what the user explicitly stated.
         """
-        result = self.pipeline.process(user_input, project_name=project_name)
-        return result.requirements
+        reqs = self.parser.parse(user_input, project_name=project_name, active_floor=active_floor)
+        self.pipeline._normalize_requirements(reqs)
+        return reqs
 
     def process(
         self,
         user_input: str,
         project_name: str = "PlanForge Project",
         allow_suggestions: bool = False,
+        active_floor: Optional[int] = None,
     ) -> PipelineResult:
         """Run full requirement pipeline including parsing, normalization, completeness, and validation.
 
@@ -65,14 +73,23 @@ class RequirementAgent:
             user_input:        Raw input text.
             project_name:      Optional project name.
             allow_suggestions: If True, provides room suggestions for missing floors.
+            active_floor:      Optional target floor number.
 
         Returns:
             ``PipelineResult`` with requirements, completeness, validation, and gating status.
         """
-        return self.pipeline.process(
-            user_input,
-            project_name=project_name,
-            allow_suggestions=allow_suggestions,
+        reqs = self.parser.parse(user_input, project_name=project_name, active_floor=active_floor)
+        self.pipeline._normalize_requirements(reqs)
+        comp_res = self.completeness_gate.check(reqs, allow_suggestions=allow_suggestions)
+        val_res = self.validator.validate(reqs)
+        can_proceed = comp_res.can_proceed and val_res.is_valid
+        status = "READY_FOR_PLANNING" if can_proceed else ("NEEDS_CLARIFICATION" if not comp_res.is_complete else "VALIDATION_FAILED")
+        return PipelineResult(
+            requirements=reqs,
+            completeness=comp_res,
+            validation=val_res,
+            can_proceed_to_planning=can_proceed,
+            status=status,
         )
 
     def update(
@@ -80,10 +97,12 @@ class RequirementAgent:
         existing_reqs: Requirements,
         additional_input: str,
         allow_suggestions: bool = False,
+        active_floor: Optional[int] = None,
     ) -> PipelineResult:
         """Multi-turn update to incrementally supply missing requirements."""
         return self.pipeline.update(
             existing_reqs,
             additional_input,
             allow_suggestions=allow_suggestions,
+            active_floor=active_floor,
         )

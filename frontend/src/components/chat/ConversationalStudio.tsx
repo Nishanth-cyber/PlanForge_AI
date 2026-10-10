@@ -258,11 +258,22 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
     setMessages((prev) => [...prev, userMsg]);
     setIsLoadingChat(true);
 
+    // Determine target floor from text or activeFloor state
+    const floorMatch = cleanText.match(/\bfloor\s*(\d+)\b/i);
+    let targetFloor = floorMatch ? parseInt(floorMatch[1], 10) : activeFloor;
+
+    const chatHistory = messages
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
+      .map((m) => ({ role: m.role, text: m.text }))
+      .slice(-20);
+
     try {
       const resp = await sendChatTurn({
         message: cleanText,
         existing_brief: canonicalBrief,
         project_name: projectName,
+        history: chatHistory,
+        active_floor: targetFloor,
       });
 
       const aiReply: ChatMessage = {
@@ -286,12 +297,12 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         setProjectName(resp.project_name);
       }
 
-      // Re-generate IF a floor plan was already generated AND requirements are complete
+      // Re-generate ONLY IF a floor plan was already generated AND requirements are fully confirmed and ready
       const hasCompletedProject = Boolean(
         (projectData && (projectData.floor_plan_set || projectData.alternatives?.length)) ||
         (generationResponse && generationResponse.is_success)
       );
-      const isComplete = resp.is_ready_for_generation || resp.remaining_count === 0;
+      const isComplete = resp.is_ready_for_generation;
 
       if (hasCompletedProject && isComplete) {
         const genAiMsg: ChatMessage = {

@@ -129,25 +129,20 @@ class FloorPlanValidator:
                 w, d = requirements.plot_dimensions
                 plot_coords = [(0.0, 0.0), (w, 0.0), (w, d), (0.0, d)]
 
-        if not buildable_coords and requirements:
-            sb = requirements.setbacks or {}
-            front = sb.get("front", 0.0)
-            rear = sb.get("rear", 0.0)
-            left = sb.get("left", 0.0)
-            right = sb.get("right", 0.0)
-            if requirements.plot_dimensions:
-                w, d = requirements.plot_dimensions
-                min_x = left
-                max_x = w - right
-                min_y = front
-                max_y = d - rear
-                if max_x > min_x and max_y > min_y:
-                    buildable_coords = [
-                        (min_x, min_y),
-                        (max_x, min_y),
-                        (max_x, max_y),
-                        (min_x, max_y),
-                    ]
+        if not buildable_coords and (plot_coords or requirements):
+            try:
+                from app.asaa.boundary import BuildableBoundaryCalculator
+                sb = requirements.setbacks if requirements else {}
+                p_dim = requirements.plot_dimensions if requirements else None
+                b_res = BuildableBoundaryCalculator.calculate(
+                    plot_polygon=plot_coords,
+                    plot_width_m=p_dim[0] if p_dim else None,
+                    plot_depth_m=p_dim[1] if p_dim else None,
+                    setbacks=sb,
+                )
+                buildable_coords = b_res.polygon
+            except Exception:
+                buildable_coords = None
 
         is_stair_req = False
         if requirements and (requirements.target_floors or 0) >= 2:

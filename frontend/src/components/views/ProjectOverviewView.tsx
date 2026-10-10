@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ProjectData, GenerationResponse } from '../../api/types';
 import type { ActiveTab } from '../layout/TabNav';
+import { getValidationDisplayStatus } from '../../utils/validationStatus';
 
 interface ProjectOverviewViewProps {
   projectData: ProjectData | null;
@@ -32,6 +33,12 @@ export const ProjectOverviewView: React.FC<ProjectOverviewViewProps> = ({
 
   const valSummary = projectData?.validation_report || generationResponse?.validation_summary;
   const fullReport = projectData?.validation_report;
+
+  const validationStatus = getValidationDisplayStatus(
+    valSummary,
+    projectData?.refinement_result,
+    projectData?.status || generationResponse?.status
+  );
 
   const overallScore: number = (() => {
     if (typeof valSummary?.overall_score === 'number' && !isNaN(valSummary.overall_score)) {
@@ -70,16 +77,6 @@ export const ProjectOverviewView: React.FC<ProjectOverviewViewProps> = ({
     return 0;
   })();
 
-  const isOverallValid: boolean = (() => {
-    if (typeof valSummary?.overall_valid === 'boolean') {
-      return valSummary.overall_valid;
-    }
-    if (fullReport?.results && fullReport.results.length > 0) {
-      return fullReport.results.every((r) => r.is_valid);
-    }
-    return generationResponse?.is_valid ?? true;
-  })();
-
   const stageStatuses = generationResponse?.stage_statuses || {};
 
   const floorPlanSet = projectData?.floor_plan_set;
@@ -101,7 +98,7 @@ export const ProjectOverviewView: React.FC<ProjectOverviewViewProps> = ({
       <div
         className="card"
         style={{
-          borderLeft: `5px solid ${isOverallValid ? 'var(--status-success)' : 'var(--status-danger)'}`,
+          borderLeft: `5px solid ${validationStatus.type === 'valid' || validationStatus.type === 'refined' ? 'var(--status-success)' : 'var(--status-danger)'}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -111,8 +108,8 @@ export const ProjectOverviewView: React.FC<ProjectOverviewViewProps> = ({
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-            <span className={`badge ${isOverallValid ? 'badge-success' : 'badge-danger'}`}>
-              {isOverallValid ? '✓ Architectural Certification Passed' : '⚠ Validation Violations Found'}
+            <span className={`badge ${validationStatus.badgeClass}`}>
+              {validationStatus.label}
             </span>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               Project ID: {projectData?.project_id || generationResponse?.project_id}

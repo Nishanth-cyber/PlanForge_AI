@@ -63,6 +63,9 @@ class RefinementLoop:
         plot_boundary: Optional[List[Point2D]] = None,
         buildable_boundary: Optional[List[Point2D]] = None,
         target_strategy: Optional[str] = None,
+        initial_report: Optional[ValidationReport] = None,
+        max_iterations: Optional[int] = None,
+        **kwargs: Any,
     ) -> RefinementResult:
         """Execute the validation-driven refinement loop until valid or stopped.
 
@@ -75,6 +78,8 @@ class RefinementLoop:
             plot_boundary: Optional plot boundary.
             buildable_boundary: Optional buildable envelope.
             target_strategy: Optional architectural design strategy to preserve during refinement.
+            initial_report: Optional pre-computed initial ValidationReport.
+            max_iterations: Optional override for max refinement iterations.
 
         Returns:
             Authoritative RefinementResult tracking all iterations and final status.
@@ -86,27 +91,54 @@ class RefinementLoop:
 
         current_design = initial_design
 
+        # Ensure boundaries are preserved from allocation_set if not explicitly passed
+        if plot_boundary is None and allocation_set and getattr(allocation_set, "plot_boundary", None):
+            plot_boundary = list(allocation_set.plot_boundary)
+        if buildable_boundary is None and allocation_set and getattr(allocation_set, "buildable_boundary", None):
+            buildable_boundary = list(allocation_set.buildable_boundary)
+
+        # Infeasibility check: if allocation_set is missing or empty
+        if not allocation_set or not allocation_set.allocations:
+            return RefinementResult(
+                status=RefinementStatus.INFEASIBLE_UNDER_CONSTRAINTS,
+                initial_design=initial_design,
+                final_design=current_design,
+                iterations=[],
+                validation_reports=[],
+                changes=[],
+                termination_reason="Infeasible requirements: no valid spatial allocations available",
+            )
+
         # ------------------------------------------------------------------
         # Iteration 0: Initial Physical Construction and Validation
         # ------------------------------------------------------------------
-        current_floor_plan_set = self.geometry_engine.construct(
-            design_set=current_design,
-            allocation_set=allocation_set,
-            project_name=project_name,
-            plot_boundary=plot_boundary,
-            buildable_boundary=buildable_boundary,
-        )
-
-        current_report = self.validator.validate(
-            floor_plan_set=current_floor_plan_set,
-            requirements=requirements,
-            planning_spec=planning_spec,
-            allocation_set=allocation_set,
-            architectural_design_set=current_design,
-            plot_boundary=plot_boundary,
-            buildable_boundary=buildable_boundary,
-            iteration=0,
-        )
+        if initial_report is not None:
+            current_report = initial_report
+            current_floor_plan_set = kwargs.get("initial_floor_plan_set") or self.geometry_engine.construct(
+                design_set=current_design,
+                allocation_set=allocation_set,
+                project_name=project_name,
+                plot_boundary=plot_boundary,
+                buildable_boundary=buildable_boundary,
+            )
+        else:
+            current_floor_plan_set = self.geometry_engine.construct(
+                design_set=current_design,
+                allocation_set=allocation_set,
+                project_name=project_name,
+                plot_boundary=plot_boundary,
+                buildable_boundary=buildable_boundary,
+            )
+            current_report = self.validator.validate(
+                floor_plan_set=current_floor_plan_set,
+                requirements=requirements,
+                planning_spec=planning_spec,
+                allocation_set=allocation_set,
+                architectural_design_set=current_design,
+                plot_boundary=plot_boundary,
+                buildable_boundary=buildable_boundary,
+                iteration=0,
+            )
 
         initial_record = RefinementIterationRecord(
             iteration=0,
@@ -136,10 +168,24 @@ class RefinementLoop:
                 termination_reason="Design was valid on initial pass without requiring refinement",
             )
 
+        # Check for unrecoverable infeasibility reported by validator
+        if any("exceeds available buildable area" in i.message.lower() or "deficit" in i.message.lower() for i in current_report.all_issues()):
+            return RefinementResult(
+                status=RefinementStatus.INFEASIBLE_UNDER_CONSTRAINTS,
+                initial_design=initial_design,
+                final_design=current_design,
+                final_floor_plan_set=current_floor_plan_set,
+                iterations=iteration_records,
+                validation_reports=validation_reports,
+                changes=[],
+                termination_reason="Infeasible requirements: required room areas exceed available buildable area",
+            )
+
         # ------------------------------------------------------------------
         # Iterative Refinement Cycles: 1 .. max_iterations
         # ------------------------------------------------------------------
-        for iter_idx in range(1, self.max_iterations + 1):
+        eff_max = max(1, max_iterations) if max_iterations is not None else self.max_iterations
+        for iter_idx in range(1, eff_max + 1):
             refinement_context = RefinementContextBuilder.build(
                 requirements=requirements or Requirements(),
                 planning_spec=planning_spec or PlanningSpec(),
@@ -147,7 +193,7 @@ class RefinementLoop:
                 current_design=current_design,
                 validation_report=current_report,
                 iteration=iter_idx,
-                max_iterations=self.max_iterations,
+                max_iterations=eff_max,
                 previous_history=iteration_records,
                 target_design_strategy=target_strategy,
             )
@@ -173,26 +219,26 @@ class RefinementLoop:
             # 2. Oscillation / No-Change Detection
             if not iter_changes or revised_fingerprint == self._compute_fingerprint(current_design):
                 return RefinementResult(
-                    status=RefinementStatus.REFINEMENT_FAILED,
+                    status=RefinementStatus.NO_CHANGE,
                     initial_design=initial_design,
                     final_design=current_design,
                     final_floor_plan_set=current_floor_plan_set,
                     iterations=iteration_records,
                     validation_reports=validation_reports,
                     changes=all_changes,
-                    termination_reason="Refinement agent produced an unchanged design; stopping to prevent infinite loop",
+                    termination_reason="Refinement agent produced an unchanged design; stopping to prevent infinite loop (no_change)",
                 )
 
             if revised_fingerprint in visited_fingerprints:
                 return RefinementResult(
-                    status=RefinementStatus.REFINEMENT_FAILED,
+                    status=RefinementStatus.OSCILLATION,
                     initial_design=initial_design,
                     final_design=current_design,
                     final_floor_plan_set=current_floor_plan_set,
                     iterations=iteration_records,
                     validation_reports=validation_reports,
                     changes=all_changes,
-                    termination_reason="Refinement agent entered an oscillatory cycle; stopping loop",
+                    termination_reason="Refinement agent entered an oscillatory cycle; stopping loop (oscillation)",
                 )
 
             visited_fingerprints.add(revised_fingerprint)

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, Fragment } from 'react';
 import type { Point2D } from '../../api/types';
 import {
   calculatePolygonArea,
@@ -64,6 +64,27 @@ export const PlotEditor: React.FC<PlotEditorProps> = ({
   const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  // Draggable mode toggle for Vertex Table
+  const [dragMode, setDragMode] = useState<boolean>(false);
+  // Reordering dragged row state
+  const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
+  // Active coordinate scrubbing state
+  const [scrubbing, setScrubbing] = useState<{
+    vertexIndex: number;
+    axis: 'x' | 'y';
+    startX: number;
+    initialValue: number;
+    currentValue: number;
+  } | null>(null);
+  const scrubRef = useRef<{
+    vertexIndex: number;
+    axis: 'x' | 'y';
+    startX: number;
+    initialValue: number;
+    currentValue: number;
+    baseVertices: Point2D[];
+  } | null>(null);
 
   // Push state to undo history
   const pushHistory = useCallback((newVertices: Point2D[]) => {
@@ -417,6 +438,137 @@ export const PlotEditor: React.FC<PlotEditorProps> = ({
       vertices: updated,
     });
     pushHistory(updated);
+  };
+
+  // Slider max bounds computed dynamically from current bounding box
+  const sliderMax = useMemo(() => {
+    const maxDim = Math.max(boundingBox.maxX, boundingBox.maxY, 30);
+    return Math.ceil(maxDim / 10) * 10 + 10;
+  }, [boundingBox]);
+
+  // Direct slider change (real-time canvas update)
+  const handleSliderChange = (index: number, axis: 'x' | 'y', val: number) => {
+    const updated = vertices.map((v, i) => {
+      if (i !== index) return v;
+      return (axis === 'x' ? [val, v[1]] : [v[0], val]) as Point2D;
+    });
+    onChange({
+      ...plotData,
+      vertices: updated,
+    });
+  };
+
+  const handleSliderCommit = () => {
+    pushHistory(vertices);
+  };
+
+  // Interactive mouse horizontal scrub for coordinates
+  const handleScrubStart = (
+    e: React.MouseEvent,
+    vertexIndex: number,
+    axis: 'x' | 'y',
+    initialValue: number
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedVertexIndex(vertexIndex);
+
+    const startData = {
+      vertexIndex,
+      axis,
+      startX: e.clientX,
+      initialValue,
+      currentValue: initialValue,
+      baseVertices: [...vertices],
+    };
+    scrubRef.current = startData;
+    setScrubbing({
+      vertexIndex,
+      axis,
+      startX: e.clientX,
+      initialValue,
+      currentValue: initialValue,
+    });
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!scrubRef.current) return;
+      const { vertexIndex: vIdx, axis: ax, startX, initialValue: initVal, baseVertices } = scrubRef.current;
+      const deltaPixels = moveEvent.clientX - startX;
+
+      let stepPerPixel = 0.05;
+      if (moveEvent.shiftKey) stepPerPixel = 0.01;
+      if (moveEvent.ctrlKey || moveEvent.metaKey) stepPerPixel = 0.2;
+
+      const deltaUnits = deltaPixels * stepPerPixel;
+      const snap = moveEvent.shiftKey ? 0.1 : 0.5;
+      const rawVal = initVal + deltaUnits;
+      const snappedVal = Math.round(rawVal / snap) * snap;
+      const rounded = parseFloat(snappedVal.toFixed(1));
+
+      scrubRef.current.currentValue = rounded;
+      setScrubbing((prev) => (prev ? { ...prev, currentValue: rounded } : null));
+
+      const updated = baseVertices.map((v, idx) => {
+        if (idx !== vIdx) return v;
+        return (ax === 'x' ? [rounded, v[1]] : [v[0], rounded]) as Point2D;
+      });
+
+      onChange({
+        ...plotData,
+        vertices: updated,
+      });
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+
+      if (scrubRef.current) {
+        const { vertexIndex: vIdx, axis: ax, currentValue: finVal, baseVertices } = scrubRef.current;
+        const finalVertices = baseVertices.map((v, idx) => {
+          if (idx !== vIdx) return v;
+          return (ax === 'x' ? [finVal, v[1]] : [v[0], finVal]) as Point2D;
+        });
+        pushHistory(finalVertices);
+        scrubRef.current = null;
+        setScrubbing(null);
+      }
+    };
+
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Drag and drop row reordering
+  const handleRowDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedRowIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleRowDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleRowDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedRowIndex === null || draggedRowIndex === targetIndex) return;
+
+    const newVertices = [...vertices];
+    const [removed] = newVertices.splice(draggedRowIndex, 1);
+    newVertices.splice(targetIndex, 0, removed);
+
+    setDraggedRowIndex(null);
+    setSelectedVertexIndex(targetIndex);
+    onChange({
+      ...plotData,
+      vertices: newVertices,
+    });
+    pushHistory(newVertices);
   };
 
   const handleDeleteVertex = (index: number) => {
@@ -825,7 +977,7 @@ export const PlotEditor: React.FC<PlotEditorProps> = ({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: mode === 'irregular' ? '1fr 280px' : '1fr',
+          gridTemplateColumns: mode === 'irregular' ? '1fr 320px' : '1fr',
           gap: '1rem',
           alignItems: 'start',
         }}
@@ -1126,96 +1278,394 @@ export const PlotEditor: React.FC<PlotEditorProps> = ({
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Vertex Table (m)</span>
-              <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>
-                {vertices.length} Points
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Vertex Table (m)</span>
+                <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>
+                  {vertices.length} Points
+                </span>
+              </div>
+              <button
+                type="button"
+                data-testid="toggle-drag-mode"
+                className={`btn btn-xs ${dragMode ? 'btn-primary' : 'btn-secondary'}`}
+                style={{
+                  fontSize: '0.675rem',
+                  padding: '0.15rem 0.45rem',
+                  borderRadius: 'var(--radius-sm)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setDragMode(!dragMode)}
+                title="Toggle interactive draggable sliders for coordinates"
+              >
+                <span>⇄</span>
+                <span>{dragMode ? 'Sliders: ON' : 'Drag Sliders'}</span>
+              </button>
             </div>
+
+            {/* Quick scrubbing hint */}
+            <div style={{ fontSize: '0.675rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+              Drag <strong>⇄</strong> horizontally to scrub values (Shift: 0.1m, Ctrl: 1m).
+            </div>
+
+            {/* Active scrub indicator overlay */}
+            {scrubbing && (
+              <div
+                style={{
+                  padding: '0.3rem 0.5rem',
+                  background: 'var(--accent-sky)',
+                  color: '#000000',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span>⇄ Dragging P{scrubbing.vertexIndex} {scrubbing.axis.toUpperCase()}:</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>
+                  {scrubbing.currentValue.toFixed(1)} m
+                </span>
+              </div>
+            )}
 
             <div style={{ flex: 1, overflowY: 'auto' }}>
               <table style={{ width: '100%', fontSize: '0.75rem', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-default)', color: 'var(--text-muted)' }}>
-                    <th style={{ padding: '0.35rem 0.2rem', textAlign: 'left' }}>#</th>
+                    <th style={{ padding: '0.35rem 0.2rem', textAlign: 'left', width: '32px' }}>#</th>
                     <th style={{ padding: '0.35rem 0.2rem', textAlign: 'left' }}>X (m)</th>
                     <th style={{ padding: '0.35rem 0.2rem', textAlign: 'left' }}>Y (m)</th>
-                    <th style={{ padding: '0.35rem 0.2rem', textAlign: 'right' }}></th>
+                    <th style={{ padding: '0.35rem 0.2rem', textAlign: 'right', width: '24px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {vertices.map((v, i) => (
-                    <tr
-                      key={i}
-                      style={{
-                        background: selectedVertexIndex === i ? 'var(--bg-surface)' : 'transparent',
-                        borderBottom: '1px solid var(--border-default)',
-                      }}
-                      onClick={() => setSelectedVertexIndex(i)}
-                    >
-                      <td style={{ padding: '0.35rem 0.2rem', fontWeight: 600 }}>P{i}</td>
-                      <td style={{ padding: '0.35rem 0.2rem' }}>
-                        <input
-                          type="number"
-                          step={0.5}
-                          style={{
-                            width: '55px',
-                            padding: '0.15rem 0.3rem',
-                            fontSize: '0.75rem',
-                            background: 'var(--bg-canvas)',
-                            border: '1px solid var(--border-default)',
-                            color: 'var(--text-primary)',
-                            borderRadius: '3px',
-                          }}
-                          value={v[0]}
-                          onChange={(e) =>
-                            handleUpdateVertexCoord(i, parseFloat(e.target.value) || 0, v[1])
-                          }
-                        />
-                      </td>
-                      <td style={{ padding: '0.35rem 0.2rem' }}>
-                        <input
-                          type="number"
-                          step={0.5}
-                          style={{
-                            width: '55px',
-                            padding: '0.15rem 0.3rem',
-                            fontSize: '0.75rem',
-                            background: 'var(--bg-canvas)',
-                            border: '1px solid var(--border-default)',
-                            color: 'var(--text-primary)',
-                            borderRadius: '3px',
-                          }}
-                          value={v[1]}
-                          onChange={(e) =>
-                            handleUpdateVertexCoord(i, v[0], parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </td>
-                      <td style={{ padding: '0.35rem 0.2rem', textAlign: 'right' }}>
-                        <button
-                          type="button"
-                          data-testid="delete-vertex-btn"
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: '#f87171',
-                            cursor: 'pointer',
-                            fontSize: '0.85rem',
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteVertex(i);
-                          }}
-                          title="Delete Vertex"
-                        >
-                          ✕
-                        </button>
-                      </td>
-                    </tr>
+                    <Fragment key={i}>
+                      <tr
+                        draggable
+                        onDragStart={(e) => handleRowDragStart(e, i)}
+                        onDragOver={handleRowDragOver}
+                        onDrop={(e) => handleRowDrop(e, i)}
+                        style={{
+                          background:
+                            draggedRowIndex === i
+                              ? 'rgba(56, 189, 248, 0.15)'
+                              : selectedVertexIndex === i
+                              ? 'var(--bg-surface)'
+                              : 'transparent',
+                          borderBottom: '1px solid var(--border-default)',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => setSelectedVertexIndex(i)}
+                      >
+                        <td style={{ padding: '0.35rem 0.2rem', fontWeight: 600 }}>
+                          <span
+                            style={{
+                              cursor: 'grab',
+                              color: 'var(--text-muted)',
+                              marginRight: '2px',
+                              fontSize: '0.75rem',
+                              userSelect: 'none',
+                            }}
+                            title="Drag row to reorder vertex in perimeter"
+                          >
+                            ⠿
+                          </span>
+                          P{i}
+                        </td>
+                        <td style={{ padding: '0.35rem 0.2rem' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            <button
+                              type="button"
+                              data-testid={`scrub-x-${i}`}
+                              onMouseDown={(e) => handleScrubStart(e, i, 'x', v[0])}
+                              title="Click and drag left/right to adjust X (Shift: fine, Ctrl: coarse)"
+                              style={{
+                                padding: '0.15rem 0.25rem',
+                                fontSize: '0.65rem',
+                                fontWeight: 700,
+                                background:
+                                  scrubbing?.vertexIndex === i && scrubbing?.axis === 'x'
+                                    ? 'var(--accent-sky)'
+                                    : 'var(--bg-surface)',
+                                color:
+                                  scrubbing?.vertexIndex === i && scrubbing?.axis === 'x'
+                                    ? '#000000'
+                                    : 'var(--text-secondary)',
+                                border: '1px solid var(--border-default)',
+                                borderRight: 'none',
+                                borderRadius: '3px 0 0 3px',
+                                cursor: 'ew-resize',
+                                userSelect: 'none',
+                                lineHeight: 1.2,
+                              }}
+                            >
+                              ⇄
+                            </button>
+                            <input
+                              type="number"
+                              step={0.5}
+                              style={{
+                                width: '48px',
+                                padding: '0.15rem 0.3rem',
+                                fontSize: '0.75rem',
+                                background:
+                                  scrubbing?.vertexIndex === i && scrubbing?.axis === 'x'
+                                    ? 'rgba(56, 189, 248, 0.1)'
+                                    : 'var(--bg-canvas)',
+                                border:
+                                  scrubbing?.vertexIndex === i && scrubbing?.axis === 'x'
+                                    ? '1px solid var(--accent-sky)'
+                                    : '1px solid var(--border-default)',
+                                color: 'var(--text-primary)',
+                                borderRadius: '0 3px 3px 0',
+                              }}
+                              value={v[0]}
+                              onChange={(e) =>
+                                handleUpdateVertexCoord(i, parseFloat(e.target.value) || 0, v[1])
+                              }
+                            />
+                          </div>
+                        </td>
+                        <td style={{ padding: '0.35rem 0.2rem' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            <button
+                              type="button"
+                              data-testid={`scrub-y-${i}`}
+                              onMouseDown={(e) => handleScrubStart(e, i, 'y', v[1])}
+                              title="Click and drag left/right to adjust Y (Shift: fine, Ctrl: coarse)"
+                              style={{
+                                padding: '0.15rem 0.25rem',
+                                fontSize: '0.65rem',
+                                fontWeight: 700,
+                                background:
+                                  scrubbing?.vertexIndex === i && scrubbing?.axis === 'y'
+                                    ? 'var(--accent-sky)'
+                                    : 'var(--bg-surface)',
+                                color:
+                                  scrubbing?.vertexIndex === i && scrubbing?.axis === 'y'
+                                    ? '#000000'
+                                    : 'var(--text-secondary)',
+                                border: '1px solid var(--border-default)',
+                                borderRight: 'none',
+                                borderRadius: '3px 0 0 3px',
+                                cursor: 'ew-resize',
+                                userSelect: 'none',
+                                lineHeight: 1.2,
+                              }}
+                            >
+                              ⇄
+                            </button>
+                            <input
+                              type="number"
+                              step={0.5}
+                              style={{
+                                width: '48px',
+                                padding: '0.15rem 0.3rem',
+                                fontSize: '0.75rem',
+                                background:
+                                  scrubbing?.vertexIndex === i && scrubbing?.axis === 'y'
+                                    ? 'rgba(56, 189, 248, 0.1)'
+                                    : 'var(--bg-canvas)',
+                                border:
+                                  scrubbing?.vertexIndex === i && scrubbing?.axis === 'y'
+                                    ? '1px solid var(--accent-sky)'
+                                    : '1px solid var(--border-default)',
+                                color: 'var(--text-primary)',
+                                borderRadius: '0 3px 3px 0',
+                              }}
+                              value={v[1]}
+                              onChange={(e) =>
+                                handleUpdateVertexCoord(i, v[0], parseFloat(e.target.value) || 0)
+                              }
+                            />
+                          </div>
+                        </td>
+                        <td style={{ padding: '0.35rem 0.2rem', textAlign: 'right' }}>
+                          <button
+                            type="button"
+                            data-testid="delete-vertex-btn"
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#f87171',
+                              cursor: 'pointer',
+                              fontSize: '0.85rem',
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteVertex(i);
+                            }}
+                            title="Delete Vertex"
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      </tr>
+                      {dragMode && (
+                        <tr style={{ background: selectedVertexIndex === i ? 'rgba(56, 189, 248, 0.05)' : 'transparent', borderBottom: '1px solid var(--border-default)' }}>
+                          <td colSpan={4} style={{ padding: '0.2rem 0.3rem 0.45rem 0.3rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', background: 'var(--bg-canvas)', padding: '0.35rem 0.45rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-default)' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                                <span style={{ width: '12px', fontWeight: 700, color: 'var(--accent-sky)' }}>X</span>
+                                <input
+                                  type="range"
+                                  data-testid={`slider-x-${i}`}
+                                  min={0}
+                                  max={sliderMax}
+                                  step={0.5}
+                                  value={v[0]}
+                                  onChange={(e) => handleSliderChange(i, 'x', parseFloat(e.target.value))}
+                                  onMouseUp={handleSliderCommit}
+                                  onTouchEnd={handleSliderCommit}
+                                  style={{ flex: 1, accentColor: 'var(--accent-sky)', cursor: 'ew-resize' }}
+                                />
+                                <span style={{ width: '38px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600 }}>
+                                  {v[0].toFixed(1)}m
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                                <span style={{ width: '12px', fontWeight: 700, color: '#34d399' }}>Y</span>
+                                <input
+                                  type="range"
+                                  data-testid={`slider-y-${i}`}
+                                  min={0}
+                                  max={sliderMax}
+                                  step={0.5}
+                                  value={v[1]}
+                                  onChange={(e) => handleSliderChange(i, 'y', parseFloat(e.target.value))}
+                                  onMouseUp={handleSliderCommit}
+                                  onTouchEnd={handleSliderCommit}
+                                  style={{ flex: 1, accentColor: '#34d399', cursor: 'ew-resize' }}
+                                />
+                                <span style={{ width: '38px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600 }}>
+                                  {v[1].toFixed(1)}m
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            {/* Selected Vertex Quick-Adjustment Card (visible when dragMode is OFF and a vertex is selected) */}
+            {!dragMode && selectedVertexIndex !== null && vertices[selectedVertexIndex] && (
+              <div
+                data-testid="selected-vertex-controls"
+                style={{
+                  background: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '0.45rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.3rem',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.725rem', fontWeight: 600, color: 'var(--accent-sky)' }}>
+                    P{selectedVertexIndex} Interactive Sliders
+                  </span>
+                  <span style={{ fontSize: '0.675rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                    ({vertices[selectedVertexIndex][0].toFixed(1)}m, {vertices[selectedVertexIndex][1].toFixed(1)}m)
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                  <span style={{ width: '12px', fontWeight: 700, color: 'var(--accent-sky)' }}>X</span>
+                  <input
+                    type="range"
+                    data-testid="slider-selected-x"
+                    min={0}
+                    max={sliderMax}
+                    step={0.5}
+                    value={vertices[selectedVertexIndex][0]}
+                    onChange={(e) => handleSliderChange(selectedVertexIndex, 'x', parseFloat(e.target.value))}
+                    onMouseUp={handleSliderCommit}
+                    onTouchEnd={handleSliderCommit}
+                    style={{ flex: 1, accentColor: 'var(--accent-sky)', cursor: 'ew-resize' }}
+                  />
+                  <span style={{ width: '38px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600 }}>
+                    {vertices[selectedVertexIndex][0].toFixed(1)}m
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                  <span style={{ width: '12px', fontWeight: 700, color: '#34d399' }}>Y</span>
+                  <input
+                    type="range"
+                    data-testid="slider-selected-y"
+                    min={0}
+                    max={sliderMax}
+                    step={0.5}
+                    value={vertices[selectedVertexIndex][1]}
+                    onChange={(e) => handleSliderChange(selectedVertexIndex, 'y', parseFloat(e.target.value))}
+                    onMouseUp={handleSliderCommit}
+                    onTouchEnd={handleSliderCommit}
+                    style={{ flex: 1, accentColor: '#34d399', cursor: 'ew-resize' }}
+                  />
+                  <span style={{ width: '38px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600 }}>
+                    {vertices[selectedVertexIndex][1].toFixed(1)}m
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'flex-end', marginTop: '0.1rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-secondary"
+                    style={{ fontSize: '0.625rem', padding: '0.1rem 0.3rem' }}
+                    onClick={() => {
+                      const v = vertices[selectedVertexIndex];
+                      handleUpdateVertexCoord(selectedVertexIndex, Math.max(0, v[0] - 1), v[1]);
+                    }}
+                    title="Subtract 1m from X"
+                  >
+                    -1X
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-secondary"
+                    style={{ fontSize: '0.625rem', padding: '0.1rem 0.3rem' }}
+                    onClick={() => {
+                      const v = vertices[selectedVertexIndex];
+                      handleUpdateVertexCoord(selectedVertexIndex, v[0] + 1, v[1]);
+                    }}
+                    title="Add 1m to X"
+                  >
+                    +1X
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-secondary"
+                    style={{ fontSize: '0.625rem', padding: '0.1rem 0.3rem' }}
+                    onClick={() => {
+                      const v = vertices[selectedVertexIndex];
+                      handleUpdateVertexCoord(selectedVertexIndex, v[0], Math.max(0, v[1] - 1));
+                    }}
+                    title="Subtract 1m from Y"
+                  >
+                    -1Y
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-secondary"
+                    style={{ fontSize: '0.625rem', padding: '0.1rem 0.3rem' }}
+                    onClick={() => {
+                      const v = vertices[selectedVertexIndex];
+                      handleUpdateVertexCoord(selectedVertexIndex, v[0], v[1] + 1);
+                    }}
+                    title="Add 1m to Y"
+                  >
+                    +1Y
+                  </button>
+                </div>
+              </div>
+            )}
 
             <button
               type="button"

@@ -7,11 +7,12 @@ and final confirmation summaries without inventing requirements.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 import re
 
 from app.agents.requirement_agent.agent import RequirementAgent
+from app.agents.requirement_agent.normalizer import ROOM_SYNONYMS
 from app.agents.requirement_agent.completeness_gate import (
     CompletenessGate,
     CompletenessResult,
@@ -67,6 +68,7 @@ class ChatTurnResult:
     remaining_count: int = 0
     project_name: str = "PlanForge Project"
     status: str = "NEEDS_CLARIFICATION"
+    requirements: Optional[Requirements] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -79,6 +81,7 @@ class ChatTurnResult:
             "remaining_count": self.remaining_count,
             "project_name": self.project_name,
             "status": self.status,
+            "requirements": asdict(self.requirements) if self.requirements else None,
         }
 
 
@@ -86,7 +89,7 @@ def format_canonical_brief(reqs: Requirements, project_name: str = "") -> str:
     """Generate canonical multi-floor brief text from Requirements."""
     lines = []
     pname = project_name or reqs.project_name or "Residential Project"
-    lines.append(f"{pname}")
+    lines.append(f"Project: {pname}")
 
     if reqs.plot_shape:
         coords_str = ", ".join(f"({round(float(x), 2)}, {round(float(y), 2)})" for x, y in reqs.plot_shape)
@@ -121,10 +124,30 @@ def format_canonical_brief(reqs: Requirements, project_name: str = "") -> str:
                 for r in fl.room_requirements:
                     cnt = r.min_count or 1
                     r_name = r.room_type.replace("_", " ").title()
-                    area_part = ""
-                    if r.preferred_area_sqm:
-                        area_part = f" of {round(r.preferred_area_sqm, 1)} sq m"
-                    lines.append(f"- {cnt} {r_name}{area_part}")
+                    details: list[str] = []
+                    if r.user_dimensions:
+                        w, l = r.user_dimensions
+                        details.append(f"{round(w, 2)}m x {round(l, 2)}m")
+                    if r.min_area_sqm is not None and r.max_area_sqm is not None:
+                        details.append(f"min {round(r.min_area_sqm, 1)} sqm, max {round(r.max_area_sqm, 1)} sqm")
+                    elif r.min_area_sqm is not None:
+                        details.append(f"min {round(r.min_area_sqm, 1)} sqm")
+                    elif r.max_area_sqm is not None:
+                        details.append(f"max {round(r.max_area_sqm, 1)} sqm")
+                    elif r.preferred_area_sqm is not None:
+                        details.append(f"{round(r.preferred_area_sqm, 1)} sq m")
+
+                    if r.attached_to:
+                        details.append(f"attached to {r.attached_to.replace('_', ' ').title()}")
+                    if r.adjacency:
+                        adj_str = ", ".join(a.replace("_", " ").title() for a in r.adjacency)
+                        details.append(f"adjacent to {adj_str}")
+                    if r.separation:
+                        sep_str = ", ".join(s.replace("_", " ").title() for s in r.separation)
+                        details.append(f"separate from {sep_str}")
+
+                    detail_suffix = f" ({', '.join(details)})" if details else ""
+                    lines.append(f"- {cnt} {r_name}{detail_suffix}")
             else:
                 lines.append("- Rooms not yet specified")
 
@@ -142,6 +165,7 @@ class ConversationalRequirementAssistant:
         message: str,
         existing_brief: Optional[str] = None,
         project_name: Optional[str] = None,
+        active_floor: Optional[int] = None,
     ) -> ChatTurnResult:
         """Process a single conversational user message and return next step guidance."""
         clean_msg = message.strip()
@@ -159,10 +183,14 @@ class ConversationalRequirementAssistant:
         if existing_brief:
             # Parse existing requirements first
             base_res = self.requirement_agent.process(existing_brief, project_name=pname)
-            # Apply user message update
-            res = self.requirement_agent.update(base_res.requirements, clean_msg)
+            # Apply user message update with active_floor context
+            res = self.requirement_agent.update(
+                base_res.requirements, clean_msg, active_floor=active_floor
+            )
         else:
-            res = self.requirement_agent.process(clean_msg, project_name=pname)
+            res = self.requirement_agent.process(
+                clean_msg, project_name=pname, active_floor=active_floor
+            )
 
         reqs = res.requirements
         comp = res.completeness
@@ -190,7 +218,204 @@ class ConversationalRequirementAssistant:
             remaining_count=remaining_count,
             project_name=pname,
             status=res.status,
+            requirements=reqs,
         )
+
+    def build_turn_result_from_reqs(
+        self,
+        reqs: Requirements,
+        last_user_msg: str,
+        project_name: str,
+    ) -> ChatTurnResult:
+        """Build progress, next step, and turn result directly from structured Requirements."""
+        self.requirement_agent.pipeline._normalize_requirements(reqs)
+        comp = self.requirement_agent.completeness_gate.check(reqs)
+        val = self.requirement_agent.validator.validate(reqs)
+        progress, remaining_count = self._build_progress(reqs, comp)
+        card, reply_msg = self._determine_next_step(last_user_msg, reqs, comp, val, project_name)
+        canonical_brief = format_canonical_brief(reqs, project_name)
+        is_ready = comp.can_proceed and val.is_valid and (card is not None and card.input_type == "confirmation")
+        status = "READY_FOR_PLANNING" if (comp.can_proceed and val.is_valid) else ("NEEDS_CLARIFICATION" if not comp.is_complete else "VALIDATION_FAILED")
+        return ChatTurnResult(
+            message=reply_msg,
+            question_card=card,
+            is_ready_for_generation=is_ready,
+            requirements_text=canonical_brief,
+            requirements_summary=self._build_summary_dict(reqs),
+            progress=progress,
+            remaining_count=remaining_count,
+            project_name=project_name,
+            status=status,
+            requirements=reqs,
+        )
+
+    # ------------------------------------------------------------------
+    # Chat-orchestrator support (no LLM involvement, deterministic)
+    # ------------------------------------------------------------------
+
+    _REMOVAL_CLAUSE_RE = re.compile(
+        r"\b(?:remove|delete|drop|eliminate|scrap|cancel|get\s+rid\s+of|take\s+out|exclude|omit|"
+        r"no|without|don'?t\s+(?:want|need|have)|do\s+not\s+(?:want|need|have)|not\s+(?:want|need))\b",
+        re.I,
+    )
+
+    def snapshot(
+        self,
+        existing_brief: Optional[str],
+        project_name: Optional[str] = None,
+    ) -> ChatTurnResult:
+        """Return the CURRENT requirement state without modifying it.
+
+        Used when a conversational message is answered by the LLM: the structured
+        requirement state (progress, readiness, summary) must be reported exactly as
+        it is, never altered by the content of a general question.
+        """
+        pname = project_name or "PlanForge Residential Project"
+        if not existing_brief or not existing_brief.strip():
+            return self._initial_greeting(pname)
+
+        res = self.requirement_agent.process(existing_brief, project_name=pname)
+        reqs, comp, val = res.requirements, res.completeness, res.validation
+        progress, remaining_count = self._build_progress(reqs, comp)
+        card, reply_msg = self._determine_next_step("", reqs, comp, val, pname)
+        is_ready = comp.can_proceed and val.is_valid and (card is not None and card.input_type == "confirmation")
+
+        return ChatTurnResult(
+            message=reply_msg,
+            question_card=card,
+            is_ready_for_generation=is_ready,
+            requirements_text=existing_brief,
+            requirements_summary=self._build_summary_dict(reqs),
+            progress=progress,
+            remaining_count=remaining_count,
+            project_name=pname,
+            status=res.status,
+        )
+
+    def handle_removal(
+        self,
+        message: str,
+        existing_brief: Optional[str] = None,
+        project_name: Optional[str] = None,
+    ) -> ChatTurnResult:
+        """Remove explicitly named rooms from the structured requirements.
+
+        The requirement parser has no notion of removal (it would turn
+        "remove the dining room" into an ADDED dining room), so removal is
+        handled here, deterministically. Only rooms the user names inside a
+        removal/negation clause are removed; nothing is ever added by a removal.
+        Clauses without removal wording are passed to the Requirement Agent as
+        normal additions.
+        """
+        pname = project_name or "PlanForge Residential Project"
+        clean = message.strip()
+
+        if not existing_brief or not existing_brief.strip():
+            snap = self.snapshot(None, pname)
+            snap.message = "There are no recorded requirements to remove yet.\n\n" + snap.message
+            return snap
+
+        targets: list[tuple[str, Optional[int]]] = []
+        keep_clauses: list[str] = []
+        for clause in re.split(r"[;\n,]|\.(?!\d)", clean):
+            c = clause.strip()
+            if not c:
+                continue
+            if self._REMOVAL_CLAUSE_RE.search(c):
+                floor_no = self._floor_in_clause(c)
+                for rtype in self._room_types_in(c):
+                    if (rtype, floor_no) not in targets:
+                        targets.append((rtype, floor_no))
+            else:
+                keep_clauses.append(c)
+
+        if not targets:
+            snap = self.snapshot(existing_brief, pname)
+            snap.message = (
+                "I couldn't tell which room you want to remove, so I haven't changed your requirements. "
+                "Try something like *'Remove the dining room'*.\n\n" + snap.message
+            )
+            return snap
+
+        base = self.requirement_agent.process(existing_brief, project_name=pname)
+        reqs = base.requirements
+
+        removed: list[str] = []
+        absent: list[str] = []
+        for rtype, floor_no in targets:
+            found = False
+            for fl in reqs.floors:
+                if floor_no is not None and fl.floor_number != floor_no:
+                    continue
+                before = len(fl.room_requirements)
+                fl.room_requirements = [r for r in fl.room_requirements if r.room_type != rtype]
+                if len(fl.room_requirements) != before:
+                    found = True
+
+            label = rtype.replace("_", " ").title() + (f" (Floor {floor_no})" if floor_no else "")
+            if found:
+                removed.append(label)
+                if not any(r.room_type == rtype for r in reqs.all_room_requirements()):
+                    for r in reqs.all_room_requirements():
+                        r.adjacency = [a for a in r.adjacency if a != rtype]
+                        r.separation = [s for s in r.separation if s != rtype]
+                        if r.attached_to == rtype:
+                            r.attached_to = None
+            else:
+                absent.append(label)
+
+        # Re-run authoritative checks (and merge any non-removal additions) via the agent.
+        res = self.requirement_agent.update(reqs, ". ".join(keep_clauses))
+        reqs, comp, val = res.requirements, res.completeness, res.validation
+        progress, remaining_count = self._build_progress(reqs, comp)
+        card, next_msg = self._determine_next_step(clean, reqs, comp, val, pname)
+        is_ready = comp.can_proceed and val.is_valid and (card is not None and card.input_type == "confirmation")
+
+        notes: list[str] = []
+        if removed:
+            notes.append("Removed from your requirements: " + ", ".join(removed) + ".")
+        if absent:
+            notes.append("Not in your current requirements (nothing changed): " + ", ".join(absent) + ".")
+
+        return ChatTurnResult(
+            message=" ".join(notes) + "\n\n" + next_msg,
+            question_card=card,
+            is_ready_for_generation=is_ready,
+            requirements_text=format_canonical_brief(reqs, pname),
+            requirements_summary=self._build_summary_dict(reqs),
+            progress=progress,
+            remaining_count=remaining_count,
+            project_name=pname,
+            status=res.status,
+        )
+
+    @staticmethod
+    def _floor_in_clause(clause: str) -> Optional[int]:
+        """Floor number explicitly named in a clause (e.g. 'Floor 2: no study'), else None."""
+        m = re.search(r"\bfloor\s*(\d+)\b", clause, re.I) or re.search(
+            r"\b(\d+)(?:st|nd|rd|th)\s+floor\b", clause, re.I
+        )
+        if m:
+            return int(m.group(1))
+        if re.search(r"\bground\s+floor\b", clause, re.I):
+            return 1
+        return None
+
+    @staticmethod
+    def _room_types_in(clause: str) -> list[str]:
+        """Canonical room types mentioned in a clause (longest synonym wins, no overlaps)."""
+        found: list[str] = []
+        occupied: list[tuple[int, int]] = []
+        for phrase in sorted(ROOM_SYNONYMS, key=len, reverse=True):
+            for m in re.finditer(rf"\b{re.escape(phrase)}s?\b", clause, re.I):
+                s, e = m.span()
+                if any(not (e <= os_ or s >= oe) for os_, oe in occupied):
+                    continue
+                occupied.append((s, e))
+                canonical = ROOM_SYNONYMS[phrase]
+                if canonical not in found:
+                    found.append(canonical)
+        return found
 
     def _initial_greeting(self, project_name: str) -> ChatTurnResult:
         """Greeting state when conversation starts."""

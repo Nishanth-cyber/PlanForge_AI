@@ -300,4 +300,54 @@ describe('PlotEditor Component', () => {
     expect(areaBadge.textContent).toContain('2000 sq ft');
     expect(areaBadge.textContent).toContain('185.8 m²');
   });
+
+  it('provides draggable coordinate scrub buttons, sliders mode, and interactive controls in vertex table', () => {
+    const onChange = vi.fn();
+    const irregularData: PlotData = {
+      mode: 'irregular',
+      vertices: [
+        [0, 0],
+        [20, 0],
+        [20, 10],
+        [0, 10],
+      ],
+      width: 20,
+      length: 10,
+      unit: 'm',
+      frontSetback: 2.0,
+      rearSetback: 2.0,
+      sideSetback: 2.0,
+      orientation: 'north',
+      isClosed: true,
+    };
+
+    render(<PlotEditor plotData={irregularData} onChange={onChange} />);
+
+    // Check scrub handles exist for vertices
+    expect(screen.getByTestId('scrub-x-0')).toBeDefined();
+    expect(screen.getByTestId('scrub-y-0')).toBeDefined();
+    expect(screen.getByTestId('toggle-drag-mode')).toBeDefined();
+
+    // Toggle drag sliders mode
+    const toggleBtn = screen.getByTestId('toggle-drag-mode');
+    fireEvent.click(toggleBtn);
+
+    // Range sliders should now be present for coordinates
+    const sliderX0 = screen.getByTestId('slider-x-0') as HTMLInputElement;
+    expect(sliderX0).toBeDefined();
+
+    // Fire slider change to drag X coordinate
+    fireEvent.change(sliderX0, { target: { value: '5' } });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        vertices: [
+          [5, 0],
+          [20, 0],
+          [20, 10],
+          [0, 10],
+        ],
+      })
+    );
+  });
 });
+

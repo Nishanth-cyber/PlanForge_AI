@@ -35,6 +35,7 @@ def verify_export_integrity(
     expected_alternatives: int = 0,
     check_images: bool = True,
     check_trace: bool = False,
+    check_dxf: bool = False,
 ) -> ExportIntegrityReport:
     """Verify that an exported project bundle is structurally complete and syntactically valid.
 
@@ -141,6 +142,19 @@ def verify_export_integrity(
             img = target_dir / f"floor_{fn}.png"
             if img.exists() and img.stat().st_size > 0:
                 verified.append(str(img.relative_to(p)))
+
+    # 5. Check CAD DXF drawing files
+    dxf_files = list(p.glob("*.dxf"))
+    if not dxf_files and expected_alternatives > 0:
+        dxf_files = list((p / "alternatives").glob("*/*.dxf"))
+    if dxf_files:
+        for dxf_p in dxf_files:
+            if dxf_p.stat().st_size == 0:
+                errors.append(f"Corrupt (0 bytes) DXF file: {dxf_p.name}")
+            else:
+                verified.append(str(dxf_p.relative_to(p)))
+    elif check_dxf:
+        errors.append("Missing required CAD DXF file (*.dxf) in export bundle.")
 
     is_valid = len(errors) == 0
     return ExportIntegrityReport(

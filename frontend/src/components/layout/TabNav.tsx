@@ -15,6 +15,8 @@ interface TabNavProps {
   projectName: string;
   projectId: string;
   isValid?: boolean;
+  statusLabel?: string;
+  statusBadgeClass?: string;
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   hasTrace?: boolean;
@@ -25,6 +27,8 @@ export const TabNav: React.FC<TabNavProps> = ({
   projectName,
   projectId,
   isValid,
+  statusLabel,
+  statusBadgeClass,
   activeTab,
   onTabChange,
   alternativesCount = 1,
@@ -45,9 +49,9 @@ export const TabNav: React.FC<TabNavProps> = ({
     <div className="subnav-container">
       <div className="project-title-bar">
         <span className="project-title-text">{projectName || projectId}</span>
-        {isValid !== undefined && (
-          <span className={`badge ${isValid ? 'badge-success' : 'badge-danger'}`}>
-            {isValid ? 'Valid Design' : 'Violations Found'}
+        {(statusLabel || isValid !== undefined) && (
+          <span className={`badge ${statusBadgeClass || (isValid ? 'badge-success' : 'badge-danger')}`}>
+            {statusLabel || (isValid ? 'Valid Design' : 'Violations Found')}
           </span>
         )}
       </div>

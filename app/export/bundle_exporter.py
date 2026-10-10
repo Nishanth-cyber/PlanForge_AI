@@ -25,13 +25,19 @@ from app.export.report_exporter import (
     generate_alternative_markdown_report,
     save_markdown,
 )
+from app.export.dxf import DXFExporter, get_dxf_filename
 
 
 class BundleExporter:
     """Orchestrates comprehensive project export bundles."""
 
-    def __init__(self, renderer: Optional[FloorPlanRenderer] = None) -> None:
+    def __init__(
+        self,
+        renderer: Optional[FloorPlanRenderer] = None,
+        dxf_exporter: Optional[DXFExporter] = None,
+    ) -> None:
         self.renderer = renderer or FloorPlanRenderer()
+        self.dxf_exporter = dxf_exporter or DXFExporter()
 
     def export_bundle(
         self,
@@ -50,6 +56,7 @@ class BundleExporter:
         render_images: bool = True,
         create_zip: bool = False,
         render_options: Optional[RenderOptions] = None,
+        export_dxf: bool = True,
     ) -> Path:
         """Create structured export bundle directory and optional ZIP package.
 
@@ -166,6 +173,19 @@ class BundleExporter:
                             project_name=f"{proj_title} (Alt {alt.index})",
                         )
 
+                    # Export CAD DXF for this alternative
+                    if export_dxf and alt.floor_plan_set:
+                        try:
+                            is_mf = len(alt.floor_plan_set.floor_plans) > 1
+                            alt_dxf_name = get_dxf_filename(f"{proj_title}_alt_{alt.index}", is_multi_floor=is_mf)
+                            self.dxf_exporter.export_floor_plan_set(
+                                floor_plan_set=alt.floor_plan_set,
+                                output_path=single_alt_dir / alt_dxf_name,
+                                project_name=f"{proj_title} (Alt {alt.index})",
+                            )
+                        except Exception:
+                            pass
+
             # 5. Fallback rendering for single floor_plan_set (if alternative_set not provided)
             elif render_images and floor_plan_set:
                 floors_dir = bundle_path / "floors"
@@ -178,7 +198,26 @@ class BundleExporter:
                     project_name=proj_title,
                 )
 
-            # 6. Optional ZIP Archive packaging
+            # 6. Export Primary CAD DXF Drawing at bundle root
+            if export_dxf:
+                primary_fps = floor_plan_set
+                if not primary_fps and alternative_set and alternative_set.alternatives:
+                    primary_fps = alternative_set.alternatives[0].floor_plan_set
+
+                if primary_fps and primary_fps.floor_plans:
+                    is_mf = len(primary_fps.floor_plans) > 1
+                    dxf_name = get_dxf_filename(proj_title, is_multi_floor=is_mf)
+                    try:
+                        self.dxf_exporter.export_floor_plan_set(
+                            floor_plan_set=primary_fps,
+                            output_path=bundle_path / dxf_name,
+                            project_name=proj_title,
+                        )
+                    except Exception as dxf_err:
+                        import logging
+                        logging.getLogger(__name__).warning("DXF export failed for '%s': %s", project_id, dxf_err)
+
+            # 7. Optional ZIP Archive packaging
             if create_zip:
                 zip_target = Path(output_dir) / f"{project_id}.zip"
                 with zipfile.ZipFile(zip_target, "w", zipfile.ZIP_DEFLATED) as zipf:
@@ -211,6 +250,7 @@ def export_project_bundle(
     render_images: bool = True,
     create_zip: bool = False,
     render_options: Optional[RenderOptions] = None,
+    export_dxf: bool = True,
 ) -> Path:
     """Convenience function to export a complete PlanForge project bundle."""
     exporter = BundleExporter()
@@ -230,4 +270,5 @@ def export_project_bundle(
         render_images=render_images,
         create_zip=create_zip,
         render_options=render_options,
+        export_dxf=export_dxf,
     )

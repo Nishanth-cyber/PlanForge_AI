@@ -101,7 +101,7 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     service: str = "PlanForge AI"
     version: str = "0.1.0"
-    llm_provider: str = "MockLLMClient (deterministic offline mode)"
+    llm_provider: str = "unknown"
     device: str = "CPU (headless Agg)"
 
 
@@ -150,12 +150,33 @@ class RequirementProgressItem(BaseModel):
     value: Optional[str] = None
 
 
+class ChatHistoryItem(BaseModel):
+    """One prior chat message, supplied by the client to give the conversational LLM context."""
+    role: str = Field(default="user", description="'user' or 'assistant'. Other roles are ignored.")
+    text: str = Field(default="", max_length=4000)
+
+
 class ChatTurnRequest(BaseModel):
-    """Client message payload for multi-turn requirement chatting."""
-    message: str = Field(default="", description="User natural language message or card selection.")
+    """Client message payload for multi-turn requirement chatting and conversation."""
+    message: str = Field(default="", max_length=8000, description="User natural language message or card selection.")
     existing_brief: Optional[str] = Field(default=None, description="Accumulated canonical brief from previous turns.")
     project_name: str = Field(default="PlanForge Residential Project", description="Project title.")
     project_id: Optional[str] = Field(default=None, description="Optional project identifier.")
+    history: List[ChatHistoryItem] = Field(
+        default_factory=list,
+        max_length=60,
+        description="Recent conversation turns (oldest first, excluding this message). The server keeps only a bounded window.",
+    )
+    active_floor: Optional[int] = Field(default=None, ge=1, le=20, description="Floor the user is currently viewing.")
+    alternative_index: Optional[int] = Field(default=None, ge=1, le=50, description="1-based design alternative the user is viewing.")
+    input_source: str = Field(default="text", description="'card' when the text came from a question-card option, else 'text'.")
+
+
+class ChatRoutePreview(BaseModel):
+    """Where a chat message WOULD be handled (no execution, no LLM call)."""
+    route: str
+    uses_llm: bool
+    reason: str = ""
 
 
 class ChatTurnResponse(BaseModel):
@@ -169,4 +190,12 @@ class ChatTurnResponse(BaseModel):
     remaining_count: int = 0
     project_name: str = "PlanForge Residential Project"
     status: str = "NEEDS_CLARIFICATION"
+    # --- Traceability: proves whether a real LLM produced `message` -------------
+    route: str = Field(default="requirement", description="requirement | requirement_removal | conversation | plan_modification")
+    llm_used: bool = Field(default=False, description="True only if `message` is a real LLM response.")
+    llm_provider: Optional[str] = None
+    llm_model: Optional[str] = None
+    llm_latency_ms: Optional[int] = None
+    turn_id: Optional[str] = None
+    plan_modified: bool = Field(default=False, description="Always False for chat replies: only the pipeline changes the plan.")
 

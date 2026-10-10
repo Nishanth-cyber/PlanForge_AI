@@ -112,12 +112,17 @@ class RequirementPipeline:
         existing: Requirements,
         additional_input: str,
         allow_suggestions: bool = False,
+        active_floor: Optional[int] = None,
     ) -> PipelineResult:
         """Incrementally update existing requirements with additional user input (multi-turn).
 
         Preserves existing valid rooms and floors while incorporating new clarifications.
         """
-        new_reqs = self.parser.parse(additional_input)
+        new_reqs = self.parser.parse(
+            additional_input,
+            project_name=existing.project_name,
+            active_floor=active_floor,
+        )
 
         # Merge plot
         if new_reqs.plot_shape:
@@ -144,7 +149,12 @@ class RequirementPipeline:
         for nf in new_reqs.floors:
             if not nf.room_requirements:
                 continue
-            existing_f = existing.get_floor(nf.floor_number)
+            effective_fn = (
+                active_floor
+                if (active_floor and active_floor > 1 and len(new_reqs.floors) == 1 and nf.floor_number == 1)
+                else nf.floor_number
+            )
+            existing_f = existing.get_floor(effective_fn)
             if existing_f:
                 # Add or update rooms
                 existing_types = {r.room_type: r for r in existing_f.room_requirements}
@@ -159,9 +169,23 @@ class RequirementPipeline:
                             er.min_area_sqm = nr.min_area_sqm
                         if nr.max_area_sqm:
                             er.max_area_sqm = nr.max_area_sqm
+                        if nr.user_dimensions:
+                            er.user_dimensions = nr.user_dimensions
+                        if nr.adjacency:
+                            for a in nr.adjacency:
+                                if a not in er.adjacency:
+                                    er.adjacency.append(a)
+                        if nr.separation:
+                            for s in nr.separation:
+                                if s not in er.separation:
+                                    er.separation.append(s)
+                        if nr.attached_to:
+                            er.attached_to = nr.attached_to
                     else:
                         existing_f.room_requirements.append(nr)
             else:
+                nf.floor_number = effective_fn
+                nf.floor_name = self.parser._floor_name(effective_fn)
                 existing.floors.append(nf)
 
         # Sort floors
