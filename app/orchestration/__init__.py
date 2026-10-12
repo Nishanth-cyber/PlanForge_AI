@@ -1,8 +1,7 @@
 """PlanForge Orchestration Subsystem.
 
-Coordinates the 10-stage generative residential floor-plan pipeline:
-Requirement -> Planning -> ASAA -> Architectural LLM -> Geometry ->
-Validation -> Refinement -> Multi-Design Diversity -> Decision Trace -> Export.
+Coordinates the generative residential floor-plan pipeline through dynamic,
+state-aware agentic orchestration and tool execution.
 """
 
 from app.orchestration.config import OrchestrationConfig
@@ -17,9 +16,14 @@ from app.orchestration.orchestrator import (
     create_default_orchestrator,
 )
 from app.orchestration.pipeline import PipelineResult
+from app.orchestration.routing import AgenticPolicy, NextAction
 from app.orchestration.state import PipelineState, StageName, StageRecord, StageStatus
+from app.orchestration.workflow import AgenticWorkflow
 
 __all__ = [
+    "AgenticPolicy",
+    "AgenticWorkflow",
+    "NextAction",
     "OrchestrationConfig",
     "OrchestrationError",
     "StageExecutionError",

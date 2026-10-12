@@ -1,0 +1,149 @@
+[
+  {
+    "dossier_id": "dossier_94ea4232d061",
+    "experiment_id": "phase8_baseline_audit",
+    "case_id": "case_03_large_single_floor",
+    "requirements_summary": {
+      "plot": "60x80",
+      "floors": 1,
+      "room_count": 9,
+      "rooms": [
+        "living",
+        "dining",
+        "kitchen",
+        "bedrooms",
+        "bathrooms"
+      ]
+    },
+    "relevant_constraints": [
+      {
+        "id": "graph_connectivity",
+        "category": "building_code",
+        "is_hard": true,
+        "description": "All rooms must connect to circulation without isolated clusters"
+      }
+    ],
+    "execution_stage": "GEOMETRY_CONSTRUCTION",
+    "responsible_component": "door_builder",
+    "exception_or_finding": "DoorPlacementError: Rooms 'dining' and 'circulation' are not adjacent; cannot place direct door intent door_8e1062eff05e.",
+    "measured_values": {
+      "isolated_room_count": 2,
+      "subgraph_count": 2
+    },
+    "thresholds": {
+      "max_allowed_isolated_rooms": 0
+    },
+    "candidate_state_before": {
+      "valid": false,
+      "score": 68.0
+    },
+    "candidate_state_after": {
+      "valid": true,
+      "score": 73.0
+    },
+    "retry_and_recovery_actions": [
+      {
+        "action": "automatic_adjacent_wall_fallback",
+        "outcome": "door placed along shared partition wall with living, restoring 100% graph connectivity"
+      }
+    ],
+    "final_workflow_status": "completed",
+    "valid_candidate_preserved": true,
+    "recovery_succeeded": true,
+    "evidence_references": [
+      "app/geometry/engine.py:DoorBuilder fallback trace",
+      "DoorPlacementError log"
+    ],
+    "root_cause_classification": "VERIFIED_ROOT_CAUSE",
+    "remaining_uncertainty": null
+  },
+  {
+    "dossier_id": "dossier_f162d2d87989",
+    "experiment_id": "phase8_baseline_audit",
+    "case_id": "case_20_tight_multifloor_deficit",
+    "requirements_summary": {
+      "plot": "30x35",
+      "floors": 2,
+      "floor_1_demand_sqm": 65.0,
+      "total_demand_sqm": 100.3
+    },
+    "relevant_constraints": [
+      {
+        "id": "setback_containment",
+        "category": "zoning_bylaw",
+        "is_hard": true,
+        "description": "Footprint cannot exceed buildable envelope (34.3 sqm)"
+      }
+    ],
+    "execution_stage": "SPATIAL_ALLOCATION",
+    "responsible_component": "asaa_allocator",
+    "exception_or_finding": "ASAA Allocation infeasible: Floor 1 requested area 65.0 sqm exceeds 34.3 sqm buildable footprint by 30.7 sqm deficit.",
+    "measured_values": {
+      "floor_1_buildable_sqm": 34.3,
+      "floor_1_demand_sqm": 65.0,
+      "total_buildable_2floors_sqm": 68.6,
+      "total_demand_sqm": 100.3
+    },
+    "thresholds": {
+      "max_allowed_deficit_sqm": 0.0
+    },
+    "candidate_state_before": null,
+    "candidate_state_after": null,
+    "retry_and_recovery_actions": [
+      {
+        "action": "adaptive_replanning_compact",
+        "outcome": "failed (demand exceeds plot physical boundary even at zero circulation allowance)"
+      }
+    ],
+    "final_workflow_status": "failed",
+    "valid_candidate_preserved": false,
+    "recovery_succeeded": false,
+    "evidence_references": [
+      "ASAA physical feasibility log: Floor 1 deficit 30.7 sqm"
+    ],
+    "root_cause_classification": "VERIFIED_ROOT_CAUSE",
+    "remaining_uncertainty": null
+  },
+  {
+    "dossier_id": "dossier_4b2f67181dcf",
+    "experiment_id": "phase9_generalization",
+    "case_id": "stress_08_unsupported_curved_geometry",
+    "requirements_summary": {
+      "plot_shape": "circular",
+      "radius_m": 15.0
+    },
+    "relevant_constraints": [
+      {
+        "id": "geometry_engine_scope",
+        "category": "engine_capability",
+        "is_hard": true,
+        "description": "Supported geometries are rectilinear and polygonal boundaries"
+      }
+    ],
+    "execution_stage": "REQUIREMENTS_PARSING",
+    "responsible_component": "requirement_agent",
+    "exception_or_finding": "Unsupported plot geometry 'circular'; non-polygonal curve boundaries cannot be represented by current ASAA partitioner.",
+    "measured_values": {
+      "plot_type": "circular"
+    },
+    "thresholds": {
+      "supported_plot_types": [
+        "rectangular",
+        "l-shaped",
+        "t-shaped",
+        "polygonal"
+      ]
+    },
+    "candidate_state_before": null,
+    "candidate_state_after": null,
+    "retry_and_recovery_actions": [],
+    "final_workflow_status": "failed",
+    "valid_candidate_preserved": false,
+    "recovery_succeeded": false,
+    "evidence_references": [
+      "app/evaluation/generalization_fixtures.py:stress_08"
+    ],
+    "root_cause_classification": "VERIFIED_ROOT_CAUSE",
+    "remaining_uncertainty": null
+  }
+]

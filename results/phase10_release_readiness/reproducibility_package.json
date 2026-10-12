@@ -1,0 +1,99 @@
+{
+  "reproducibility_package_version": "1.0.0",
+  "date_compiled": "2026-10-11T04:35:12.708900+00:00",
+  "git_commit": "5d370b97842218281fd0e179d09e30457da48abf",
+  "environment": {
+    "python_version": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "os_name": "nt",
+    "architecture": "64bit"
+  },
+  "dependencies": {
+    "ezdxf": "1.4.4",
+    "shapely": "2.0+",
+    "fastapi": "0.100+",
+    "pydantic": "2.0+",
+    "pytest": "8.0+"
+  },
+  "dataset_corpora": {
+    "phase8_evaluation_benchmark": {
+      "total_cases": 20,
+      "ground_truth_feasible": 17,
+      "ground_truth_infeasible": 3,
+      "cases": [
+        "case_01_small_single_floor",
+        "case_02_medium_single_floor",
+        "case_03_large_single_floor",
+        "case_04_two_floor_family",
+        "case_05_three_floor_townhouse",
+        "case_06_irregular_l_plot",
+        "case_07_tight_urban",
+        "case_08_multi_bedroom",
+        "case_09_attached_suite",
+        "case_10_separation_heavy",
+        "case_11_adjacency_heavy",
+        "case_12_preferred_relationships",
+        "case_13_staircase_core",
+        "case_14_orientation_east",
+        "case_15_feasibility_edge",
+        "case_16_infeasible_deficit",
+        "case_17_contradictory_setbacks",
+        "case_18_missing_mandatory_rooms",
+        "case_19_irregular_t_plot",
+        "case_20_tight_multifloor_deficit"
+      ]
+    },
+    "phase9_heldout_generalization": {
+      "total_cases": 7,
+      "cases": [
+        "heldout_01_narrow_elongated",
+        "heldout_02_nonconvex_l_wings",
+        "heldout_03_nonconvex_t_junction",
+        "heldout_04_irregular_pentagon",
+        "heldout_05_tight_setback_envelope",
+        "heldout_06_narrow_wing_bifurcation",
+        "heldout_07_irregular_multifloor"
+      ]
+    },
+    "phase9_complexity_stress": {
+      "total_cases": 8,
+      "cases": [
+        "stress_01_high_room_count",
+        "stress_02_dense_area_demand",
+        "stress_03_infeasible_area_overload",
+        "stress_04_conflicting_adjacencies",
+        "stress_05_extreme_aspect_rooms",
+        "stress_06_three_floor_vertical_stress",
+        "stress_07_ambiguous_brief",
+        "stress_08_unsupported_curved_geometry"
+      ]
+    }
+  },
+  "reproduction_commands": [
+    {
+      "protocol": "Full backend test suite (659+ tests)",
+      "command": ".\\venv\\Scripts\\python.exe -m pytest tests/ -q"
+    },
+    {
+      "protocol": "Full frontend test suite (61 tests)",
+      "command": "npm test (inside frontend directory)"
+    },
+    {
+      "protocol": "Phase 8 Research Evaluation & Ablation Suite",
+      "command": ".\\venv\\Scripts\\python.exe scripts/run_phase8_research_evaluation.py"
+    },
+    {
+      "protocol": "Phase 9 Robustness & Generalization Suite",
+      "command": ".\\venv\\Scripts\\python.exe scripts/run_phase9_robustness_evaluation.py"
+    },
+    {
+      "protocol": "Phase 10 Release Readiness & Independent Validation Audit",
+      "command": ".\\venv\\Scripts\\python.exe scripts/run_phase10_release_readiness_audit.py"
+    }
+  ],
+  "reproducibility_notes": [
+    "Fixed seeds (seed=42) guarantee canonical SHA-256 hash reproducibility.",
+    "Mock LLM client provides deterministic offline regression testing.",
+    "All metrics explicitly declare exact numerators and denominators."
+  ]
+}

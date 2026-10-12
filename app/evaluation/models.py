@@ -21,6 +21,59 @@ class BenchmarkCategory(str, Enum):
     ORIENTATION = "ORIENTATION"
     INFEASIBLE = "INFEASIBLE"
     FEASIBILITY_EDGE_CASE = "FEASIBILITY_EDGE_CASE"
+    CONTRADICTORY = "CONTRADICTORY"
+    MISSING_REQUIREMENTS = "MISSING_REQUIREMENTS"
+
+
+@dataclass
+class EvaluationProtocolConfig:
+    """Protocol metadata recording environment, input provenance, and scoring versions."""
+    experiment_id: str
+    dataset_version: str = "1.2.0"
+    case_ids: List[str] = field(default_factory=list)
+    case_input_hashes: Dict[str, str] = field(default_factory=dict)
+    timestamp: str = ""
+    app_version: str = "2.1.0"
+    git_commit: str = "phase8_head"
+    python_version: str = ""
+    os_platform: str = ""
+    environment_dependencies: Dict[str, str] = field(default_factory=dict)
+    random_seed: int = 42
+    asaa_candidate_budget: int = 3
+    max_refinement_iterations: int = 3
+    max_execution_steps: int = 25
+    orchestration_mode: str = "multi_agent"
+    interactive: bool = False
+    llm_provider: Optional[str] = None
+    llm_model: Optional[str] = None
+    use_live_llm: bool = False
+    scoring_version: str = "v2.1"
+    validator_version: str = "v2.0"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "experiment_id": self.experiment_id,
+            "dataset_version": self.dataset_version,
+            "case_ids": self.case_ids,
+            "case_input_hashes": self.case_input_hashes,
+            "timestamp": self.timestamp,
+            "app_version": self.app_version,
+            "git_commit": self.git_commit,
+            "python_version": self.python_version,
+            "os_platform": self.os_platform,
+            "environment_dependencies": self.environment_dependencies,
+            "random_seed": self.random_seed,
+            "asaa_candidate_budget": self.asaa_candidate_budget,
+            "max_refinement_iterations": self.max_refinement_iterations,
+            "max_execution_steps": self.max_execution_steps,
+            "orchestration_mode": self.orchestration_mode,
+            "interactive": self.interactive,
+            "llm_provider": self.llm_provider,
+            "llm_model": self.llm_model,
+            "use_live_llm": self.use_live_llm,
+            "scoring_version": self.scoring_version,
+            "validator_version": self.validator_version,
+        }
 
 
 @dataclass

@@ -1,0 +1,81 @@
+{
+  "checklist_version": "1.0.0",
+  "audit_timestamp": "2026-10-11T04:35:12.768082+00:00",
+  "total_checks": 12,
+  "passed_checks": 12,
+  "release_verdict": "READY FOR RESEARCH SUBMISSION AND LIVE DEMONSTRATION",
+  "checklist_items": [
+    {
+      "item_id": "CHK_01",
+      "category": "Architecture",
+      "description": "Deterministic pipeline and opt-in hierarchical multi-agent modes operational",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_02",
+      "category": "ASAA",
+      "description": "ASAA spatial allocation algorithm correctly satisfies buildable envelope setbacks",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_03",
+      "category": "Validation",
+      "description": "Independent validation suite enforces boundary containment, non-overlap, and connectivity",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_04",
+      "category": "CAD/DXF",
+      "description": "Exported DXF drawings open cleanly in ezdxf with standard layers and accurate coordinates",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_05",
+      "category": "Generalization",
+      "description": "Held-out geometries (1:4, L-wings, T-junction, pentagon, deep setbacks) achieve 100% validity",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_06",
+      "category": "Stress Truthfulness",
+      "description": "Mathematical infeasibility and conflicting constraints truthfully reported without false success",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_07",
+      "category": "Fault Recovery",
+      "description": "Transient LLM timeouts, network errors, and malformed JSON recover via bounded fallback",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_08",
+      "category": "State Rollback",
+      "description": "CandidateManager preserves best-valid candidate and rejects degraded mutation overwrites",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_09",
+      "category": "Clarification",
+      "description": "Interactive clarification workflow atomically updates requirements and invalidates stale state",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_10",
+      "category": "Reproducibility",
+      "description": "Fixed seeds produce identical canonical SHA-256 hashes across repeated evaluations",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_11",
+      "category": "Explainability",
+      "description": "Evidence-grounded FailureDossiers provide transparent diagnostic post-mortems",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "item_id": "CHK_12",
+      "category": "Test Integrity",
+      "description": "Zero regressions: 659 backend tests pass, 61 frontend tests pass",
+      "status": "VERIFIED_PASS"
+    }
+  ]
+}

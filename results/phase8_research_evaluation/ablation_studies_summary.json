@@ -1,0 +1,214 @@
+[
+  {
+    "ablation_id": "ablation_cand_budget_case_06_irregular_l_plot",
+    "case_id": "case_06_irregular_l_plot",
+    "variant_a_name": "Budget_3_Candidates",
+    "variant_a_metrics": {
+      "is_success": true,
+      "overall_valid": true,
+      "quality_score": 85.0,
+      "validation_error_count": 0,
+      "validation_warning_count": 5,
+      "total_execution_ms": 221.9417000305839,
+      "total_allocated_area_sqm": 126.33,
+      "num_allocated_regions": 7,
+      "allocation_score": 79.68,
+      "num_constructed_rooms": 6,
+      "allocation_adjacency_compliance": 100.0,
+      "area_preferred_mae": 8.29,
+      "area_min_compliance": 100.0,
+      "boundary_compliance": 100.0,
+      "connectivity_rate": 100.0,
+      "separation_compliance": 100.0
+    },
+    "variant_b_name": "Budget_1_Candidate",
+    "variant_b_metrics": {
+      "is_success": true,
+      "overall_valid": true,
+      "quality_score": 85.0,
+      "validation_error_count": 0,
+      "validation_warning_count": 5,
+      "total_execution_ms": 216.8010999885155,
+      "total_allocated_area_sqm": 126.33,
+      "num_allocated_regions": 7,
+      "allocation_score": 79.68,
+      "num_constructed_rooms": 6,
+      "allocation_adjacency_compliance": 100.0,
+      "area_preferred_mae": 8.29,
+      "area_min_compliance": 100.0,
+      "boundary_compliance": 100.0,
+      "connectivity_rate": 100.0,
+      "separation_compliance": 100.0
+    },
+    "deltas": {
+      "score_delta": 0.0,
+      "runtime_delta_ms": 5.1
+    }
+  },
+  {
+    "ablation_id": "ablation_llm_action_case_01_small_single_floor",
+    "case_id": "case_01_small_single_floor",
+    "variant_a_name": "LLM_Action_Selector",
+    "variant_a_metrics": {
+      "is_success": true,
+      "overall_valid": true,
+      "quality_score": 94.0,
+      "validation_error_count": 0,
+      "validation_warning_count": 2,
+      "total_execution_ms": 0,
+      "total_allocated_area_sqm": 64.78,
+      "num_allocated_regions": 6,
+      "allocation_score": 89.81,
+      "num_constructed_rooms": 5,
+      "allocation_adjacency_compliance": 100.0,
+      "area_preferred_mae": 1.5,
+      "area_min_compliance": 100.0,
+      "boundary_compliance": 100.0,
+      "connectivity_rate": 100.0,
+      "separation_compliance": 100.0
+    },
+    "variant_b_name": "Deterministic_Rule_Selector",
+    "variant_b_metrics": {
+      "is_success": true,
+      "overall_valid": true,
+      "quality_score": 94.0,
+      "validation_error_count": 0,
+      "validation_warning_count": 2,
+      "total_execution_ms": 0,
+      "total_allocated_area_sqm": 64.78,
+      "num_allocated_regions": 6,
+      "allocation_score": 89.81,
+      "num_constructed_rooms": 5,
+      "allocation_adjacency_compliance": 100.0,
+      "area_preferred_mae": 1.5,
+      "area_min_compliance": 100.0,
+      "boundary_compliance": 100.0,
+      "connectivity_rate": 100.0,
+      "separation_compliance": 100.0
+    },
+    "deltas": {
+      "score_delta": 0.0,
+      "runtime_delta_ms": 0.0
+    }
+  },
+  {
+    "ablation_id": "ablation_coordination_case_01_small_single_floor",
+    "case_id": "case_01_small_single_floor",
+    "variant_a_name": "Hierarchical_Multi_Agent",
+    "variant_a_metrics": {
+      "is_success": true,
+      "overall_valid": true,
+      "quality_score": 94.0,
+      "validation_error_count": 0,
+      "validation_warning_count": 2,
+      "total_execution_ms": 0,
+      "total_allocated_area_sqm": 64.78,
+      "num_allocated_regions": 6,
+      "allocation_score": 89.81,
+      "num_constructed_rooms": 5,
+      "allocation_adjacency_compliance": 100.0,
+      "area_preferred_mae": 1.5,
+      "area_min_compliance": 100.0,
+      "boundary_compliance": 100.0,
+      "connectivity_rate": 100.0,
+      "separation_compliance": 100.0
+    },
+    "variant_b_name": "Pipeline_Baseline",
+    "variant_b_metrics": {
+      "is_success": true,
+      "overall_valid": true,
+      "quality_score": 94.0,
+      "validation_error_count": 0,
+      "validation_warning_count": 2,
+      "total_execution_ms": 103.83529998944141,
+      "total_allocated_area_sqm": 64.78,
+      "num_allocated_regions": 6,
+      "allocation_score": 89.81,
+      "num_constructed_rooms": 5,
+      "allocation_adjacency_compliance": 100.0,
+      "area_preferred_mae": 1.5,
+      "area_min_compliance": 100.0,
+      "boundary_compliance": 100.0,
+      "connectivity_rate": 100.0,
+      "separation_compliance": 100.0
+    },
+    "deltas": {
+      "score_delta": 0.0,
+      "runtime_delta_ms": -103.8
+    }
+  },
+  {
+    "ablation_id": "ablation_refinement_case_01_small_single_floor",
+    "case_id": "case_01_small_single_floor",
+    "variant_a_name": "With_Refinement",
+    "variant_a_metrics": {
+      "is_success": true,
+      "overall_valid": true,
+      "quality_score": 94.0,
+      "validation_error_count": 0,
+      "validation_warning_count": 2,
+      "total_execution_ms": 111.58449998765718,
+      "total_allocated_area_sqm": 64.78,
+      "num_allocated_regions": 6,
+      "allocation_score": 89.81,
+      "num_constructed_rooms": 5,
+      "allocation_adjacency_compliance": 100.0,
+      "area_preferred_mae": 1.5,
+      "area_min_compliance": 100.0,
+      "boundary_compliance": 100.0,
+      "connectivity_rate": 100.0,
+      "separation_compliance": 100.0
+    },
+    "variant_b_name": "Without_Refinement",
+    "variant_b_metrics": {
+      "is_success": true,
+      "overall_valid": true,
+      "quality_score": 94.0,
+      "validation_error_count": 0,
+      "validation_warning_count": 2,
+      "total_execution_ms": 157.1605999924941,
+      "total_allocated_area_sqm": 64.78,
+      "num_allocated_regions": 6,
+      "allocation_score": 89.81,
+      "num_constructed_rooms": 5,
+      "allocation_adjacency_compliance": 100.0,
+      "area_preferred_mae": 1.5,
+      "area_min_compliance": 100.0,
+      "boundary_compliance": 100.0,
+      "connectivity_rate": 100.0,
+      "separation_compliance": 100.0
+    },
+    "deltas": {
+      "error_reduction": 0.0,
+      "validity_gain": 0.0
+    }
+  },
+  {
+    "ablation_id": "ablation_clarification_case_16_infeasible_deficit",
+    "case_id": "case_16_infeasible_deficit",
+    "variant_a_name": "Interactive_Clarification_Mode",
+    "variant_a_metrics": {
+      "is_success": false,
+      "overall_valid": false,
+      "quality_score": 0.0,
+      "validation_error_count": 0,
+      "validation_warning_count": 0,
+      "total_execution_ms": 0,
+      "status": "waiting_for_clarification"
+    },
+    "variant_b_name": "Batch_NonInteractive_Mode",
+    "variant_b_metrics": {
+      "is_success": false,
+      "overall_valid": false,
+      "quality_score": 0.0,
+      "validation_error_count": 0,
+      "validation_warning_count": 0,
+      "total_execution_ms": 0,
+      "status": "failed"
+    },
+    "deltas": {
+      "clarification_triggered": 1.0,
+      "truthful_halt": 1.0
+    }
+  }
+]

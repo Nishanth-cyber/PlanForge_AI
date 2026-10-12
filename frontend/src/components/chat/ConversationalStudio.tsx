@@ -29,6 +29,14 @@ interface ConversationalStudioProps {
   theme?: 'light' | 'dark';
   onViewTrace?: () => void;
   onViewExports?: () => void;
+  onClarificationSubmit?: (
+    selectedOptionId?: string,
+    responseText?: string,
+    numericOverrides?: Record<string, number>
+  ) => Promise<void>;
+  onClarificationResume?: () => Promise<void>;
+  onClarificationCancel?: () => Promise<void>;
+  onProjectUpdated?: () => Promise<void>;
 }
 
 export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
@@ -47,6 +55,10 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
   theme = 'light',
   onViewTrace,
   onViewExports,
+  onClarificationSubmit,
+  onClarificationResume,
+  onClarificationCancel,
+  onProjectUpdated,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [progress, setProgress] = useState<RequirementProgressItem[]>([]);
@@ -57,6 +69,7 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
   const [isLoadingChat, setIsLoadingChat] = useState<boolean>(false);
   const [isCustomPlotModalOpen, setIsCustomPlotModalOpen] = useState<boolean>(false);
   const [savedPlotData, setSavedPlotData] = useState<PlotData | undefined>(undefined);
+  const [conversationId, setConversationId] = useState<string | undefined>(undefined);
 
   // Initialize conversation
   const initConversation = useCallback(async (starterBrief?: string) => {
@@ -68,6 +81,10 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
           message: starterBrief,
           project_name: projectName,
         });
+
+        if (resp.conversation_id) {
+          setConversationId(resp.conversation_id);
+        }
 
         const initialMsgs: ChatMessage[] = [
           {
@@ -82,6 +99,14 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
             text: resp.message,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             question_card: resp.question_card,
+            response_type: resp.response_type,
+            intent: resp.intent,
+            conversation_stage: resp.conversation_stage,
+            quick_replies: resp.quick_replies,
+            missing_requirements: resp.missing_requirements,
+            requirements_updated: resp.requirements_updated,
+            action: resp.action,
+            is_ready_for_generation: resp.is_ready_for_generation,
           },
         ];
 
@@ -97,12 +122,24 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
           project_name: projectName,
         });
 
+        if (resp.conversation_id) {
+          setConversationId(resp.conversation_id);
+        }
+
         const initialAiMsg: ChatMessage = {
           id: 'welcome-ai',
           role: 'assistant',
           text: resp.message,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           question_card: resp.question_card,
+          response_type: resp.response_type,
+          intent: resp.intent,
+          conversation_stage: resp.conversation_stage,
+          quick_replies: resp.quick_replies,
+          missing_requirements: resp.missing_requirements,
+          requirements_updated: resp.requirements_updated,
+          action: resp.action,
+          is_ready_for_generation: resp.is_ready_for_generation,
         };
 
         setMessages([initialAiMsg]);
@@ -119,6 +156,7 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
           role: 'assistant',
           text: 'Hello! I am PlanForge AI. You can describe your building requirements to get started.',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          response_type: 'text',
         },
       ]);
     } finally {
@@ -159,7 +197,12 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         message: plotBriefSnippet,
         existing_brief: canonicalBrief,
         project_name: projectName,
+        conversation_id: conversationId,
       });
+
+      if (resp.conversation_id) {
+        setConversationId(resp.conversation_id);
+      }
 
       const aiReply: ChatMessage = {
         id: `ai-${Date.now()}`,
@@ -167,6 +210,14 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         text: resp.message,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         question_card: resp.question_card,
+        response_type: resp.response_type,
+        intent: resp.intent,
+        conversation_stage: resp.conversation_stage,
+        quick_replies: resp.quick_replies,
+        missing_requirements: resp.missing_requirements,
+        requirements_updated: resp.requirements_updated,
+        action: resp.action,
+        is_ready_for_generation: resp.is_ready_for_generation,
       };
 
       setMessages((prev) => [...prev, aiReply]);
@@ -186,6 +237,7 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         role: 'assistant',
         text: `Sorry, I encountered an issue saving your custom plot: ${err.message || 'Unknown error'}. Please try again.`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        response_type: 'text',
       };
       setMessages((prev) => [...prev, errReply]);
     } finally {
@@ -227,6 +279,7 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         role: 'assistant',
         text: 'Starting generation pipeline! Executing spatial allocation (ASAA), architectural intent synthesis, CAD geometry construction, and independent code validation...',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        response_type: 'generation_progress',
       };
 
       setMessages((prev) => [...prev, userMsg, aiMsg]);
@@ -242,6 +295,7 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         enable_exports: true,
         create_zip: false,
         plot_shape: savedPlotData?.vertices,
+        conversation_id: conversationId,
       });
 
       return;
@@ -268,13 +322,24 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
       .slice(-20);
 
     try {
+      const activeProjId = projectData?.project_metadata?.project_id || generationResponse?.project_id;
       const resp = await sendChatTurn({
         message: cleanText,
         existing_brief: canonicalBrief,
         project_name: projectName,
+        project_id: activeProjId,
+        conversation_id: conversationId,
         history: chatHistory,
         active_floor: targetFloor,
       });
+
+      if (resp.conversation_id) {
+        setConversationId(resp.conversation_id);
+      }
+
+      if (resp.plan_modified && onProjectUpdated) {
+        await onProjectUpdated();
+      }
 
       const aiReply: ChatMessage = {
         id: `ai-${Date.now()}`,
@@ -282,6 +347,14 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         text: resp.message,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         question_card: resp.question_card,
+        response_type: resp.response_type,
+        intent: resp.intent,
+        conversation_stage: resp.conversation_stage,
+        quick_replies: resp.quick_replies,
+        missing_requirements: resp.missing_requirements,
+        requirements_updated: resp.requirements_updated,
+        action: resp.action,
+        is_ready_for_generation: resp.is_ready_for_generation,
       };
 
       setMessages((prev) => [...prev, aiReply]);
@@ -297,22 +370,8 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         setProjectName(resp.project_name);
       }
 
-      // Re-generate ONLY IF a floor plan was already generated AND requirements are fully confirmed and ready
-      const hasCompletedProject = Boolean(
-        (projectData && (projectData.floor_plan_set || projectData.alternatives?.length)) ||
-        (generationResponse && generationResponse.is_success)
-      );
-      const isComplete = resp.is_ready_for_generation;
-
-      if (hasCompletedProject && isComplete) {
-        const genAiMsg: ChatMessage = {
-          id: `ai-gen-${Date.now()}`,
-          role: 'assistant',
-          text: 'Updating requirements and re-generating your floor plan design with the requested alterations...',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, genAiMsg]);
-
+      // Check if backend instructed auto-execution of generation (Section 9)
+      if (resp.action && resp.action.type === 'generate_floor_plan' && resp.action.auto_execute) {
         await onGenerateSubmit({
           brief: updatedBrief,
           project_name: resp.project_name || projectName,
@@ -323,6 +382,7 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
           enable_exports: true,
           create_zip: false,
           plot_shape: savedPlotData?.vertices,
+          conversation_id: resp.conversation_id || conversationId,
         });
       }
     } catch (err: any) {
@@ -332,6 +392,7 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         role: 'assistant',
         text: `Sorry, I encountered an issue: ${err.message || 'Unknown error'}. Please try again.`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        response_type: 'text',
       };
       setMessages((prev) => [...prev, errReply]);
     } finally {
@@ -339,7 +400,16 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
     }
   };
 
+  const handleExecuteAction = async (action: import('../../api/types').ChatActionData) => {
+    if (action.type === 'generate_floor_plan') {
+      await handleSendMessage('Generate Floor Plan');
+    } else if (action.type === 'export' && onViewExports) {
+      onViewExports();
+    }
+  };
+
   const handleReset = () => {
+    setConversationId(undefined);
     initConversation(undefined);
   };
 
@@ -353,10 +423,12 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         isReadyForGeneration={isReadyForGeneration}
         isLoading={isLoadingChat}
         onSendMessage={handleSendMessage}
+        onExecuteAction={handleExecuteAction}
         onResetConversation={handleReset}
         projectName={projectName}
         onOpenCustomPlot={handleOpenCustomPlot}
       />
+
 
       {/* RIGHT PANEL: Floor-plan Visualization / Canvas Workspace */}
       <FloorPlanWorkspace
@@ -372,6 +444,10 @@ export const ConversationalStudio: React.FC<ConversationalStudioProps> = ({
         theme={theme}
         onViewTrace={onViewTrace}
         onViewExports={onViewExports}
+        onClarificationSubmit={onClarificationSubmit}
+        onClarificationResume={onClarificationResume}
+        onClarificationCancel={onClarificationCancel}
+        onProjectUpdated={onProjectUpdated}
       />
 
       {/* MODAL: Custom Irregular Plot Editor Popup */}

@@ -18,9 +18,10 @@ from app.orchestration.orchestrator import PlanForgeOrchestrator
 
 
 def test_all_16_benchmark_cases_valid_and_explicit():
-    """Audit 1: Verify all 16 benchmark cases are deterministic, well-formed, and explicit."""
+    """Audit 1: Verify all benchmark cases (minimum 16, now 20 in Phase 8) are deterministic, well-formed, and explicit."""
     cases = BenchmarkRegistry.get_all_cases()
-    assert len(cases) == 16, f"Expected exactly 16 benchmark cases, found {len(cases)}"
+    assert len(cases) >= 16, f"Expected at least 16 benchmark cases, found {len(cases)}"
+    assert len(cases) == 20, f"Expected 20 benchmark cases in Phase 8 suite, found {len(cases)}"
 
     for case in cases:
         assert case.case_id.strip(), "Case ID must not be empty"

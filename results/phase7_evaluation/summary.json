@@ -1,0 +1,150 @@
+{
+  "evaluation_title": "Phase 7 Interactive Clarification & Resumable Workflow Benchmark",
+  "timestamp": "2026-10-10T09:43:17Z",
+  "cases_evaluated": [
+    "case_01_small_single_floor",
+    "case_04_two_floor_family",
+    "case_06_irregular_l_plot",
+    "case_15_feasibility_edge",
+    "case_16_infeasible_deficit"
+  ],
+  "modes": [
+    "pipeline_baseline",
+    "phase6_multi_agent_batch",
+    "phase7_interactive_multi_agent"
+  ],
+  "comparison_table": [
+    {
+      "case_id": "case_01_small_single_floor",
+      "name": "Small Single-Floor Bungalow",
+      "pipeline": {
+        "status": "completed",
+        "score": 94.0,
+        "hard_errors": 0,
+        "runtime_ms": 123.4
+      },
+      "phase6_multi_agent": {
+        "status": "completed",
+        "score": 94.0,
+        "hard_errors": 0,
+        "runtime_ms": 404.1
+      },
+      "phase7_interactive": {
+        "status": "completed",
+        "score": 94.0,
+        "hard_errors": 0,
+        "runtime_ms": 358.9,
+        "clarification_triggered": false,
+        "clarification_questions": [],
+        "resumed_result": null
+      }
+    },
+    {
+      "case_id": "case_04_two_floor_family",
+      "name": "Two-Floor Family Residence",
+      "pipeline": {
+        "status": "completed",
+        "score": 94.0,
+        "hard_errors": 0,
+        "runtime_ms": 103.8
+      },
+      "phase6_multi_agent": {
+        "status": "completed",
+        "score": 94.0,
+        "hard_errors": 0,
+        "runtime_ms": 717.5
+      },
+      "phase7_interactive": {
+        "status": "completed",
+        "score": 94.0,
+        "hard_errors": 0,
+        "runtime_ms": 658.2,
+        "clarification_triggered": false,
+        "clarification_questions": [],
+        "resumed_result": null
+      }
+    },
+    {
+      "case_id": "case_06_irregular_l_plot",
+      "name": "Irregular L-Shaped Boundary Residence",
+      "pipeline": {
+        "status": "completed",
+        "score": 85.0,
+        "hard_errors": 0,
+        "runtime_ms": 224.2
+      },
+      "phase6_multi_agent": {
+        "status": "completed",
+        "score": 85.0,
+        "hard_errors": 0,
+        "runtime_ms": 546.2
+      },
+      "phase7_interactive": {
+        "status": "completed",
+        "score": 85.0,
+        "hard_errors": 0,
+        "runtime_ms": 559.6,
+        "clarification_triggered": false,
+        "clarification_questions": [],
+        "resumed_result": null
+      }
+    },
+    {
+      "case_id": "case_15_feasibility_edge",
+      "name": "High-Density Feasibility Edge Case",
+      "pipeline": {
+        "status": "completed",
+        "score": 82.0,
+        "hard_errors": 0,
+        "runtime_ms": 197.7
+      },
+      "phase6_multi_agent": {
+        "status": "completed",
+        "score": 82.0,
+        "hard_errors": 0,
+        "runtime_ms": 524.3
+      },
+      "phase7_interactive": {
+        "status": "completed",
+        "score": 82.0,
+        "hard_errors": 0,
+        "runtime_ms": 510.1,
+        "clarification_triggered": false,
+        "clarification_questions": [],
+        "resumed_result": null
+      }
+    },
+    {
+      "case_id": "case_16_infeasible_deficit",
+      "name": "Infeasible Room Deficit Program",
+      "pipeline": {
+        "status": "failed",
+        "score": 0.0,
+        "hard_errors": 0,
+        "runtime_ms": 7.8
+      },
+      "phase6_multi_agent": {
+        "status": "failed",
+        "score": 0.0,
+        "hard_errors": 0,
+        "runtime_ms": 10.4
+      },
+      "phase7_interactive": {
+        "status": "waiting_for_clarification",
+        "score": 0.0,
+        "hard_errors": 0,
+        "runtime_ms": 12.0,
+        "clarification_triggered": true,
+        "clarification_questions": [
+          "The requested room program is physically infeasible: Total minimum required area exceeds available buildable footprint by 112.6 m\u00b2. Please choose an authorized adjustment to proceed."
+        ],
+        "resumed_result": {
+          "status": "completed",
+          "score": 85.0,
+          "hard_errors": 0,
+          "resume_ms": 472.3
+        }
+      }
+    }
+  ]
+}

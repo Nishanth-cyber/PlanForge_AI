@@ -15,7 +15,16 @@ import { ExplainabilityView } from './components/views/ExplainabilityView';
 import { RefinementView } from './components/views/RefinementView';
 import { ExportView } from './components/views/ExportView';
 
-import { getProjectData, generateFloorPlan } from './api/projects';
+import {
+  getProjectData,
+  generateFloorPlan,
+  submitClarificationResponse,
+  resumeProject,
+  cancelProject,
+  editProjectDesign,
+  undoProjectDesign,
+  getProjectVersions,
+} from './api/projects';
 import type {
   ProjectData,
   GenerationRequest,
@@ -23,6 +32,7 @@ import type {
   GeoRoom,
   FloorPlan,
   FloorPlanSet,
+  VersionSummary,
 } from './api/types';
 
 import { ConversationalStudio } from './components/chat/ConversationalStudio';
@@ -79,6 +89,14 @@ export function App() {
   const [isLoadingProject, setIsLoadingProject] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Edit Existing Design State (Section 9)
+  const [editInput, setEditInput] = useState<string>('');
+  const [isEditingDesign, setIsEditingDesign] = useState<boolean>(false);
+  const [editSummary, setEditSummary] = useState<string | null>(null);
+  const [canUndoDesign, setCanUndoDesign] = useState<boolean>(false);
+  const [versionHistory, setVersionHistory] = useState<VersionSummary[]>([]);
+  const [isVersionModalOpen, setIsVersionModalOpen] = useState<boolean>(false);
+
   // Preset briefs for NewProjectView
   const [initialBrief, setInitialBrief] = useState<string | undefined>(undefined);
   const [initialName, setInitialName] = useState<string | undefined>(undefined);
@@ -127,6 +145,62 @@ export function App() {
     };
   }, [activeProjectId]);
 
+  const handleReloadProjectData = async () => {
+    if (!activeProjectId) return;
+    try {
+      const data = await getProjectData(activeProjectId);
+      setProjectData(data);
+      const vList = await getProjectVersions(activeProjectId);
+      setVersionHistory(vList);
+      setCanUndoDesign(vList.length > 1);
+    } catch (err: any) {
+      console.warn('Failed to refresh project data', err);
+    }
+  };
+
+  const handleEditProject = async (instruction?: string) => {
+    const text = (instruction || editInput).trim();
+    if (!text || !activeProjectId || isEditingDesign) return;
+    setIsEditingDesign(true);
+    setEditSummary(null);
+    try {
+      const resp = await editProjectDesign(activeProjectId, {
+        instruction: text,
+        floor_number: activeFloor,
+        alternative_index: selectedAlternativeIndex,
+      });
+      if (resp.success) {
+        setEditSummary(resp.summary);
+        setEditInput('');
+        setCanUndoDesign(resp.can_undo);
+        await handleReloadProjectData();
+      } else {
+        setErrorMessage(resp.summary || resp.error_message || 'Edit could not be applied');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Edit request failed');
+    } finally {
+      setIsEditingDesign(false);
+    }
+  };
+
+  const handleUndoProject = async () => {
+    if (!activeProjectId || isEditingDesign) return;
+    setIsEditingDesign(true);
+    try {
+      const resp = await undoProjectDesign(activeProjectId);
+      if (resp.success) {
+        setEditSummary(`Restored previous design (${resp.version_id}).`);
+        setCanUndoDesign(resp.can_undo);
+        await handleReloadProjectData();
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Undo failed');
+    } finally {
+      setIsEditingDesign(false);
+    }
+  };
+
   const handleOpenNewProject = (presetBrief?: string, presetName?: string) => {
     setInitialBrief(presetBrief);
     setInitialName(presetName);
@@ -146,6 +220,13 @@ export function App() {
     try {
       const resp = await generateFloorPlan(req);
       setGenerationResponse(resp);
+
+      if (resp.status === 'waiting_for_clarification' || resp.pending_clarification) {
+        // Paused workflow waiting for user response
+        setActiveProjectId(resp.project_id);
+        setIsGenerating(false);
+        return;
+      }
 
       if (resp.status === 'incomplete_requirements') {
         setErrorMessage(
@@ -170,6 +251,71 @@ export function App() {
     } catch (err: any) {
       console.error('Generation failed', err);
       setErrorMessage(err.message || 'Floor plan generation failed');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleClarificationSubmit = async (
+    selectedOptionId?: string,
+    responseText?: string,
+    numericOverrides?: Record<string, number>
+  ) => {
+    if (!generationResponse?.project_id || !generationResponse.pending_clarification) return;
+    setIsGenerating(true);
+    setErrorMessage(null);
+    try {
+      await submitClarificationResponse(
+        generationResponse.project_id,
+        generationResponse.pending_clarification.request_id,
+        {
+          selected_option_id: selectedOptionId,
+          user_response_text: responseText,
+          numeric_overrides: numericOverrides,
+          expected_state_version: generationResponse.pending_clarification.state_version,
+        }
+      );
+      // Auto-resume workflow following accepted response
+      const resumed = await resumeProject(generationResponse.project_id);
+      setGenerationResponse(resumed);
+      if (resumed.is_success) {
+        const data = await getProjectData(resumed.project_id);
+        setProjectData(data);
+        setActiveProjectId(resumed.project_id);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to submit clarification response');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleClarificationResume = async () => {
+    if (!generationResponse?.project_id) return;
+    setIsGenerating(true);
+    setErrorMessage(null);
+    try {
+      const resumed = await resumeProject(generationResponse.project_id);
+      setGenerationResponse(resumed);
+      if (resumed.is_success) {
+        const data = await getProjectData(resumed.project_id);
+        setProjectData(data);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to resume generation');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleClarificationCancel = async () => {
+    if (!generationResponse?.project_id) return;
+    setIsGenerating(true);
+    try {
+      const cancelled = await cancelProject(generationResponse.project_id);
+      setGenerationResponse(cancelled);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to cancel project');
     } finally {
       setIsGenerating(false);
     }
@@ -292,6 +438,10 @@ export function App() {
               setCurrentView('project_detail');
               setActiveTab('export');
             }}
+            onClarificationSubmit={handleClarificationSubmit}
+            onClarificationResume={handleClarificationResume}
+            onClarificationCancel={handleClarificationCancel}
+            onProjectUpdated={handleReloadProjectData}
           />
         )}
 
@@ -407,8 +557,208 @@ export function App() {
                       )}
                     </div>
 
+                    {/* NATURAL-LANGUAGE EDIT DESIGN BAR (Section 9 & 10) */}
+                    <div
+                      className="card"
+                      style={{
+                        padding: '0.75rem 1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
+                          <span>✨ Edit Design:</span>
+                        </div>
+                        <input
+                          type="text"
+                          className="input input-sm"
+                          placeholder="Type natural-language instruction (e.g. 'Make master bedroom larger', 'Change living room to L-shaped', 'Add window')..."
+                          value={editInput}
+                          onChange={(e) => setEditInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleEditProject();
+                          }}
+                          disabled={isEditingDesign}
+                          style={{ flex: 1, fontSize: '0.825rem' }}
+                        />
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => handleEditProject()}
+                          disabled={isEditingDesign || !editInput.trim()}
+                          style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                        >
+                          {isEditingDesign ? 'Applying...' : 'Apply Edit'}
+                        </button>
+
+                        {canUndoDesign && (
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={handleUndoProject}
+                            disabled={isEditingDesign}
+                            title="Undo last edit and restore previous design version"
+                            style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem', whiteSpace: 'nowrap', color: 'var(--color-primary)' }}
+                          >
+                            ↶ Undo
+                          </button>
+                        )}
+
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={() => setIsVersionModalOpen(!isVersionModalOpen)}
+                          title="View design version history"
+                          style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                        >
+                          📜 Versions
+                        </button>
+                      </div>
+
+                      {/* Suggestions */}
+                      {!isEditingDesign && !editSummary && (
+                        <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.1rem', scrollbarWidth: 'none' }}>
+                          <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', alignSelf: 'center', marginRight: '0.2rem' }}>Suggestions:</span>
+                          {[
+                            'Make the master bedroom larger',
+                            'Change the living room to an L-shaped design',
+                            'Add a window to the master bedroom',
+                            'Move the entrance to the east side',
+                            'Increase kitchen area to 15 square meters',
+                            'Improve circulation flow',
+                          ].map((s, idx) => (
+                            <button
+                              key={idx}
+                              className="btn btn-outline btn-xs"
+                              onClick={() => handleEditProject(s)}
+                              style={{ fontSize: '0.725rem', padding: '0.15rem 0.45rem', whiteSpace: 'nowrap', borderRadius: 'var(--radius-full)' }}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Editing Progress */}
+                      {isEditingDesign && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.6rem',
+                            padding: '0.4rem 0.75rem',
+                            backgroundColor: 'var(--status-info-bg, rgba(59, 130, 246, 0.08))',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.8rem',
+                            color: 'var(--color-primary)',
+                          }}
+                        >
+                          <div className="generating-spinner-box" style={{ width: '14px', height: '14px', borderWidth: '2px', margin: 0 }} />
+                          <span>Executing Design Editing Agent: analyzing modification, drafting CAD geometry, verifying building codes...</span>
+                        </div>
+                      )}
+
+                      {/* Change Summary Banner */}
+                      {editSummary && !isEditingDesign && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0.45rem 0.75rem',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.8rem',
+                            backgroundColor: 'var(--status-success-bg)',
+                            color: 'var(--status-success)',
+                            border: '1px solid var(--status-success-border)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <span>✓</span>
+                            <span>{editSummary}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                            {canUndoDesign && (
+                              <button
+                                className="btn btn-xs"
+                                onClick={handleUndoProject}
+                                style={{ fontSize: '0.725rem', padding: '0.1rem 0.45rem' }}
+                              >
+                                Undo
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setEditSummary(null)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '0.9rem' }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Dominant Element: Floor Plan Canvas (Section 10 & 13) */}
-                    <div style={{ minHeight: '620px', width: '100%' }}>
+                    <div style={{ minHeight: '620px', width: '100%', position: 'relative' }}>
+                      {/* Version History Modal Popup */}
+                      {isVersionModalOpen && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            right: '1rem',
+                            top: '1rem',
+                            width: '360px',
+                            maxWidth: '92%',
+                            maxHeight: '80%',
+                            zIndex: 40,
+                            backgroundColor: 'var(--bg-card)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: 'var(--radius-md)',
+                            boxShadow: 'var(--shadow-xl)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>Design Version History</h4>
+                            <button
+                              onClick={() => setIsVersionModalOpen(false)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: 'var(--text-muted)' }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <div style={{ padding: '0.75rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                            {versionHistory.map((ver, idx) => (
+                              <div
+                                key={ver.version_id}
+                                style={{
+                                  padding: '0.6rem',
+                                  borderRadius: 'var(--radius-sm)',
+                                  border: idx === versionHistory.length - 1 ? '1px solid var(--color-primary)' : '1px solid var(--border-color)',
+                                  backgroundColor: idx === versionHistory.length - 1 ? 'var(--bg-surface)' : 'transparent',
+                                  fontSize: '0.8rem',
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                                  <span style={{ fontWeight: 700, color: idx === versionHistory.length - 1 ? 'var(--color-primary)' : 'inherit' }}>
+                                    {ver.version_id.toUpperCase()} {idx === versionHistory.length - 1 ? '(Active)' : ''}
+                                  </span>
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                    {new Date(ver.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.2rem' }}>
+                                  {ver.instruction}
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                  Score: {ver.validation_score}/100 • Errors: {ver.total_errors}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <FloorPlanCanvas
                         floorPlan={activeFloorPlan}
                         plotBoundary={activeFloorPlanSet?.plot_boundary || []}

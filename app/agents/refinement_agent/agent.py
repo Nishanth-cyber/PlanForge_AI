@@ -204,16 +204,17 @@ class RefinementAgent:
                     room["design_rationale"] = "Added main exterior entrance door to resolve missing_entrance_connection"
 
             # 2. Isolated room / reachability correction
-            if (is_isolated_room or is_unreachable) and len(doors) == 0:
+            has_corridor_door = any(d.get("connects_to") in {"corridor", "circulation", "living"} for d in doors)
+            if (is_isolated_room and len(doors) == 0) or (is_unreachable and not has_corridor_door):
                 doors.append(
                     {
                         "wall_orientation": "north",
-                        "connects_to": "corridor",
+                        "connects_to": "circulation",
                         "door_type": "interior",
                         "rationale": "access",
                     }
                 )
-                room["design_rationale"] = "Added connecting interior door to resolve room isolation"
+                room["design_rationale"] = "Added connecting interior door to resolve room isolation or reachability defect"
 
             # 3. Required adjacency correction
             if is_required_adj and rtype == "living":

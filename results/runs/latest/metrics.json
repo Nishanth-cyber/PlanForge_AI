@@ -1,0 +1,1727 @@
+{
+  "case_01_small_single_floor": {
+    "req_room_coverage": {
+      "name": "req_room_coverage",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_rooms_requested": {
+      "name": "req_rooms_requested",
+      "value": 4,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_rooms_generated": {
+      "name": "req_rooms_generated",
+      "value": 5,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_floor_count_adherence": {
+      "name": "req_floor_count_adherence",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "room_count_mae": {
+      "name": "room_count_mae",
+      "value": 0.0,
+      "unit": "rooms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "room_count_accuracy": {
+      "name": "room_count_accuracy",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_min_compliance": {
+      "name": "area_min_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_preferred_mae": {
+      "name": "area_preferred_mae",
+      "value": 1.5,
+      "unit": "m\u00b2",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_max_violations": {
+      "name": "area_max_violations",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_compliance": {
+      "name": "allocation_adjacency_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_satisfied": {
+      "name": "allocation_adjacency_satisfied",
+      "value": 1,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_total": {
+      "name": "allocation_adjacency_total",
+      "value": 1,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "separation_compliance": {
+      "name": "separation_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "attached_suite_compliance": {
+      "name": "attached_suite_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "boundary_compliance": {
+      "name": "boundary_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "boundary_violation_count": {
+      "name": "boundary_violation_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "overlap_free": {
+      "name": "overlap_free",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "overlap_violation_count": {
+      "name": "overlap_violation_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "connectivity_rate": {
+      "name": "connectivity_rate",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "disconnected_room_count": {
+      "name": "disconnected_room_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "door_compliance": {
+      "name": "door_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "total_doors": {
+      "name": "total_doors",
+      "value": 5,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "total_windows": {
+      "name": "total_windows",
+      "value": 4,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "staircase_compliance": {
+      "name": "staircase_compliance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Single-floor plan; staircase not required"
+    },
+    "validation_success": {
+      "name": "validation_success",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_error_count": {
+      "name": "validation_error_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_warning_count": {
+      "name": "validation_warning_count",
+      "value": 2,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_score": {
+      "name": "validation_score",
+      "value": 94.0,
+      "unit": "points",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "refinement_error_reduction": {
+      "name": "refinement_error_reduction",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Refinement not triggered or loop disabled"
+    },
+    "diversity_mean_distance": {
+      "name": "diversity_mean_distance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Single alternative run; diversity requires >= 2 alternatives"
+    },
+    "diversity_duplicate_count": {
+      "name": "diversity_duplicate_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternative_validity_rate": {
+      "name": "alternative_validity_rate",
+      "value": 0.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternatives_generated_count": {
+      "name": "alternatives_generated_count",
+      "value": 1,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternatives_valid_count": {
+      "name": "alternatives_valid_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_stage_coverage": {
+      "name": "trace_stage_coverage",
+      "value": 70.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_entity_chain_completeness": {
+      "name": "trace_entity_chain_completeness",
+      "value": 550.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_total_events": {
+      "name": "trace_total_events",
+      "value": 54,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_no_fabrication_audit": {
+      "name": "trace_no_fabrication_audit",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_requirement_ms": {
+      "name": "timing_requirement_ms",
+      "value": 37.69,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_planning_ms": {
+      "name": "timing_planning_ms",
+      "value": 0.1,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_asaa_ms": {
+      "name": "timing_asaa_ms",
+      "value": 53.29,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_architectural_design_ms": {
+      "name": "timing_architectural_design_ms",
+      "value": 0.36,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_geometry_ms": {
+      "name": "timing_geometry_ms",
+      "value": 11.82,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_validation_ms": {
+      "name": "timing_validation_ms",
+      "value": 2.47,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_refinement_ms": {
+      "name": "timing_refinement_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_multi_design_ms": {
+      "name": "timing_multi_design_ms",
+      "value": 0.02,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_explainability_ms": {
+      "name": "timing_explainability_ms",
+      "value": 0.5,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_export_ms": {
+      "name": "timing_export_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_total_ms": {
+      "name": "timing_total_ms",
+      "value": 106.25,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "asaa_duration_ms": {
+      "name": "asaa_duration_ms",
+      "value": 53.29,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "asaa_allocation_rate": {
+      "name": "asaa_allocation_rate",
+      "value": 112.6,
+      "unit": "regions/sec",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "reproducibility_evaluated": {
+      "name": "reproducibility_evaluated",
+      "value": true,
+      "unit": "flag",
+      "is_available": true,
+      "unavailable_reason": null
+    }
+  },
+  "case_04_two_floor_family": {
+    "req_room_coverage": {
+      "name": "req_room_coverage",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_rooms_requested": {
+      "name": "req_rooms_requested",
+      "value": 5,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_rooms_generated": {
+      "name": "req_rooms_generated",
+      "value": 6,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_floor_count_adherence": {
+      "name": "req_floor_count_adherence",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "room_count_mae": {
+      "name": "room_count_mae",
+      "value": 0.2,
+      "unit": "rooms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "room_count_accuracy": {
+      "name": "room_count_accuracy",
+      "value": 83.3,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_min_compliance": {
+      "name": "area_min_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_preferred_mae": {
+      "name": "area_preferred_mae",
+      "value": 8.73,
+      "unit": "m\u00b2",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_max_violations": {
+      "name": "area_max_violations",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_compliance": {
+      "name": "allocation_adjacency_compliance",
+      "value": 66.7,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_satisfied": {
+      "name": "allocation_adjacency_satisfied",
+      "value": 2,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_total": {
+      "name": "allocation_adjacency_total",
+      "value": 3,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "separation_compliance": {
+      "name": "separation_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "attached_suite_compliance": {
+      "name": "attached_suite_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "boundary_compliance": {
+      "name": "boundary_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "boundary_violation_count": {
+      "name": "boundary_violation_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "overlap_free": {
+      "name": "overlap_free",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "overlap_violation_count": {
+      "name": "overlap_violation_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "connectivity_rate": {
+      "name": "connectivity_rate",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "disconnected_room_count": {
+      "name": "disconnected_room_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "door_compliance": {
+      "name": "door_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "total_doors": {
+      "name": "total_doors",
+      "value": 7,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "total_windows": {
+      "name": "total_windows",
+      "value": 5,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "staircase_compliance": {
+      "name": "staircase_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "staircase_aligned": {
+      "name": "staircase_aligned",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_success": {
+      "name": "validation_success",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_error_count": {
+      "name": "validation_error_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_warning_count": {
+      "name": "validation_warning_count",
+      "value": 4,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_score": {
+      "name": "validation_score",
+      "value": 94.0,
+      "unit": "points",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "refinement_error_reduction": {
+      "name": "refinement_error_reduction",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Refinement not triggered or loop disabled"
+    },
+    "diversity_mean_distance": {
+      "name": "diversity_mean_distance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Single alternative run; diversity requires >= 2 alternatives"
+    },
+    "diversity_duplicate_count": {
+      "name": "diversity_duplicate_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternative_validity_rate": {
+      "name": "alternative_validity_rate",
+      "value": 0.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternatives_generated_count": {
+      "name": "alternatives_generated_count",
+      "value": 1,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternatives_valid_count": {
+      "name": "alternatives_valid_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_stage_coverage": {
+      "name": "trace_stage_coverage",
+      "value": 70.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_entity_chain_completeness": {
+      "name": "trace_entity_chain_completeness",
+      "value": 580.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_total_events": {
+      "name": "trace_total_events",
+      "value": 83,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_no_fabrication_audit": {
+      "name": "trace_no_fabrication_audit",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_requirement_ms": {
+      "name": "timing_requirement_ms",
+      "value": 9.03,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_planning_ms": {
+      "name": "timing_planning_ms",
+      "value": 0.12,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_asaa_ms": {
+      "name": "timing_asaa_ms",
+      "value": 55.4,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_architectural_design_ms": {
+      "name": "timing_architectural_design_ms",
+      "value": 0.42,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_geometry_ms": {
+      "name": "timing_geometry_ms",
+      "value": 14.89,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_validation_ms": {
+      "name": "timing_validation_ms",
+      "value": 5.79,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_refinement_ms": {
+      "name": "timing_refinement_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_multi_design_ms": {
+      "name": "timing_multi_design_ms",
+      "value": 0.02,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_explainability_ms": {
+      "name": "timing_explainability_ms",
+      "value": 0.69,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_export_ms": {
+      "name": "timing_export_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_total_ms": {
+      "name": "timing_total_ms",
+      "value": 86.36,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "asaa_duration_ms": {
+      "name": "asaa_duration_ms",
+      "value": 55.4,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "asaa_allocation_rate": {
+      "name": "asaa_allocation_rate",
+      "value": 180.5,
+      "unit": "regions/sec",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "reproducibility_evaluated": {
+      "name": "reproducibility_evaluated",
+      "value": true,
+      "unit": "flag",
+      "is_available": true,
+      "unavailable_reason": null
+    }
+  },
+  "case_06_irregular_l_plot": {
+    "req_room_coverage": {
+      "name": "req_room_coverage",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_rooms_requested": {
+      "name": "req_rooms_requested",
+      "value": 5,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_rooms_generated": {
+      "name": "req_rooms_generated",
+      "value": 6,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_floor_count_adherence": {
+      "name": "req_floor_count_adherence",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "room_count_mae": {
+      "name": "room_count_mae",
+      "value": 0.0,
+      "unit": "rooms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "room_count_accuracy": {
+      "name": "room_count_accuracy",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_min_compliance": {
+      "name": "area_min_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_preferred_mae": {
+      "name": "area_preferred_mae",
+      "value": 8.29,
+      "unit": "m\u00b2",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_max_violations": {
+      "name": "area_max_violations",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_compliance": {
+      "name": "allocation_adjacency_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_satisfied": {
+      "name": "allocation_adjacency_satisfied",
+      "value": 3,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_total": {
+      "name": "allocation_adjacency_total",
+      "value": 3,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "separation_compliance": {
+      "name": "separation_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "attached_suite_compliance": {
+      "name": "attached_suite_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "boundary_compliance": {
+      "name": "boundary_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "boundary_violation_count": {
+      "name": "boundary_violation_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "overlap_free": {
+      "name": "overlap_free",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "overlap_violation_count": {
+      "name": "overlap_violation_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "connectivity_rate": {
+      "name": "connectivity_rate",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "disconnected_room_count": {
+      "name": "disconnected_room_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "door_compliance": {
+      "name": "door_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "total_doors": {
+      "name": "total_doors",
+      "value": 6,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "total_windows": {
+      "name": "total_windows",
+      "value": 5,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "staircase_compliance": {
+      "name": "staircase_compliance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Single-floor plan; staircase not required"
+    },
+    "validation_success": {
+      "name": "validation_success",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_error_count": {
+      "name": "validation_error_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_warning_count": {
+      "name": "validation_warning_count",
+      "value": 5,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_score": {
+      "name": "validation_score",
+      "value": 85.0,
+      "unit": "points",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "refinement_error_reduction": {
+      "name": "refinement_error_reduction",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Refinement not triggered or loop disabled"
+    },
+    "diversity_mean_distance": {
+      "name": "diversity_mean_distance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Single alternative run; diversity requires >= 2 alternatives"
+    },
+    "diversity_duplicate_count": {
+      "name": "diversity_duplicate_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternative_validity_rate": {
+      "name": "alternative_validity_rate",
+      "value": 0.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternatives_generated_count": {
+      "name": "alternatives_generated_count",
+      "value": 1,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternatives_valid_count": {
+      "name": "alternatives_valid_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_stage_coverage": {
+      "name": "trace_stage_coverage",
+      "value": 70.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_entity_chain_completeness": {
+      "name": "trace_entity_chain_completeness",
+      "value": 540.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_total_events": {
+      "name": "trace_total_events",
+      "value": 65,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_no_fabrication_audit": {
+      "name": "trace_no_fabrication_audit",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_requirement_ms": {
+      "name": "timing_requirement_ms",
+      "value": 9.57,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_planning_ms": {
+      "name": "timing_planning_ms",
+      "value": 0.07,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_asaa_ms": {
+      "name": "timing_asaa_ms",
+      "value": 168.7,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_architectural_design_ms": {
+      "name": "timing_architectural_design_ms",
+      "value": 0.32,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_geometry_ms": {
+      "name": "timing_geometry_ms",
+      "value": 13.6,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_validation_ms": {
+      "name": "timing_validation_ms",
+      "value": 3.3,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_refinement_ms": {
+      "name": "timing_refinement_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_multi_design_ms": {
+      "name": "timing_multi_design_ms",
+      "value": 0.01,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_explainability_ms": {
+      "name": "timing_explainability_ms",
+      "value": 0.52,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_export_ms": {
+      "name": "timing_export_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_total_ms": {
+      "name": "timing_total_ms",
+      "value": 196.11,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "asaa_duration_ms": {
+      "name": "asaa_duration_ms",
+      "value": 168.7,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "asaa_allocation_rate": {
+      "name": "asaa_allocation_rate",
+      "value": 41.5,
+      "unit": "regions/sec",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "reproducibility_evaluated": {
+      "name": "reproducibility_evaluated",
+      "value": true,
+      "unit": "flag",
+      "is_available": true,
+      "unavailable_reason": null
+    }
+  },
+  "case_15_feasibility_edge": {
+    "req_room_coverage": {
+      "name": "req_room_coverage",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_rooms_requested": {
+      "name": "req_rooms_requested",
+      "value": 5,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_rooms_generated": {
+      "name": "req_rooms_generated",
+      "value": 6,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "req_floor_count_adherence": {
+      "name": "req_floor_count_adherence",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "room_count_mae": {
+      "name": "room_count_mae",
+      "value": 0.0,
+      "unit": "rooms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "room_count_accuracy": {
+      "name": "room_count_accuracy",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_min_compliance": {
+      "name": "area_min_compliance",
+      "value": 80.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_preferred_mae": {
+      "name": "area_preferred_mae",
+      "value": 3.31,
+      "unit": "m\u00b2",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "area_max_violations": {
+      "name": "area_max_violations",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_compliance": {
+      "name": "allocation_adjacency_compliance",
+      "value": 66.7,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_satisfied": {
+      "name": "allocation_adjacency_satisfied",
+      "value": 2,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "allocation_adjacency_total": {
+      "name": "allocation_adjacency_total",
+      "value": 3,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "separation_compliance": {
+      "name": "separation_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "attached_suite_compliance": {
+      "name": "attached_suite_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "boundary_compliance": {
+      "name": "boundary_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "boundary_violation_count": {
+      "name": "boundary_violation_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "overlap_free": {
+      "name": "overlap_free",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "overlap_violation_count": {
+      "name": "overlap_violation_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "connectivity_rate": {
+      "name": "connectivity_rate",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "disconnected_room_count": {
+      "name": "disconnected_room_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "door_compliance": {
+      "name": "door_compliance",
+      "value": 100.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "total_doors": {
+      "name": "total_doors",
+      "value": 6,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "total_windows": {
+      "name": "total_windows",
+      "value": 5,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "staircase_compliance": {
+      "name": "staircase_compliance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Single-floor plan; staircase not required"
+    },
+    "validation_success": {
+      "name": "validation_success",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_error_count": {
+      "name": "validation_error_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_warning_count": {
+      "name": "validation_warning_count",
+      "value": 6,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_score": {
+      "name": "validation_score",
+      "value": 82.0,
+      "unit": "points",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "refinement_error_reduction": {
+      "name": "refinement_error_reduction",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Refinement not triggered or loop disabled"
+    },
+    "diversity_mean_distance": {
+      "name": "diversity_mean_distance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Single alternative run; diversity requires >= 2 alternatives"
+    },
+    "diversity_duplicate_count": {
+      "name": "diversity_duplicate_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternative_validity_rate": {
+      "name": "alternative_validity_rate",
+      "value": 0.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternatives_generated_count": {
+      "name": "alternatives_generated_count",
+      "value": 1,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternatives_valid_count": {
+      "name": "alternatives_valid_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_stage_coverage": {
+      "name": "trace_stage_coverage",
+      "value": 70.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_entity_chain_completeness": {
+      "name": "trace_entity_chain_completeness",
+      "value": 540.0,
+      "unit": "%",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_total_events": {
+      "name": "trace_total_events",
+      "value": 66,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "trace_no_fabrication_audit": {
+      "name": "trace_no_fabrication_audit",
+      "value": true,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_requirement_ms": {
+      "name": "timing_requirement_ms",
+      "value": 12.48,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_planning_ms": {
+      "name": "timing_planning_ms",
+      "value": 0.1,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_asaa_ms": {
+      "name": "timing_asaa_ms",
+      "value": 211.38,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_architectural_design_ms": {
+      "name": "timing_architectural_design_ms",
+      "value": 0.51,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_geometry_ms": {
+      "name": "timing_geometry_ms",
+      "value": 20.39,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_validation_ms": {
+      "name": "timing_validation_ms",
+      "value": 6.63,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_refinement_ms": {
+      "name": "timing_refinement_ms",
+      "value": 0.01,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_multi_design_ms": {
+      "name": "timing_multi_design_ms",
+      "value": 0.02,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_explainability_ms": {
+      "name": "timing_explainability_ms",
+      "value": 0.9,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_export_ms": {
+      "name": "timing_export_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_total_ms": {
+      "name": "timing_total_ms",
+      "value": 252.43,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "asaa_duration_ms": {
+      "name": "asaa_duration_ms",
+      "value": 211.38,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "asaa_allocation_rate": {
+      "name": "asaa_allocation_rate",
+      "value": 33.1,
+      "unit": "regions/sec",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "reproducibility_evaluated": {
+      "name": "reproducibility_evaluated",
+      "value": true,
+      "unit": "flag",
+      "is_available": true,
+      "unavailable_reason": null
+    }
+  },
+  "case_16_infeasible_deficit": {
+    "req_room_coverage": {
+      "name": "req_room_coverage",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Requirements or FloorPlanSet artifact missing"
+    },
+    "room_count_accuracy": {
+      "name": "room_count_accuracy",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Artifacts missing"
+    },
+    "area_min_compliance": {
+      "name": "area_min_compliance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Artifacts missing"
+    },
+    "area_preferred_mae": {
+      "name": "area_preferred_mae",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Artifacts missing"
+    },
+    "allocation_adjacency_compliance": {
+      "name": "allocation_adjacency_compliance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "PlanningSpec or AllocationSet missing"
+    },
+    "separation_compliance": {
+      "name": "separation_compliance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Artifacts missing"
+    },
+    "attached_suite_compliance": {
+      "name": "attached_suite_compliance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Artifacts missing"
+    },
+    "boundary_compliance": {
+      "name": "boundary_compliance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "ValidationReport missing"
+    },
+    "overlap_free": {
+      "name": "overlap_free",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "ValidationReport missing"
+    },
+    "connectivity_rate": {
+      "name": "connectivity_rate",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Artifacts missing"
+    },
+    "door_compliance": {
+      "name": "door_compliance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "FloorPlanSet missing"
+    },
+    "staircase_compliance": {
+      "name": "staircase_compliance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Single-floor plan; staircase not required"
+    },
+    "validation_success": {
+      "name": "validation_success",
+      "value": false,
+      "unit": "bool",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_error_count": {
+      "name": "validation_error_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_warning_count": {
+      "name": "validation_warning_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "validation_score": {
+      "name": "validation_score",
+      "value": 0.0,
+      "unit": "points",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "refinement_error_reduction": {
+      "name": "refinement_error_reduction",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Refinement not triggered or loop disabled"
+    },
+    "diversity_mean_distance": {
+      "name": "diversity_mean_distance",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "Single alternative run; diversity requires >= 2 alternatives"
+    },
+    "diversity_duplicate_count": {
+      "name": "diversity_duplicate_count",
+      "value": 0,
+      "unit": "count",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "alternative_validity_rate": {
+      "name": "alternative_validity_rate",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "No alternatives generated"
+    },
+    "trace_completeness": {
+      "name": "trace_completeness",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "DecisionTrace missing"
+    },
+    "trace_no_fabrication_audit": {
+      "name": "trace_no_fabrication_audit",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "DecisionTrace missing"
+    },
+    "timing_requirement_ms": {
+      "name": "timing_requirement_ms",
+      "value": 12.37,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_planning_ms": {
+      "name": "timing_planning_ms",
+      "value": 0.09,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_asaa_ms": {
+      "name": "timing_asaa_ms",
+      "value": 0.81,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_architectural_design_ms": {
+      "name": "timing_architectural_design_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_geometry_ms": {
+      "name": "timing_geometry_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_validation_ms": {
+      "name": "timing_validation_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_refinement_ms": {
+      "name": "timing_refinement_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_multi_design_ms": {
+      "name": "timing_multi_design_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_explainability_ms": {
+      "name": "timing_explainability_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_export_ms": {
+      "name": "timing_export_ms",
+      "value": 0.0,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "timing_total_ms": {
+      "name": "timing_total_ms",
+      "value": 13.27,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "asaa_duration_ms": {
+      "name": "asaa_duration_ms",
+      "value": 0.81,
+      "unit": "ms",
+      "is_available": true,
+      "unavailable_reason": null
+    },
+    "asaa_allocation_rate": {
+      "name": "asaa_allocation_rate",
+      "value": null,
+      "unit": "",
+      "is_available": false,
+      "unavailable_reason": "ASAA duration zero or allocation set missing"
+    },
+    "reproducibility_evaluated": {
+      "name": "reproducibility_evaluated",
+      "value": true,
+      "unit": "flag",
+      "is_available": true,
+      "unavailable_reason": null
+    }
+  }
+}

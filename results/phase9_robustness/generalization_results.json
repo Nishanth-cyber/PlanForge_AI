@@ -1,0 +1,139 @@
+{
+  "fixtures_count": 7,
+  "valid_design_rate_pct": 100.0,
+  "results": [
+    {
+      "fixture_id": "heldout_01_narrow_elongated",
+      "name": "Narrow Elongated Plot (1:4 Aspect Ratio)",
+      "category": "heldout_geometry",
+      "expected_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "plot_shape": "rectangular",
+        "aspect_ratio": 4.0,
+        "width_m": 6.1,
+        "length_m": 24.4,
+        "buildable_width_m": 4.1,
+        "buildable_length_m": 20.4
+      },
+      "status": "completed",
+      "is_valid": true,
+      "boundary_compliant": true,
+      "quality_score": 82.0,
+      "candidate_count": 1,
+      "duration_ms": 158.43,
+      "error_message": null
+    },
+    {
+      "fixture_id": "heldout_02_nonconvex_l_wings",
+      "name": "Asymmetric L-Shaped Winged Plot",
+      "category": "heldout_geometry",
+      "expected_feasibility": "feasible",
+      "geometric_properties": {
+        "plot_shape": "l-shaped",
+        "non_convex": true,
+        "wing_proportions": [
+          0.6,
+          0.4
+        ]
+      },
+      "status": "completed",
+      "is_valid": true,
+      "boundary_compliant": true,
+      "quality_score": 79.0,
+      "candidate_count": 1,
+      "duration_ms": 379.98,
+      "error_message": null
+    },
+    {
+      "fixture_id": "heldout_03_nonconvex_t_junction",
+      "name": "T-Shaped Junction Plot",
+      "category": "heldout_geometry",
+      "expected_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "plot_shape": "t-shaped",
+        "non_convex": true,
+        "bottleneck_width_m": 5.0
+      },
+      "status": "completed",
+      "is_valid": true,
+      "boundary_compliant": true,
+      "quality_score": 79.0,
+      "candidate_count": 1,
+      "duration_ms": 262.74,
+      "error_message": null
+    },
+    {
+      "fixture_id": "heldout_04_irregular_pentagon",
+      "name": "Irregular Pentagonal Boundary",
+      "category": "heldout_geometry",
+      "expected_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "plot_shape": "irregular_pentagon",
+        "num_vertices": 5,
+        "non_orthogonal": true
+      },
+      "status": "completed",
+      "is_valid": true,
+      "boundary_compliant": true,
+      "quality_score": 88.0,
+      "candidate_count": 1,
+      "duration_ms": 133.75,
+      "error_message": null
+    },
+    {
+      "fixture_id": "heldout_05_tight_setback_envelope",
+      "name": "Deep Setback Constrained Envelope",
+      "category": "heldout_geometry",
+      "expected_feasibility": "feasible",
+      "geometric_properties": {
+        "plot_shape": "rectangular",
+        "front_setback_m": 3.0,
+        "rear_setback_m": 3.0,
+        "side_setback_m": 2.5,
+        "buildable_width_m": 5.2
+      },
+      "status": "completed",
+      "is_valid": true,
+      "boundary_compliant": true,
+      "quality_score": 85.0,
+      "candidate_count": 1,
+      "duration_ms": 337.7,
+      "error_message": null
+    },
+    {
+      "fixture_id": "heldout_06_narrow_wing_bifurcation",
+      "name": "Dual-Wing Narrow Bifurcation Plot",
+      "category": "heldout_geometry",
+      "expected_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "plot_shape": "dual_wing",
+        "bridge_width_m": 3.5
+      },
+      "status": "completed",
+      "is_valid": true,
+      "boundary_compliant": true,
+      "quality_score": 79.0,
+      "candidate_count": 1,
+      "duration_ms": 429.3,
+      "error_message": null
+    },
+    {
+      "fixture_id": "heldout_07_irregular_multifloor",
+      "name": "Two-Floor Irregular Plot Residence",
+      "category": "heldout_geometry",
+      "expected_feasibility": "feasible",
+      "geometric_properties": {
+        "plot_shape": "l-shaped",
+        "floors": 2,
+        "requires_staircase": true
+      },
+      "status": "completed",
+      "is_valid": true,
+      "boundary_compliant": true,
+      "quality_score": 91.0,
+      "candidate_count": 1,
+      "duration_ms": 119.0,
+      "error_message": null
+    }
+  ]
+}

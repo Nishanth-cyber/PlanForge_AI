@@ -1,0 +1,106 @@
+{
+  "pipeline_mode": {},
+  "agentic_mode": {},
+  "comparison_table": [
+    {
+      "case_id": "case_01_small_single_floor",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "duration_ms": 107.5,
+        "error": null
+      },
+      "agentic": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "duration_ms": 43.9,
+        "decisions_count": 8,
+        "error": null,
+        "infeasibility_evidence": []
+      }
+    },
+    {
+      "case_id": "case_04_two_floor_family",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "duration_ms": 88.0,
+        "error": null
+      },
+      "agentic": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "duration_ms": 56.6,
+        "decisions_count": 8,
+        "error": null,
+        "infeasibility_evidence": []
+      }
+    },
+    {
+      "case_id": "case_06_irregular_l_plot",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 85.0,
+        "duration_ms": 192.2,
+        "error": null
+      },
+      "agentic": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 79.0,
+        "duration_ms": 80.0,
+        "decisions_count": 8,
+        "error": null,
+        "infeasibility_evidence": []
+      }
+    },
+    {
+      "case_id": "case_15_feasibility_edge",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 82.0,
+        "duration_ms": 173.7,
+        "error": null
+      },
+      "agentic": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 85.0,
+        "duration_ms": 80.9,
+        "decisions_count": 8,
+        "error": null,
+        "infeasibility_evidence": []
+      }
+    },
+    {
+      "case_id": "case_16_infeasible_deficit",
+      "pipeline": {
+        "status": "failed",
+        "is_valid": false,
+        "score": 0.0,
+        "duration_ms": 9.0,
+        "error": "Floor 1: Total minimum room area (122.6 m\u00b2) exceeds available buildable area (4.4 m\u00b2) by deficit of 118.2 m\u00b2"
+      },
+      "agentic": {
+        "status": "failed",
+        "is_valid": false,
+        "score": 0.0,
+        "duration_ms": 8.3,
+        "decisions_count": 4,
+        "error": "ASAA Allocation infeasible: Floor 1: Total minimum room area (122.6 m\u00b2) exceeds available buildable area (4.4 m\u00b2) by deficit of 118.2 m\u00b2",
+        "infeasibility_evidence": [
+          {
+            "reason": "asaa_infeasible",
+            "error": "Floor 1: Total minimum room area (122.6 m\u00b2) exceeds available buildable area (4.4 m\u00b2) by deficit of 118.2 m\u00b2"
+          }
+        ]
+      }
+    }
+  ]
+}

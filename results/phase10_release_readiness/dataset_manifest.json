@@ -1,0 +1,376 @@
+{
+  "manifest_version": "10.0.0",
+  "created_at": "2026-10-11T04:35:02.982402+00:00",
+  "git_revision": "5d370b97842218281fd0e179d09e30457da48abf",
+  "total_cases_count": 35,
+  "benchmark_cases_count": 20,
+  "heldout_cases_count": 7,
+  "stress_cases_count": 8,
+  "ground_truth_summary": {
+    "feasible_benchmark_cases": 17,
+    "infeasible_benchmark_cases": 3,
+    "heldout_feasible_cases": 7,
+    "stress_truthful_expectations": 8
+  },
+  "benchmark_cases": [
+    {
+      "case_id": "case_01_small_single_floor",
+      "name": "Small Single-Floor Bungalow",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "low",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_02_medium_single_floor",
+      "name": "Medium Single-Floor Suburban Residence",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "medium",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_03_large_single_floor",
+      "name": "Large Single-Floor Estate Villa",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "medium",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_04_two_floor_family",
+      "name": "Two-Floor Family Residence",
+      "category": "MULTI_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "medium",
+      "expected_floors": 2,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_05_three_floor_townhouse",
+      "name": "Three-Floor Urban Townhouse",
+      "category": "MULTI_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "high",
+      "expected_floors": 3,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_06_irregular_l_plot",
+      "name": "Irregular L-Shaped Boundary Residence",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "high",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_07_tight_urban",
+      "name": "Constrained Narrow Urban Infill",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "high",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_08_multi_bedroom",
+      "name": "Four-Bedroom Extended Family Layout",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "medium",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_09_attached_suite",
+      "name": "Master Bedroom Attached Suite",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "medium",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_10_separation_heavy",
+      "name": "Separation Heavy Acoustic Layout",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "high",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_11_adjacency_heavy",
+      "name": "Adjacency Heavy Social Flow",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "medium",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_12_preferred_relationships",
+      "name": "Preferred Relationship Flexible Program",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "medium",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_13_staircase_core",
+      "name": "Multi-Level Vertical Staircase Coordination",
+      "category": "MULTI_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "medium",
+      "expected_floors": 2,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_14_orientation_east",
+      "name": "East-Facing Solar & Entrance Orientation",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "medium",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_15_feasibility_edge",
+      "name": "High-Density Feasibility Edge Case",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "high",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_16_infeasible_deficit",
+      "name": "Infeasible Room Deficit Program",
+      "category": "infeasible_stress",
+      "ground_truth_feasibility": "infeasible",
+      "difficulty": "high",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_17_contradictory_setbacks",
+      "name": "Contradictory Boundary Setbacks",
+      "category": "infeasible_stress",
+      "ground_truth_feasibility": "infeasible",
+      "difficulty": "high",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_18_missing_mandatory_rooms",
+      "name": "Ambiguous Program Missing Mandatory Rooms",
+      "category": "interactive_clarification",
+      "ground_truth_feasibility": "feasible_with_clarification",
+      "difficulty": "medium",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_19_irregular_t_plot",
+      "name": "Irregular T-Shaped Boundary Program",
+      "category": "SINGLE_FLOOR",
+      "ground_truth_feasibility": "feasible",
+      "difficulty": "high",
+      "expected_floors": 1,
+      "evaluation_group": "phase8_benchmark_corpus"
+    },
+    {
+      "case_id": "case_20_tight_multifloor_deficit",
+      "name": "Constrained Multi-Floor Ground Floor Deficit",
+      "category": "mathematical_deficit_infeasible",
+      "ground_truth_feasibility": "infeasible",
+      "difficulty": "high",
+      "expected_floors": 2,
+      "evaluation_group": "phase8_benchmark_corpus"
+    }
+  ],
+  "heldout_cases": [
+    {
+      "fixture_id": "heldout_01_narrow_elongated",
+      "name": "Narrow Elongated Plot (1:4 Aspect Ratio)",
+      "category": "heldout_geometry",
+      "ground_truth_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "plot_shape": "rectangular",
+        "aspect_ratio": 4.0,
+        "width_m": 6.1,
+        "length_m": 24.4,
+        "buildable_width_m": 4.1,
+        "buildable_length_m": 20.4
+      },
+      "evaluation_group": "phase9_heldout_generalization"
+    },
+    {
+      "fixture_id": "heldout_02_nonconvex_l_wings",
+      "name": "Asymmetric L-Shaped Winged Plot",
+      "category": "heldout_geometry",
+      "ground_truth_feasibility": "feasible",
+      "geometric_properties": {
+        "plot_shape": "l-shaped",
+        "non_convex": true,
+        "wing_proportions": [
+          0.6,
+          0.4
+        ]
+      },
+      "evaluation_group": "phase9_heldout_generalization"
+    },
+    {
+      "fixture_id": "heldout_03_nonconvex_t_junction",
+      "name": "T-Shaped Junction Plot",
+      "category": "heldout_geometry",
+      "ground_truth_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "plot_shape": "t-shaped",
+        "non_convex": true,
+        "bottleneck_width_m": 5.0
+      },
+      "evaluation_group": "phase9_heldout_generalization"
+    },
+    {
+      "fixture_id": "heldout_04_irregular_pentagon",
+      "name": "Irregular Pentagonal Boundary",
+      "category": "heldout_geometry",
+      "ground_truth_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "plot_shape": "irregular_pentagon",
+        "num_vertices": 5,
+        "non_orthogonal": true
+      },
+      "evaluation_group": "phase9_heldout_generalization"
+    },
+    {
+      "fixture_id": "heldout_05_tight_setback_envelope",
+      "name": "Deep Setback Constrained Envelope",
+      "category": "heldout_geometry",
+      "ground_truth_feasibility": "feasible",
+      "geometric_properties": {
+        "plot_shape": "rectangular",
+        "front_setback_m": 3.0,
+        "rear_setback_m": 3.0,
+        "side_setback_m": 2.5,
+        "buildable_width_m": 5.2
+      },
+      "evaluation_group": "phase9_heldout_generalization"
+    },
+    {
+      "fixture_id": "heldout_06_narrow_wing_bifurcation",
+      "name": "Dual-Wing Narrow Bifurcation Plot",
+      "category": "heldout_geometry",
+      "ground_truth_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "plot_shape": "dual_wing",
+        "bridge_width_m": 3.5
+      },
+      "evaluation_group": "phase9_heldout_generalization"
+    },
+    {
+      "fixture_id": "heldout_07_irregular_multifloor",
+      "name": "Two-Floor Irregular Plot Residence",
+      "category": "heldout_geometry",
+      "ground_truth_feasibility": "feasible",
+      "geometric_properties": {
+        "plot_shape": "l-shaped",
+        "floors": 2,
+        "requires_staircase": true
+      },
+      "evaluation_group": "phase9_heldout_generalization"
+    }
+  ],
+  "stress_cases": [
+    {
+      "fixture_id": "stress_01_high_room_count",
+      "name": "12-Room High-Complexity Program",
+      "category": "complexity_stress",
+      "ground_truth_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "room_count": 12,
+        "plot_dimensions": "60ft x 80ft"
+      },
+      "evaluation_group": "phase9_complexity_stress"
+    },
+    {
+      "fixture_id": "stress_02_dense_area_demand",
+      "name": "Dense 92% Buildable Envelope Packing",
+      "category": "complexity_stress",
+      "ground_truth_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "buildable_area_utilization": 0.92
+      },
+      "evaluation_group": "phase9_complexity_stress"
+    },
+    {
+      "fixture_id": "stress_03_infeasible_area_overload",
+      "name": "Deterministic Infeasible Area Overload (150%)",
+      "category": "feasibility_limit",
+      "ground_truth_feasibility": "infeasible",
+      "geometric_properties": {
+        "area_demand_ratio": 1.5,
+        "ground_truth_feasible": false
+      },
+      "evaluation_group": "phase9_complexity_stress"
+    },
+    {
+      "fixture_id": "stress_04_conflicting_adjacencies",
+      "name": "Directly Conflicting Adjacency & Separation",
+      "category": "conflicting_constraints",
+      "ground_truth_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "contradictory_rules": true
+      },
+      "evaluation_group": "phase9_complexity_stress"
+    },
+    {
+      "fixture_id": "stress_05_extreme_aspect_rooms",
+      "name": "Constrained Aspect Ratio Room Program",
+      "category": "complexity_stress",
+      "ground_truth_feasibility": "feasible_but_difficult",
+      "geometric_properties": {
+        "min_room_width_m": 1.8
+      },
+      "evaluation_group": "phase9_complexity_stress"
+    },
+    {
+      "fixture_id": "stress_06_three_floor_vertical_stress",
+      "name": "Three-Floor Residence with Vertical Circulation",
+      "category": "complexity_stress",
+      "ground_truth_feasibility": "feasible",
+      "geometric_properties": {
+        "floors": 3,
+        "staircases_required": 2
+      },
+      "evaluation_group": "phase9_complexity_stress"
+    },
+    {
+      "fixture_id": "stress_07_ambiguous_brief",
+      "name": "Ambiguous Program Requiring Clarification",
+      "category": "feasibility_limit",
+      "ground_truth_feasibility": "insufficient_information",
+      "geometric_properties": {
+        "missing_rooms": true
+      },
+      "evaluation_group": "phase9_complexity_stress"
+    },
+    {
+      "fixture_id": "stress_08_unsupported_curved_geometry",
+      "name": "Explicitly Unsupported Curved Plot Boundary",
+      "category": "unsupported_input",
+      "ground_truth_feasibility": "unsupported_input",
+      "geometric_properties": {
+        "plot_shape": "circular",
+        "supported": false
+      },
+      "evaluation_group": "phase9_complexity_stress"
+    }
+  ]
+}

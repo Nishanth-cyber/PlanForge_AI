@@ -179,6 +179,182 @@ class AblationStudyCoordinator:
             deltas=deltas,
         )
 
+    def evaluate_candidate_budget_ablation(
+        self,
+        case: BenchmarkCase,
+        orchestrator: PlanForgeOrchestrator,
+        budgets: Optional[List[int]] = None,
+        output_dir: str = "results/ablation/candidate_budget",
+    ) -> AblationResult:
+        """Ablation A: ASAA Candidate Exploration Budget (e.g. 1 candidate vs 3 candidates)."""
+        b_list = budgets or [1, 3]
+
+        cfg_low = OrchestrationConfig(
+            output_dir=output_dir,
+            candidate_budget=b_list[0],
+            enable_refinement=False,
+            enable_rendering=False,
+            enable_exports=False,
+        )
+        cfg_high = OrchestrationConfig(
+            output_dir=output_dir,
+            candidate_budget=b_list[1],
+            enable_refinement=False,
+            enable_rendering=False,
+            enable_exports=False,
+        )
+
+        res_low = orchestrator.generate(case.brief, project_name=f"{case.name}_Budget_{b_list[0]}", config=cfg_low)
+        res_high = orchestrator.generate(case.brief, project_name=f"{case.name}_Budget_{b_list[1]}", config=cfg_high)
+
+        metrics_low = self._extract_key_metrics(res_low)
+        metrics_high = self._extract_key_metrics(res_high)
+
+        deltas = {
+            "score_delta": round(float(metrics_high.get("quality_score", 0.0)) - float(metrics_low.get("quality_score", 0.0)), 2),
+            "runtime_delta_ms": round(float(metrics_high.get("total_execution_ms", 0.0)) - float(metrics_low.get("total_execution_ms", 0.0)), 1),
+        }
+
+        return AblationResult(
+            ablation_id=f"ablation_cand_budget_{case.case_id}",
+            case_id=case.case_id,
+            variant_a_name=f"Budget_{b_list[1]}_Candidates",
+            variant_a_metrics=metrics_high,
+            variant_b_name=f"Budget_{b_list[0]}_Candidate",
+            variant_b_metrics=metrics_low,
+            deltas=deltas,
+        )
+
+    def evaluate_llm_action_selection_ablation(
+        self,
+        case: BenchmarkCase,
+        orchestrator: PlanForgeOrchestrator,
+        output_dir: str = "results/ablation/llm_selection",
+    ) -> AblationResult:
+        """Ablation B: LLM Action Selection with Deterministic Fallback vs Deterministic Rule-Based Selection."""
+        cfg_llm = OrchestrationConfig(
+            mode="agentic",
+            use_llm=True,
+            output_dir=output_dir,
+            enable_rendering=False,
+            enable_exports=False,
+        )
+        cfg_rule = OrchestrationConfig(
+            mode="agentic",
+            use_llm=False,
+            output_dir=output_dir,
+            enable_rendering=False,
+            enable_exports=False,
+        )
+
+        res_llm = orchestrator.generate(case.brief, project_name=f"{case.name}_LLM_Select", config=cfg_llm)
+        res_rule = orchestrator.generate(case.brief, project_name=f"{case.name}_Rule_Select", config=cfg_rule)
+
+        metrics_llm = self._extract_key_metrics(res_llm)
+        metrics_rule = self._extract_key_metrics(res_rule)
+
+        deltas = {
+            "score_delta": round(float(metrics_llm.get("quality_score", 0.0)) - float(metrics_rule.get("quality_score", 0.0)), 2),
+            "runtime_delta_ms": round(float(metrics_llm.get("total_execution_ms", 0.0)) - float(metrics_rule.get("total_execution_ms", 0.0)), 1),
+        }
+
+        return AblationResult(
+            ablation_id=f"ablation_llm_action_{case.case_id}",
+            case_id=case.case_id,
+            variant_a_name="LLM_Action_Selector",
+            variant_a_metrics=metrics_llm,
+            variant_b_name="Deterministic_Rule_Selector",
+            variant_b_metrics=metrics_rule,
+            deltas=deltas,
+        )
+
+    def evaluate_multi_agent_coordination_ablation(
+        self,
+        case: BenchmarkCase,
+        orchestrator: PlanForgeOrchestrator,
+        output_dir: str = "results/ablation/multi_agent",
+    ) -> AblationResult:
+        """Ablation C: Hierarchical Multi-Agent Coordination vs Single-Agent Pipeline Baseline."""
+        cfg_multi = OrchestrationConfig(
+            mode="multi_agent",
+            output_dir=output_dir,
+            enable_rendering=False,
+            enable_exports=False,
+        )
+        cfg_pipe = OrchestrationConfig(
+            mode="pipeline",
+            output_dir=output_dir,
+            enable_rendering=False,
+            enable_exports=False,
+        )
+
+        res_multi = orchestrator.generate(case.brief, project_name=f"{case.name}_MultiAgent", config=cfg_multi)
+        res_pipe = orchestrator.generate(case.brief, project_name=f"{case.name}_Pipeline", config=cfg_pipe)
+
+        metrics_multi = self._extract_key_metrics(res_multi)
+        metrics_pipe = self._extract_key_metrics(res_pipe)
+
+        deltas = {
+            "score_delta": round(float(metrics_multi.get("quality_score", 0.0)) - float(metrics_pipe.get("quality_score", 0.0)), 2),
+            "runtime_delta_ms": round(float(metrics_multi.get("total_execution_ms", 0.0)) - float(metrics_pipe.get("total_execution_ms", 0.0)), 1),
+        }
+
+        return AblationResult(
+            ablation_id=f"ablation_coordination_{case.case_id}",
+            case_id=case.case_id,
+            variant_a_name="Hierarchical_Multi_Agent",
+            variant_a_metrics=metrics_multi,
+            variant_b_name="Pipeline_Baseline",
+            variant_b_metrics=metrics_pipe,
+            deltas=deltas,
+        )
+
+    def evaluate_clarification_ablation(
+        self,
+        case: BenchmarkCase,
+        orchestrator: PlanForgeOrchestrator,
+        output_dir: str = "results/ablation/clarification",
+    ) -> AblationResult:
+        """Ablation E: Interactive Clarification Mode vs Non-Interactive Batch Mode."""
+        cfg_interactive = OrchestrationConfig(
+            mode="multi_agent",
+            interactive=True,
+            output_dir=output_dir,
+            enable_rendering=False,
+            enable_exports=False,
+        )
+        cfg_batch = OrchestrationConfig(
+            mode="multi_agent",
+            interactive=False,
+            output_dir=output_dir,
+            enable_rendering=False,
+            enable_exports=False,
+        )
+
+        res_interactive = orchestrator.generate(case.brief, project_name=f"{case.name}_Interactive", config=cfg_interactive)
+        res_batch = orchestrator.generate(case.brief, project_name=f"{case.name}_Batch", config=cfg_batch)
+
+        metrics_interactive = self._extract_key_metrics(res_interactive)
+        metrics_batch = self._extract_key_metrics(res_batch)
+
+        metrics_interactive["status"] = res_interactive.status
+        metrics_batch["status"] = res_batch.status
+
+        deltas = {
+            "clarification_triggered": 1.0 if res_interactive.status == "waiting_for_clarification" else 0.0,
+            "truthful_halt": 1.0 if res_batch.status in ("failed", "incomplete_requirements") else 0.0,
+        }
+
+        return AblationResult(
+            ablation_id=f"ablation_clarification_{case.case_id}",
+            case_id=case.case_id,
+            variant_a_name="Interactive_Clarification_Mode",
+            variant_a_metrics=metrics_interactive,
+            variant_b_name="Batch_NonInteractive_Mode",
+            variant_b_metrics=metrics_batch,
+            deltas=deltas,
+        )
+
     def _extract_key_metrics(self, res: PipelineResult) -> Dict[str, Any]:
         """Extract comparable numeric & boolean metrics from a pipeline execution result."""
         vr = res.validation_report

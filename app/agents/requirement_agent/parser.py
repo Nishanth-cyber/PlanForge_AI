@@ -266,6 +266,10 @@ class RequirementParser:
             # X floors / storeys / levels
             (r"\b(\d+)[\-\s]*(?:floors?|stor(?:ey|y)s?|levels?)\b", lambda m: int(m.group(1))),
             (r"\b(one|two|three|four|five)[\-\s]*(?:floors?|stor(?:ey|y)s?|levels?)\b", lambda m: WORD_NUMBERS[m.group(1).lower()]),
+            # Building-type shorthand. Lowest priority: used only when the user gave no explicit count.
+            (r"\bbungalow\b", lambda _: 1),
+            (r"\bduplex\b", lambda _: 2),
+            (r"\btown\s*house\b|\btownhouse\b", lambda _: 3),
         ]
         for pat, fn in patterns:
             m = re.search(pat, text, re.I)

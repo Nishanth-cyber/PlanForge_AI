@@ -156,7 +156,17 @@ class RefinementLoop:
 
         visited_fingerprints.add(self._compute_fingerprint(current_design))
 
+        best_valid_design: Optional[ArchitecturalDesignSet] = None
+        best_valid_floor_plan_set: Optional[FloorPlanSet] = None
+        best_valid_report: Optional[ValidationReport] = None
+        best_diagnostic_design: ArchitecturalDesignSet = current_design
+        best_diagnostic_floor_plan_set: FloorPlanSet = current_floor_plan_set
+        best_diagnostic_report: ValidationReport = current_report
+
         if current_report.overall_valid:
+            best_valid_design = current_design
+            best_valid_floor_plan_set = current_floor_plan_set
+            best_valid_report = current_report
             return RefinementResult(
                 status=RefinementStatus.VALID_ON_INITIAL_PASS,
                 initial_design=initial_design,
@@ -205,8 +215,8 @@ class RefinementLoop:
                 return RefinementResult(
                     status=RefinementStatus.REFINEMENT_OUTPUT_INVALID,
                     initial_design=initial_design,
-                    final_design=current_design,
-                    final_floor_plan_set=current_floor_plan_set,
+                    final_design=best_valid_design or best_diagnostic_design,
+                    final_floor_plan_set=best_valid_floor_plan_set or best_diagnostic_floor_plan_set,
                     iterations=iteration_records,
                     validation_reports=validation_reports,
                     changes=all_changes,
@@ -221,8 +231,8 @@ class RefinementLoop:
                 return RefinementResult(
                     status=RefinementStatus.NO_CHANGE,
                     initial_design=initial_design,
-                    final_design=current_design,
-                    final_floor_plan_set=current_floor_plan_set,
+                    final_design=best_valid_design or best_diagnostic_design,
+                    final_floor_plan_set=best_valid_floor_plan_set or best_diagnostic_floor_plan_set,
                     iterations=iteration_records,
                     validation_reports=validation_reports,
                     changes=all_changes,
@@ -233,8 +243,8 @@ class RefinementLoop:
                 return RefinementResult(
                     status=RefinementStatus.OSCILLATION,
                     initial_design=initial_design,
-                    final_design=current_design,
-                    final_floor_plan_set=current_floor_plan_set,
+                    final_design=best_valid_design or best_diagnostic_design,
+                    final_floor_plan_set=best_valid_floor_plan_set or best_diagnostic_floor_plan_set,
                     iterations=iteration_records,
                     validation_reports=validation_reports,
                     changes=all_changes,
@@ -278,6 +288,24 @@ class RefinementLoop:
             iteration_records.append(iter_record)
             validation_reports.append(new_report)
 
+            # Update best candidate tracking
+            if new_report.overall_valid:
+                if best_valid_report is None or new_report.overall_score >= best_valid_report.overall_score:
+                    best_valid_design = revised_design
+                    best_valid_floor_plan_set = new_floor_plan_set
+                    best_valid_report = new_report
+
+            if (
+                new_report.total_errors < best_diagnostic_report.total_errors
+                or (
+                    new_report.total_errors == best_diagnostic_report.total_errors
+                    and new_report.overall_score >= best_diagnostic_report.overall_score
+                )
+            ):
+                best_diagnostic_design = revised_design
+                best_diagnostic_floor_plan_set = new_floor_plan_set
+                best_diagnostic_report = new_report
+
             current_design = revised_design
             current_floor_plan_set = new_floor_plan_set
             current_report = new_report
@@ -287,8 +315,8 @@ class RefinementLoop:
                 return RefinementResult(
                     status=RefinementStatus.VALID_AFTER_REFINEMENT,
                     initial_design=initial_design,
-                    final_design=current_design,
-                    final_floor_plan_set=current_floor_plan_set,
+                    final_design=best_valid_design or current_design,
+                    final_floor_plan_set=best_valid_floor_plan_set or current_floor_plan_set,
                     iterations=iteration_records,
                     validation_reports=validation_reports,
                     changes=all_changes,
@@ -298,11 +326,24 @@ class RefinementLoop:
         # ------------------------------------------------------------------
         # Max Iterations Reached Without Full Validity
         # ------------------------------------------------------------------
+        # If any iteration was valid, preserve and return the best valid candidate!
+        if best_valid_design is not None:
+            return RefinementResult(
+                status=RefinementStatus.VALID_AFTER_REFINEMENT,
+                initial_design=initial_design,
+                final_design=best_valid_design,
+                final_floor_plan_set=best_valid_floor_plan_set,
+                iterations=iteration_records,
+                validation_reports=validation_reports,
+                changes=all_changes,
+                termination_reason="Preserved highest-scoring valid candidate discovered during refinement",
+            )
+
         return RefinementResult(
             status=RefinementStatus.MAX_ITERATIONS_REACHED,
             initial_design=initial_design,
-            final_design=current_design,
-            final_floor_plan_set=current_floor_plan_set,
+            final_design=best_diagnostic_design,
+            final_floor_plan_set=best_diagnostic_floor_plan_set,
             iterations=iteration_records,
             validation_reports=validation_reports,
             changes=all_changes,

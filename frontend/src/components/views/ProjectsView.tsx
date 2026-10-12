@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { listProjects, deleteProject } from '../../api/projects';
+import { listProjects, deleteProject, clearProjects } from '../../api/projects';
 import type { ProjectDetailResponse } from '../../api/types';
 
 interface ProjectsViewProps {
@@ -14,6 +14,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
   const [projects, setProjects] = useState<ProjectDetailResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [clearing, setClearing] = useState<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
@@ -52,6 +53,24 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
     }
   };
 
+  const handleClearAll = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to clear all project history? This will delete all generated floor plans and outputs.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setClearing(true);
+      await clearProjects();
+      setProjects([]);
+    } catch (err) {
+      console.error('Failed to clear project history', err);
+      alert('Failed to clear project history. Please try again.');
+    } finally {
+      setClearing(false);
+    }
+  };
+
   return (
     <div style={{ width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
@@ -62,10 +81,23 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             All residential floor plan projects in your workspace
           </p>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={onNewProject}>
-          + New Project
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {projects.length > 0 && (
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={handleClearAll}
+              disabled={clearing}
+              style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+            >
+              {clearing ? 'Clearing...' : 'Clear All History'}
+            </button>
+          )}
+          <button className="btn btn-primary btn-sm" onClick={onNewProject}>
+            + New Project
+          </button>
+        </div>
       </div>
+
 
       {/* Projects Table */}
       <div className="card" style={{ padding: '0.5rem' }}>

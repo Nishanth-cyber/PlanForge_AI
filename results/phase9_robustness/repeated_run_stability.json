@@ -1,0 +1,31 @@
+{
+  "cases_evaluated": 2,
+  "stability_records": [
+    {
+      "case_id": "case_01_small_single_floor",
+      "num_runs": 3,
+      "is_deterministic_hash_identical": true,
+      "hashes": [
+        "b951f21af5887dff",
+        "b951f21af5887dff",
+        "b951f21af5887dff"
+      ],
+      "mean_quality_score": 94.0,
+      "std_quality_score": 0.0,
+      "mean_duration_ms": 84.19
+    },
+    {
+      "case_id": "case_02_medium_single_floor",
+      "num_runs": 3,
+      "is_deterministic_hash_identical": true,
+      "hashes": [
+        "690c94d169cec0ef",
+        "690c94d169cec0ef",
+        "690c94d169cec0ef"
+      ],
+      "mean_quality_score": 76.0,
+      "std_quality_score": 0.0,
+      "mean_duration_ms": 390.64
+    }
+  ]
+}

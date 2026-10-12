@@ -58,6 +58,19 @@ class GenerationRequest(BaseModel):
         default="outputs",
         description="Root output directory where export bundles are stored.",
     )
+    mode: str = Field(
+        default="standard",
+        description="Execution mode: 'standard' or 'agentic'.",
+    )
+    interactive: bool = Field(
+        default=False,
+        description="Whether the workflow should pause for interactive clarification on ambiguity or deficit.",
+    )
+    conversation_id: Optional[str] = Field(
+        default=None,
+        description="Optional conversation identifier for state persistence.",
+    )
+
 
 
 class ValidationSummarySchema(BaseModel):
@@ -82,7 +95,7 @@ class GenerationResponse(BaseModel):
     """Structured response returned by the floor-plan generation endpoint."""
     project_id: str
     project_name: str
-    status: str  # "completed", "incomplete_requirements", "failed"
+    status: str  # "completed", "incomplete_requirements", "failed", "waiting_for_clarification"
     is_success: bool
     is_valid: bool
     stage_statuses: Dict[str, str] = Field(default_factory=dict)
@@ -93,7 +106,10 @@ class GenerationResponse(BaseModel):
     missing_fields: List[str] = Field(default_factory=list)
     missing_floors: List[int] = Field(default_factory=list)
     clarification_questions: List[str] = Field(default_factory=list)
+    pending_clarification: Optional[Dict[str, Any]] = None
     error_message: Optional[str] = None
+    agentic_state: Optional[Dict[str, Any]] = None
+    decisions: Optional[List[Dict[str, Any]]] = None
 
 
 class HealthResponse(BaseModel):
@@ -162,6 +178,7 @@ class ChatTurnRequest(BaseModel):
     existing_brief: Optional[str] = Field(default=None, description="Accumulated canonical brief from previous turns.")
     project_name: str = Field(default="PlanForge Residential Project", description="Project title.")
     project_id: Optional[str] = Field(default=None, description="Optional project identifier.")
+    conversation_id: Optional[str] = Field(default=None, description="Active conversation identifier for state persistence.")
     history: List[ChatHistoryItem] = Field(
         default_factory=list,
         max_length=60,
@@ -177,6 +194,22 @@ class ChatRoutePreview(BaseModel):
     route: str
     uses_llm: bool
     reason: str = ""
+
+
+class QuickReplySchema(BaseModel):
+    """Small relevant choice option presented with assistant message."""
+    label: str
+    value: str
+
+
+class ChatActionSchema(BaseModel):
+    """Executable or executed backend operation payload."""
+    type: str
+    label: str = ""
+    status: str = "ready"
+    action_id: str = ""
+    auto_execute: bool = False
+    payload: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ChatTurnResponse(BaseModel):
@@ -198,4 +231,136 @@ class ChatTurnResponse(BaseModel):
     llm_latency_ms: Optional[int] = None
     turn_id: Optional[str] = None
     plan_modified: bool = Field(default=False, description="Always False for chat replies: only the pipeline changes the plan.")
+    # --- Structured Response Contract (Section 9) -------------------------------
+    response_type: str = Field(default="text", description="text | quick_replies | clarification | requirement_summary | generation_progress | generation_result | action_result")
+    intent: Optional[str] = Field(default=None, description="Recognized conversation intent.")
+    conversation_stage: str = Field(default="DISCOVERY", description="DISCOVERY | COLLECTING_REQUIREMENTS | READY_TO_GENERATE | GENERATING | REVIEWING_DESIGN")
+    quick_replies: List[QuickReplySchema] = Field(default_factory=list, description="Relevant quick reply choices.")
+    missing_requirements: List[str] = Field(default_factory=list, description="Missing requirements list.")
+    requirements_updated: List[str] = Field(default_factory=list, description="Fields changed in this turn.")
+    action: Optional[ChatActionSchema] = Field(default=None, description="Validated action payload.")
+    conversation_id: Optional[str] = Field(default=None, description="Conversation session ID.")
+    project_id: Optional[str] = Field(default=None, description="Associated project ID.")
+
+
+
+# ==============================================================================
+# Phase 7: Interactive Clarification & Resumable Workflow Schemas
+# ==============================================================================
+
+
+class ClarificationOptionSchema(BaseModel):
+    """Selectable resolution option presented to the user."""
+    option_id: str
+    title: str
+    description: str
+    feasibility_type: str = "suggested_alternative"  # "verified_feasible" | "suggested_alternative" | "unverified_hypothetical"
+    affected_rooms: List[str] = Field(default_factory=list)
+    numeric_changes: Dict[str, float] = Field(default_factory=dict)
+    requires_confirmation: bool = True
+
+
+class ClarificationRequestSchema(BaseModel):
+    """Active interactive clarification request."""
+    request_id: str
+    project_id: str
+    state_version: int
+    category: str
+    question: str
+    evidence: str = ""
+    measured_deficit_sqm: Optional[float] = None
+    available_sqm: Optional[float] = None
+    required_sqm: Optional[float] = None
+    options: List[ClarificationOptionSchema] = Field(default_factory=list)
+    allow_free_text: bool = True
+    allow_numeric_input: bool = False
+    affected_constraints: List[str] = Field(default_factory=list)
+    is_mandatory: bool = True
+    created_at: str | float = ""
+    status: str = "pending"
+
+
+class ClarificationResponsePayload(BaseModel):
+    """User submission responding to an active clarification request."""
+    selected_option_id: Optional[str] = None
+    user_response_text: Optional[str] = None
+    numeric_overrides: Optional[Dict[str, float]] = None
+    expected_state_version: Optional[int] = None
+
+
+class ClarificationSubmitResponse(BaseModel):
+    """Result of submitting a response to a clarification request."""
+    success: bool
+    message: str
+    status: str
+    state_version: int
+    pending_clarification: Optional[ClarificationRequestSchema] = None
+
+
+class ClarificationListResponse(BaseModel):
+    """Complete clarification inspection for a project."""
+    project_id: str
+    status: str
+    state_version: int
+    pending_clarification: Optional[ClarificationRequestSchema] = None
+    clarification_history: List[Dict[str, Any]] = Field(default_factory=list)
+    requirement_changes: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class ResumeRequestSchema(BaseModel):
+    """Payload to resume a paused generation workflow."""
+    reason: Optional[str] = "User requested resume"
+
+
+class CancelRequestSchema(BaseModel):
+    """Payload to cancel an ongoing or paused generation workflow."""
+    reason: Optional[str] = "User requested cancellation"
+
+
+# ==============================================================================
+# Natural-Language Editing & Project Versioning Schemas
+# ==============================================================================
+
+
+class EditDesignRequest(BaseModel):
+    """Payload for natural-language floor plan editing."""
+    instruction: str = Field(..., description="Natural-language edit instruction")
+    floor_number: Optional[int] = Field(None, description="Optional target floor number")
+    alternative_index: Optional[int] = Field(1, description="Alternative index being modified")
+
+
+class EditDesignResponse(BaseModel):
+    """Response containing outcome of design edit or undo operation."""
+    success: bool
+    project_id: str
+    version_id: str
+    instruction: str
+    summary: str
+    is_valid: bool
+    validation_summary: Optional[ValidationSummarySchema] = None
+    affected_rooms: List[str] = Field(default_factory=list)
+    affected_elements: List[str] = Field(default_factory=list)
+    can_undo: bool = False
+    clarification_required: bool = False
+    clarification_question: Optional[str] = None
+    new_design_requested: bool = False
+    error_message: Optional[str] = None
+    feasible_alternatives: List[str] = Field(default_factory=list)
+
+
+class VersionSummarySchema(BaseModel):
+    """Summary of a recorded design version."""
+    version_id: str
+    project_id: str
+    parent_version_id: Optional[str] = None
+    instruction: str
+    summary: str
+    timestamp: float
+    affected_room_ids: List[str] = Field(default_factory=list)
+    affected_element_ids: List[str] = Field(default_factory=list)
+    is_valid: bool = True
+    validation_score: float = 100.0
+    total_errors: int = 0
+    total_warnings: int = 0
+
 

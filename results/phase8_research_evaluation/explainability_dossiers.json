@@ -1,0 +1,97 @@
+[
+  {
+    "project_id": "proj_1275cfa32365",
+    "status": "completed",
+    "infeasibility_explanation": null,
+    "clarification_explanations": [],
+    "allocation_explanations": [],
+    "validation_explanations": [
+      {
+        "explanation_id": "exp_val_f56b84eb2d32",
+        "decision_action": "record_advisory_warning",
+        "observed_trigger": "validation check 'window' failed with severity 'warning': Window (id=geowindow_2850af5cdac6) faces 'west' instead of requested 'north'",
+        "supporting_evidence": {
+          "expected_orientation": "north",
+          "actual_orientation": "west"
+        },
+        "relevant_constraints": [
+          {
+            "name": "window",
+            "type": "preferred",
+            "is_hard": false
+          }
+        ],
+        "tool_outcome": "warning",
+        "alternatives_considered": [],
+        "selection_rationale": "Defect flagged on target 'geowindow_2850af5cdac6'; hard defects prevent project completion without repair.",
+        "resulting_state_change": "Recorded in validation report",
+        "unresolved_limitations": [],
+        "is_verified": true,
+        "unverified_reason": null
+      },
+      {
+        "explanation_id": "exp_val_9aa04ef2fbd5",
+        "decision_action": "record_advisory_warning",
+        "observed_trigger": "validation check 'window' failed with severity 'warning': Window (id=geowindow_e3d61335a4ab) faces 'east' instead of requested 'west'",
+        "supporting_evidence": {
+          "expected_orientation": "west",
+          "actual_orientation": "east"
+        },
+        "relevant_constraints": [
+          {
+            "name": "window",
+            "type": "preferred",
+            "is_hard": false
+          }
+        ],
+        "tool_outcome": "warning",
+        "alternatives_considered": [],
+        "selection_rationale": "Defect flagged on target 'geowindow_e3d61335a4ab'; hard defects prevent project completion without repair.",
+        "resulting_state_change": "Recorded in validation report",
+        "unresolved_limitations": [],
+        "is_verified": true,
+        "unverified_reason": null
+      }
+    ],
+    "decision_explanations": [],
+    "unresolved_limitations": []
+  },
+  {
+    "project_id": "proj_c075bd76f6ea",
+    "status": "waiting_for_clarification",
+    "infeasibility_explanation": {
+      "explanation_id": "exp_inf_82ee6188b285",
+      "decision_action": "declare_infeasible",
+      "observed_trigger": "measured room-area demand (0.0 m\u00b2) exceeds available buildable area (4.4 m\u00b2) by a deficit of 118.2 m\u00b2",
+      "supporting_evidence": {
+        "deficit_sqm": 118.2,
+        "available_sqm": 4.4,
+        "required_sqm": 0.0
+      },
+      "relevant_constraints": [
+        {
+          "name": "plot_setback_envelope",
+          "type": "mandatory",
+          "is_hard": true
+        },
+        {
+          "name": "minimum_room_areas",
+          "type": "mandatory",
+          "is_hard": true
+        }
+      ],
+      "tool_outcome": "infeasible",
+      "alternatives_considered": [],
+      "selection_rationale": "The ASAA spatial boundary calculator determined that the requested spaces cannot physically fit inside the setback-constrained envelope without violating mandatory minimum area limits.",
+      "resulting_state_change": "Transitioned workflow to INFEASIBLE (or WAITING_FOR_CLARIFICATION in interactive mode)",
+      "unresolved_limitations": [],
+      "is_verified": true,
+      "unverified_reason": null
+    },
+    "clarification_explanations": [],
+    "allocation_explanations": [],
+    "validation_explanations": [],
+    "decision_explanations": [],
+    "unresolved_limitations": []
+  }
+]

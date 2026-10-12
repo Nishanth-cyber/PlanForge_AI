@@ -22,8 +22,7 @@ def test_huggingface_deepseek_connection_or_skip():
     """Verify Hugging Face DeepSeek client can be initialized and fails explicitly if offline."""
     cfg = LLMConfig.from_env()
     cfg.provider = "huggingface"
-    if not os.getenv("PLANFORGE_LLM_MODEL"):
-        cfg.model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
+    cfg.model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 
     client = HuggingFaceClient(cfg)
     assert client.config.provider == "huggingface"

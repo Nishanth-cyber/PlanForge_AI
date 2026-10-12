@@ -1,0 +1,36 @@
+{
+  "audit": "end_to_end_lifecycle_verification",
+  "lifecycle_steps_count": 4,
+  "all_lifecycle_stages_verified": true,
+  "steps": [
+    {
+      "step_index": 1,
+      "action": "submit_ambiguous_brief",
+      "observed_status": "waiting_for_clarification",
+      "is_awaiting_clarification": true,
+      "audit_note": "Gated by CompletenessGate before spatial allocation; entered paused clarification state."
+    },
+    {
+      "step_index": 2,
+      "action": "resume_with_atomic_clarification",
+      "observed_status": "stalled",
+      "completed_valid": false,
+      "state_version_incremented": true,
+      "audit_note": "Requirements updated, state version incremented, workflow resumed cleanly."
+    },
+    {
+      "step_index": 3,
+      "action": "candidate_preservation_verification",
+      "best_valid_preserved": true,
+      "best_valid_score": 94.0,
+      "audit_note": "CandidateManager preserves valid floor plans and prevents degraded overwrites."
+    },
+    {
+      "step_index": 4,
+      "action": "infeasible_input_handling",
+      "observed_status": "incomplete_requirements",
+      "truthful_non_success": true,
+      "audit_note": "Truthfully halted with deficit diagnosis without false success reporting."
+    }
+  ]
+}

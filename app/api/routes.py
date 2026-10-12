@@ -17,8 +17,15 @@ from app.api.errors import resolve_safe_path
 from app.api.registry import ProjectRegistry
 from app.api.schemas import (
     AlternativeSummarySchema,
+    CancelRequestSchema,
+    ChatActionSchema,
     ChatTurnRequest,
     ChatTurnResponse,
+    ClarificationListResponse,
+    ClarificationOptionSchema,
+    ClarificationRequestSchema,
+    ClarificationResponsePayload,
+    ClarificationSubmitResponse,
     ExportFileItem,
     ExportResponse,
     GenerationRequest,
@@ -26,13 +33,19 @@ from app.api.schemas import (
     HealthResponse,
     ProjectDetailResponse,
     QuestionCardSchema,
+    QuickReplySchema,
     RequirementProgressItem,
+    ResumeRequestSchema,
     ValidationSummarySchema,
+    EditDesignRequest,
+    EditDesignResponse,
+    VersionSummarySchema,
 )
 from app.export.json_exporter import export_project_json
 from app.export.dxf import DXFExporter, get_dxf_filename
 from app.orchestration.config import OrchestrationConfig
 from app.orchestration.orchestrator import PlanForgeOrchestrator
+from app.utils.ids import generate_id
 
 from app.chat.orchestrator import ChatOrchestrator
 
@@ -69,6 +82,7 @@ def chat_turn(
     updates structured requirements, checks completeness, and returns the next dynamic question card.
     """
     chat_orchestrator.registry = registry
+    conv_id = req.conversation_id
     result = chat_orchestrator.handle(
         message=req.message,
         existing_brief=req.existing_brief,
@@ -78,8 +92,16 @@ def chat_turn(
         active_floor=req.active_floor,
         alternative_index=req.alternative_index,
         input_source=req.input_source,
+        conversation_id=conv_id,
     )
     res = result.turn
+    action_dict = None
+    if result.action is not None:
+        if hasattr(result.action, "to_dict"):
+            action_dict = result.action.to_dict()
+        elif isinstance(result.action, dict):
+            action_dict = result.action
+
     return ChatTurnResponse(
         message=res.message,
         question_card=QuestionCardSchema(**res.question_card.to_dict()) if res.question_card else None,
@@ -97,53 +119,22 @@ def chat_turn(
         llm_latency_ms=result.llm_latency_ms,
         turn_id=result.turn_id,
         plan_modified=result.plan_modified,
+        response_type=result.response_type.value if result.response_type else "text",
+        intent=result.intent,
+        conversation_stage=result.stage or "DISCOVERY",
+        quick_replies=[QuickReplySchema(label=q.label, value=q.value) for q in result.quick_replies],
+        missing_requirements=result.missing_requirements or [],
+        requirements_updated=result.requirements_updated or [],
+        action=ChatActionSchema(**action_dict) if action_dict else None,
+        conversation_id=result.conversation_id or conv_id,
+        project_id=result.project_id or req.project_id,
     )
 
 
 
-@router.post(
-    "/generate",
-    response_model=GenerationResponse,
-    summary="Generate Residential Floor Plan",
-)
-def generate_floor_plan(
-    req: GenerationRequest,
-    orchestrator: PlanForgeOrchestrator = Depends(get_orchestrator),
-    registry: ProjectRegistry = Depends(get_project_registry),
-) -> GenerationResponse:
-    """Execute the complete 10-stage PlanForge generative pipeline.
 
-    Coordinates:
-    Requirement -> Planning -> ASAA -> Architectural LLM -> Geometry Engine ->
-    Independent Validator -> Refinement Loop -> Multi-Design Diversity ->
-    Decision Trace -> Export & Rendering.
-    """
-    cfg = OrchestrationConfig(
-        enable_refinement=req.enable_refinement,
-        max_refinement_iterations=req.max_refinement_iterations,
-        num_alternatives=req.num_alternatives,
-        enable_rendering=req.enable_rendering,
-        enable_exports=req.enable_exports,
-        create_zip=req.create_zip,
-        output_dir=req.output_dir,
-    )
-
-    brief_to_use = req.brief or ""
-    if req.plot_shape and len(req.plot_shape) >= 3 and "polygon:" not in brief_to_use.lower() and "plot shape:" not in brief_to_use.lower():
-        coords_str = ", ".join(f"({float(p[0])}, {float(p[1])})" for p in req.plot_shape)
-        brief_to_use = f"Plot polygon: {coords_str}\n" + brief_to_use
-
-    result = orchestrator.generate(
-        raw_brief=brief_to_use,
-        project_name=req.project_name,
-        project_id=req.project_id,
-        config=cfg,
-    )
-
-    # Cache result in process-local registry
-    registry.save_result(result)
-
-    # Format validation summary if available
+def _build_generation_response(result: PipelineResult) -> GenerationResponse:
+    """Helper to convert PipelineResult into GenerationResponse with pending clarification support."""
     val_summary = None
     if result.validation_report:
         val_summary = ValidationSummarySchema(
@@ -153,7 +144,6 @@ def generate_floor_plan(
             total_warnings=result.validation_report.total_warnings,
         )
 
-    # Format alternatives if available (neutrally presented without rankings)
     alts_list: List[AlternativeSummarySchema] = []
     if result.alternative_set and result.alternative_set.alternatives:
         for alt in result.alternative_set.alternatives:
@@ -167,6 +157,10 @@ def generate_floor_plan(
                     diversity_scores=dict(alt.diversity_scores),
                 )
             )
+
+    pending_clarification = None
+    if result.agentic_state and result.agentic_state.get("pending_clarification"):
+        pending_clarification = result.agentic_state.get("pending_clarification")
 
     return GenerationResponse(
         project_id=result.project_id,
@@ -182,8 +176,99 @@ def generate_floor_plan(
         missing_fields=result.missing_fields,
         missing_floors=result.missing_floors,
         clarification_questions=result.clarification_questions,
+        pending_clarification=pending_clarification,
         error_message=result.error_message,
+        agentic_state=result.agentic_state,
+        decisions=result.decisions,
     )
+
+
+@router.post(
+    "/generate",
+    response_model=GenerationResponse,
+    summary="Generate Residential Floor Plan",
+)
+def generate_floor_plan(
+    req: GenerationRequest,
+    orchestrator: PlanForgeOrchestrator = Depends(get_orchestrator),
+    registry: ProjectRegistry = Depends(get_project_registry),
+) -> GenerationResponse:
+    """Execute the complete PlanForge generative pipeline or multi-agent coordinator."""
+    cfg = OrchestrationConfig(
+        enable_refinement=req.enable_refinement,
+        max_refinement_iterations=req.max_refinement_iterations,
+        num_alternatives=req.num_alternatives,
+        enable_rendering=req.enable_rendering,
+        enable_exports=req.enable_exports,
+        create_zip=req.create_zip,
+        output_dir=req.output_dir,
+        interactive=req.interactive,
+    )
+
+    brief_to_use = req.brief or ""
+    if req.plot_shape and len(req.plot_shape) >= 3 and "polygon:" not in brief_to_use.lower() and "plot shape:" not in brief_to_use.lower():
+        coords_str = ", ".join(f"({float(p[0])}, {float(p[1])})" for p in req.plot_shape)
+        brief_to_use = f"Plot polygon: {coords_str}\n" + brief_to_use
+
+    mode_val = getattr(req, "mode", "standard")
+    pid = req.project_id or generate_id("proj")
+    pname = req.project_name
+    cid = getattr(req, "conversation_id", None)
+    if cid:
+        from app.chat.state import conversation_store
+        conversation_store.begin_generation(cid, pid)
+
+    if mode_val in ("multi_agent", "hierarchical") or (mode_val == "agentic" and req.interactive):
+        from app.orchestration.hierarchical import HierarchicalOrchestrator
+        hierarchical = HierarchicalOrchestrator(
+            registry=orchestrator.tool_registry,
+            budget=getattr(cfg, "budget", None),
+            interactive=req.interactive,
+        )
+        project_state = hierarchical.run(
+            project_id=pid,
+            goal=pname,
+            raw_brief=brief_to_use,
+            inputs={
+                "output_dir": cfg.output_dir,
+                "project_name": pname,
+                "num_alternatives": cfg.num_alternatives,
+            },
+        )
+        result = orchestrator._create_result_from_agentic_state(
+            project_state, pid, pname, cfg, event_log=hierarchical.event_log
+        )
+        registry.save_result(result, state=project_state, orchestrator=hierarchical, config=cfg)
+    elif mode_val == "agentic":
+        result = orchestrator.generate_agentic(
+            raw_brief=brief_to_use,
+            project_name=pname,
+            project_id=pid,
+            config=cfg,
+        )
+        registry.save_result(result)
+    else:
+        result = orchestrator.generate(
+            raw_brief=brief_to_use,
+            project_name=pname,
+            project_id=pid,
+            config=cfg,
+        )
+        registry.save_result(result)
+
+    if cid:
+        from app.chat.state import conversation_store
+        conversation_store.finish_generation(
+            cid,
+            ok=result.is_success,
+            project_id=result.project_id,
+            status=result.status,
+            valid=result.is_valid,
+            error=result.error_message,
+        )
+
+    return _build_generation_response(result)
+
 
 
 @router.get(
@@ -354,6 +439,13 @@ def delete_project(
             deleted_from_disk = True
         except Exception:
             pass
+    zip_path = Path("outputs") / f"{project_id}.zip"
+    if zip_path.exists() and zip_path.is_file():
+        try:
+            zip_path.unlink()
+            deleted_from_disk = True
+        except Exception:
+            pass
 
     if not deleted_from_memory and not deleted_from_disk:
         raise HTTPException(
@@ -367,6 +459,274 @@ def delete_project(
         "deleted_from_memory": deleted_from_memory,
         "deleted_from_disk": deleted_from_disk,
     }
+
+
+@router.delete(
+    "/projects",
+    summary="Clear All Generated Projects",
+)
+def clear_all_projects(
+    registry: ProjectRegistry = Depends(get_project_registry),
+) -> Dict[str, Any]:
+    """Clear all generated projects from in-memory registry and disk outputs."""
+    registry.clear()
+    cleared_count = 0
+    outputs_dir = Path("outputs")
+    preserved = {"dxf", "json", "png"}
+    if outputs_dir.exists() and outputs_dir.is_dir():
+        for item in outputs_dir.iterdir():
+            if item.is_dir() and item.name not in preserved:
+                try:
+                    shutil.rmtree(item)
+                    cleared_count += 1
+                except Exception:
+                    pass
+            elif item.is_file():
+                try:
+                    item.unlink()
+                    cleared_count += 1
+                except Exception:
+                    pass
+    return {
+        "status": "cleared",
+        "cleared_count": cleared_count,
+    }
+
+
+
+# ==============================================================================
+# Phase 7: Interactive Clarification and Resumable Workflow Endpoints
+# ==============================================================================
+
+
+@router.get(
+    "/projects/{project_id}/clarifications",
+    response_model=ClarificationListResponse,
+    summary="Retrieve Pending and Historical Clarifications",
+)
+def get_project_clarifications(
+    project_id: str,
+    registry: ProjectRegistry = Depends(get_project_registry),
+) -> ClarificationListResponse:
+    """Retrieve active pending clarification request, history, and requirement changes."""
+    data = registry.get_clarifications(project_id)
+    if data["status"] == "not_found":
+        pjson_path = Path("outputs") / project_id / "project.json"
+        if not pjson_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project '{project_id}' not found.",
+            )
+
+    pending_schema = None
+    if data.get("pending_clarification"):
+        pending_schema = ClarificationRequestSchema(**data["pending_clarification"])
+
+    return ClarificationListResponse(
+        project_id=project_id,
+        status=data["status"],
+        state_version=data["state_version"],
+        pending_clarification=pending_schema,
+        clarification_history=data.get("clarification_history", []),
+        requirement_changes=data.get("requirement_changes", []),
+    )
+
+
+@router.post(
+    "/projects/{project_id}/clarifications/{request_id}/response",
+    response_model=ClarificationSubmitResponse,
+    summary="Submit User Response to Clarification Request",
+)
+def submit_clarification_response(
+    project_id: str,
+    request_id: str,
+    payload: ClarificationResponsePayload,
+    registry: ProjectRegistry = Depends(get_project_registry),
+) -> ClarificationSubmitResponse:
+    """Submit a user response (selected option, numeric override, or free text) to an active clarification request."""
+    success, msg, resp, state = registry.submit_clarification_response(
+        project_id=project_id,
+        request_id=request_id,
+        selected_option_id=payload.selected_option_id,
+        user_response_text=payload.user_response_text,
+        numeric_overrides=payload.numeric_overrides,
+        expected_state_version=payload.expected_state_version,
+    )
+    if not success:
+        if "not found in active session" in msg:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+        if "stale response" in msg.lower():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
+
+    pending_schema = None
+    if state and state.pending_clarification:
+        pending_schema = ClarificationRequestSchema(**state.pending_clarification.to_dict())
+
+    return ClarificationSubmitResponse(
+        success=True,
+        message=msg,
+        status=state.status.value if state else "accepted",
+        state_version=state.version if state else 0,
+        pending_clarification=pending_schema,
+    )
+
+
+@router.post(
+    "/projects/{project_id}/resume",
+    response_model=GenerationResponse,
+    summary="Resume Paused Floor-Plan Generation Workflow",
+)
+def resume_project_workflow(
+    project_id: str,
+    payload: ResumeRequestSchema = ResumeRequestSchema(),
+    registry: ProjectRegistry = Depends(get_project_registry),
+) -> GenerationResponse:
+    """Resume execution of a paused or waiting generation workflow from its paused stage."""
+    success, msg, result = registry.resume_project(project_id)
+    if not success or not result:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
+    return _build_generation_response(result)
+
+
+@router.post(
+    "/projects/{project_id}/cancel",
+    response_model=GenerationResponse,
+    summary="Cancel Ongoing or Paused Generation Session",
+)
+def cancel_project_workflow(
+    project_id: str,
+    payload: CancelRequestSchema = CancelRequestSchema(),
+    registry: ProjectRegistry = Depends(get_project_registry),
+) -> GenerationResponse:
+    """Cancel an active, waiting, or paused generation workflow."""
+    success, msg, result = registry.cancel_project(project_id, reason=payload.reason or "User cancelled")
+    if not success or not result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+    return _build_generation_response(result)
+
+
+# ==============================================================================
+# Natural-Language Editing & Project Versioning Endpoints
+# ==============================================================================
+
+
+@router.post(
+    "/projects/{project_id}/edit",
+    response_model=EditDesignResponse,
+    summary="Edit Existing Floor Plan via Natural Language",
+)
+def edit_project_design(
+    project_id: str,
+    payload: EditDesignRequest,
+    registry: ProjectRegistry = Depends(get_project_registry),
+) -> EditDesignResponse:
+    """Intelligently edit existing architectural design in place using natural language instructions."""
+    res = registry.get_result(project_id)
+    if not res:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project '{project_id}' not found.",
+        )
+
+    edit_res = registry.edit_project(
+        project_id=project_id,
+        instruction=payload.instruction,
+        floor_number=payload.floor_number,
+        alternative_index=payload.alternative_index or 1,
+    )
+
+    if not edit_res:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to initialize design editing agent.",
+        )
+
+    val_summary = None
+    if edit_res.validation_summary:
+        val_summary = ValidationSummarySchema(**edit_res.validation_summary)
+
+    return EditDesignResponse(
+        success=edit_res.success,
+        project_id=project_id,
+        version_id=edit_res.version_id,
+        instruction=edit_res.instruction,
+        summary=edit_res.summary,
+        is_valid=edit_res.is_valid,
+        validation_summary=val_summary,
+        affected_rooms=edit_res.affected_rooms,
+        affected_elements=edit_res.affected_elements,
+        can_undo=edit_res.can_undo,
+        clarification_required=edit_res.clarification_required,
+        clarification_question=edit_res.clarification_question,
+        new_design_requested=edit_res.new_design_requested,
+        error_message=edit_res.error_message,
+        feasible_alternatives=edit_res.feasible_alternatives,
+    )
+
+
+@router.post(
+    "/projects/{project_id}/undo",
+    response_model=EditDesignResponse,
+    summary="Undo Last Floor Plan Edit",
+)
+def undo_project_design(
+    project_id: str,
+    registry: ProjectRegistry = Depends(get_project_registry),
+) -> EditDesignResponse:
+    """Restore the previous design version safely and revalidate."""
+    res = registry.get_result(project_id)
+    if not res:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project '{project_id}' not found.",
+        )
+
+    undo_res = registry.undo_project(project_id)
+    if not undo_res or not undo_res.success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=undo_res.summary if undo_res else "Nothing to undo.",
+        )
+
+    val_summary = None
+    if undo_res.validation_summary:
+        val_summary = ValidationSummarySchema(**undo_res.validation_summary)
+
+    return EditDesignResponse(
+        success=undo_res.success,
+        project_id=project_id,
+        version_id=undo_res.version_id,
+        instruction=undo_res.instruction,
+        summary=undo_res.summary,
+        is_valid=undo_res.is_valid,
+        validation_summary=val_summary,
+        affected_rooms=undo_res.affected_rooms,
+        affected_elements=undo_res.affected_elements,
+        can_undo=undo_res.can_undo,
+        error_message=undo_res.error_message,
+    )
+
+
+@router.get(
+    "/projects/{project_id}/versions",
+    response_model=List[VersionSummarySchema],
+    summary="List Design Version History",
+)
+def get_project_versions(
+    project_id: str,
+    registry: ProjectRegistry = Depends(get_project_registry),
+) -> List[VersionSummarySchema]:
+    """Retrieve full version history snapshots for an edited project."""
+    res = registry.get_result(project_id)
+    if not res:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project '{project_id}' not found.",
+        )
+
+    summaries = registry.get_project_versions(project_id)
+    return [VersionSummarySchema(**s) for s in summaries]
 
 
 @router.get(

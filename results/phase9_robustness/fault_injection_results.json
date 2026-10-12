@@ -1,0 +1,102 @@
+{
+  "scenarios_tested": 8,
+  "recovery_success_count": 8,
+  "fault_records": [
+    {
+      "fault_type": "llm_timeout",
+      "target_component": "architectural_agent.llm_client",
+      "injected_at_step": 1,
+      "payload": {},
+      "exception_raised": null,
+      "recovered_successfully": true,
+      "fallback_invoked": true,
+      "preserved_best_valid": true,
+      "terminal_status": "completed",
+      "audit_notes": "Fell back safely to deterministic proposal generator without crash."
+    },
+    {
+      "fault_type": "llm_connection_error",
+      "target_component": "architectural_agent.llm_client",
+      "injected_at_step": 1,
+      "payload": {},
+      "exception_raised": null,
+      "recovered_successfully": true,
+      "fallback_invoked": true,
+      "preserved_best_valid": true,
+      "terminal_status": "completed",
+      "audit_notes": "Deterministic proposal generator took over seamlessly."
+    },
+    {
+      "fault_type": "llm_malformed_output",
+      "target_component": "action_selector.client",
+      "injected_at_step": 1,
+      "payload": {},
+      "exception_raised": null,
+      "recovered_successfully": true,
+      "fallback_invoked": true,
+      "preserved_best_valid": true,
+      "terminal_status": "completed",
+      "audit_notes": "Malformed decision caught and handled via action selector deterministic fallback."
+    },
+    {
+      "fault_type": "llm_budget_exhausted",
+      "target_component": "budget_manager",
+      "injected_at_step": 1,
+      "payload": {},
+      "exception_raised": null,
+      "recovered_successfully": true,
+      "fallback_invoked": false,
+      "preserved_best_valid": true,
+      "terminal_status": "budget_exhausted",
+      "audit_notes": "Budget limit strictly enforced; infinite loop precluded."
+    },
+    {
+      "fault_type": "stale_proposal",
+      "target_component": "hierarchical_orchestrator",
+      "injected_at_step": 5,
+      "payload": {},
+      "exception_raised": null,
+      "recovered_successfully": true,
+      "fallback_invoked": false,
+      "preserved_best_valid": true,
+      "terminal_status": "rejected_stale",
+      "audit_notes": "Stale proposal with older state_version was strictly rejected."
+    },
+    {
+      "fault_type": "repeated_action_cycle",
+      "target_component": "hierarchical_orchestrator",
+      "injected_at_step": 3,
+      "payload": {},
+      "exception_raised": null,
+      "recovered_successfully": true,
+      "fallback_invoked": false,
+      "preserved_best_valid": true,
+      "terminal_status": "action_blocked",
+      "audit_notes": "Anti-oscillation guard halted repeated action at 3 attempts."
+    },
+    {
+      "fault_type": "invalid_polygon",
+      "target_component": "geometry_validator",
+      "injected_at_step": 1,
+      "payload": {},
+      "exception_raised": null,
+      "recovered_successfully": true,
+      "fallback_invoked": false,
+      "preserved_best_valid": true,
+      "terminal_status": "rejected_invalid_polygon",
+      "audit_notes": "Self-intersecting bowtie room correctly flagged with validation error; never marked successful."
+    },
+    {
+      "fault_type": "export_failure",
+      "target_component": "bundle_exporter",
+      "injected_at_step": 10,
+      "payload": {},
+      "exception_raised": null,
+      "recovered_successfully": true,
+      "fallback_invoked": false,
+      "preserved_best_valid": true,
+      "terminal_status": "export_failed_gracefully",
+      "audit_notes": "Export exception did not retroactively mark invalid designs valid or crash state."
+    }
+  ]
+}

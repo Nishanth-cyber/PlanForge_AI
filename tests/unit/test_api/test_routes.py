@@ -344,3 +344,35 @@ def test_dxf_download_nonexistent_and_invalid(client: TestClient):
     assert resp_404.status_code == 404
 
 
+def test_clear_all_projects_and_delete_project(client: TestClient, tmp_path: Path):
+    """Verify DELETE /projects clears in-memory and disk project outputs."""
+    # First generate a small project
+    payload = {
+        "brief": "Living room and kitchen residence on 40x50 plot.",
+        "project_name": "Deletion Test",
+        "num_alternatives": 1,
+        "enable_rendering": False,
+        "enable_exports": False,
+    }
+    gen_resp = client.post("/api/v1/generate", json=payload)
+    assert gen_resp.status_code == 200
+    pid = gen_resp.json()["project_id"]
+
+    # Verify project is listed
+    list_resp = client.get("/api/v1/projects")
+    assert list_resp.status_code == 200
+    pids = [p["project_id"] for p in list_resp.json()]
+    assert pid in pids
+
+    # Clear all projects via DELETE /api/v1/projects
+    clear_resp = client.delete("/api/v1/projects")
+    assert clear_resp.status_code == 200
+    assert clear_resp.json()["status"] == "cleared"
+
+    # Verify project list is now empty
+    list_resp2 = client.get("/api/v1/projects")
+    assert list_resp2.status_code == 200
+    assert len(list_resp2.json()) == 0
+
+
+

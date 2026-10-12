@@ -384,8 +384,8 @@ def test_conversational_greeting_in_mock_mode():
     assert result.route == "conversation"
     assert "PLANFORGE_LLM_PROVIDER" not in result.turn.message
     assert "PlanForge" in result.turn.message
-    assert result.turn.question_card is not None
-    assert result.turn.question_card.field_key == "project_type"
+    # Under intelligent chat requirements, greetings do not force question cards
+    assert result.turn.question_card is None
 
 
 def test_conversational_plan_modification_fallback():

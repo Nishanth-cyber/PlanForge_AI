@@ -1,0 +1,14 @@
+{
+  "phase": 9,
+  "git_revision": "5d370b97842218281fd0e179d09e30457da48abf",
+  "feasible_valid_design_rate": {
+    "phase8_reported_baseline_pct": 88.89,
+    "phase9_post_fix_original_denominator_pct": 94.44,
+    "phase9_ground_truth_feasible_rate_pct": 100.0
+  },
+  "heldout_geometry_valid_design_rate_pct": 100.0,
+  "stress_matrix_truthful_classification_rate_pct": 100.0,
+  "fault_recovery_rate_pct": 100.0,
+  "repeated_run_deterministic_hash_agreement": true,
+  "total_evaluation_runtime_sec": 24.54
+}

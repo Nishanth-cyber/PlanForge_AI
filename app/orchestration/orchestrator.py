@@ -13,7 +13,13 @@ from app.agents.planning_agent import PlanningAgent
 from app.agents.refinement_agent import RefinementLoop, RefinementStatus
 from app.agents.requirement_agent import RequirementAgent
 from app.agents.requirement_agent.completeness_gate import CompletenessGate
+from app.agents.validation_agent import ValidationAgent
 from app.asaa.allocator import ASAAAllocator
+from app.asaa.exceptions import InfeasibleAllocationError
+from app.agentic.state import ProjectState, RunStatus
+from app.agentic.toolset import create_default_tool_registry
+from app.orchestration.workflow import AgenticWorkflow
+from app.orchestration.routing import AgenticPolicy
 from app.explainability.builder import DecisionTraceBuilder
 from app.export.bundle_exporter import BundleExporter, export_project_bundle
 from app.export.integrity import verify_export_integrity
@@ -31,7 +37,7 @@ from app.orchestration.errors import (
     StageExecutionError,
 )
 from app.orchestration.pipeline import PipelineResult
-from app.orchestration.state import PipelineState, StageName, StageStatus
+from app.orchestration.state import PipelineState, StageName, StageRecord, StageStatus
 from app.utils.ids import generate_id
 from app.validation.validator import FloorPlanValidator
 
@@ -71,6 +77,7 @@ class PlanForgeOrchestrator:
         self.architectural_agent = architectural_agent or ArchitecturalAgent()
         self.geometry_engine = geometry_engine or GeometryEngine()
         self.validator = validator or FloorPlanValidator()
+        self.validation_agent = ValidationAgent(validator=self.validator)
         self.refinement_loop = refinement_loop or RefinementLoop(
             geometry_engine=self.geometry_engine,
             validator=self.validator,
@@ -83,6 +90,17 @@ class PlanForgeOrchestrator:
         )
         self.trace_builder = trace_builder or DecisionTraceBuilder
         self.exporter = exporter or BundleExporter()
+        self.tool_registry = create_default_tool_registry(
+            requirement_agent=self.requirement_agent,
+            planning_agent=self.planning_agent,
+            asaa_allocator=self.asaa_allocator,
+            architectural_agent=self.architectural_agent,
+            geometry_engine=self.geometry_engine,
+            validation_agent=self.validation_agent,
+            refinement_loop=self.refinement_loop,
+            diversity_generator=self.diversity_generator,
+            exporter=self.exporter,
+        )
 
     def generate(
         self,
@@ -91,6 +109,7 @@ class PlanForgeOrchestrator:
         project_name: str = "",
         project_id: Optional[str] = None,
         config: Optional[OrchestrationConfig] = None,
+        mode: Optional[str] = None,
     ) -> PipelineResult:
         """Execute the complete generation pipeline according to configuration.
 
@@ -100,11 +119,30 @@ class PlanForgeOrchestrator:
             project_name: Project title.
             project_id: Optional existing ID. If None, generated automatically.
             config: Execution configuration. Defaults to standard OrchestrationConfig.
+            mode: Optional execution mode override ("pipeline" or "agentic").
 
         Returns:
             PipelineResult containing all generated models, status, and diagnostics.
         """
         cfg = config or OrchestrationConfig()
+        exec_mode = mode or getattr(cfg, "mode", "pipeline")
+        if exec_mode in ("multi_agent", "hierarchical") or getattr(cfg, "use_hierarchical_coordination", False):
+            return self.generate_hierarchical(
+                raw_brief=raw_brief,
+                requirements=requirements,
+                project_name=project_name,
+                project_id=project_id,
+                config=cfg,
+            )
+        if exec_mode == "agentic":
+            return self.generate_agentic(
+                raw_brief=raw_brief,
+                requirements=requirements,
+                project_name=project_name,
+                project_id=project_id,
+                config=cfg,
+            )
+
         pid = project_id or generate_id("proj")
         pname = project_name or (requirements.project_name if requirements else "PlanForge Project")
 
@@ -184,6 +222,27 @@ class PlanForgeOrchestrator:
                 StageName.ASAA,
                 metadata={"allocations_count": len(state.allocation_set.allocations)},
             )
+        except InfeasibleAllocationError as e:
+            logger.warning(f"ASAA Allocation infeasible: {e}. Attempting adaptive replanning with compact strategy...")
+            replan_ok = False
+            if state.requirements:
+                try:
+                    compact_spec = self.planning_agent.plan(state.requirements, strategy="compact")
+                    compact_alloc = self.asaa_allocator.allocate(compact_spec)
+                    state.planning_spec = compact_spec
+                    state.allocation_set = compact_alloc
+                    state.complete_stage(
+                        StageName.ASAA,
+                        metadata={"allocations_count": len(state.allocation_set.allocations), "replan": "compact"},
+                    )
+                    replan_ok = True
+                except Exception:
+                    replan_ok = False
+            if not replan_ok:
+                logger.warning("Adaptive replanning could not resolve spatial infeasibility.")
+                state.fail_stage(StageName.ASAA, str(e))
+                state.skip_downstream_stages(StageName.ASAA)
+                return self._create_result(state, status="failed", error=str(e))
         except Exception as e:
             logger.exception("Error in ASAA stage")
             state.fail_stage(StageName.ASAA, str(e))
@@ -307,6 +366,43 @@ class PlanForgeOrchestrator:
                     state.validation_report = ref_res.final_report
                     if state.floor_plan_set:
                         state.floor_plan_set.validation_report = ref_res.final_report
+
+                # Autonomous Replanning: adapt spatial strategy if local refinement could not fix hard errors
+                if state.validation_report and not state.validation_report.overall_valid and state.requirements:
+                    for replan_strat in ["compact", "circulation_prioritized"]:
+                        try:
+                            replan_spec = self.planning_agent.plan(state.requirements, strategy=replan_strat)
+                            replan_alloc = self.asaa_allocator.allocate(replan_spec)
+                            replan_arch = self.architectural_agent.design(
+                                planning_spec=replan_spec,
+                                allocation_set=replan_alloc,
+                                requirements=state.requirements,
+                            )
+                            replan_geom = self.geometry_engine.construct(
+                                replan_arch,
+                                replan_alloc,
+                                plot_boundary=p_bound,
+                                buildable_boundary=b_bound,
+                            )
+                            replan_val = self.validator.validate(
+                                replan_geom,
+                                requirements=state.requirements,
+                                planning_spec=replan_spec,
+                                allocation_set=replan_alloc,
+                                architectural_design_set=replan_arch,
+                                plot_boundary=p_bound,
+                                buildable_boundary=b_bound,
+                            )
+                            if replan_val.overall_valid or replan_val.total_errors < state.validation_report.total_errors:
+                                state.planning_spec = replan_spec
+                                state.allocation_set = replan_alloc
+                                state.architectural_design_set = replan_arch
+                                state.floor_plan_set = replan_geom
+                                state.validation_report = replan_val
+                                state.floor_plan_set.validation_report = replan_val
+                                break
+                        except Exception:
+                            continue
 
                 status_val = ref_res.status.value if hasattr(ref_res.status, "value") else str(ref_res.status)
                 state.complete_stage(
@@ -461,6 +557,195 @@ class PlanForgeOrchestrator:
                 final_status = "unresolved"
 
         return self._create_result(state, status=final_status)
+
+    def generate_agentic(
+        self,
+        raw_brief: Optional[str] = None,
+        requirements: Optional[Requirements] = None,
+        project_name: str = "",
+        project_id: Optional[str] = None,
+        config: Optional[OrchestrationConfig] = None,
+    ) -> PipelineResult:
+        """Execute end-to-end floor plan generation using the state-aware agentic workflow."""
+        cfg = config or OrchestrationConfig()
+        pid = project_id or generate_id("proj")
+        pname = project_name or (requirements.project_name if requirements else "PlanForge Project")
+
+        policy = AgenticPolicy(
+            enable_refinement=cfg.enable_refinement,
+            num_alternatives=cfg.num_alternatives,
+            enable_exports=cfg.enable_exports,
+        )
+        workflow = AgenticWorkflow(
+            registry=self.tool_registry,
+            policy=policy,
+            budget=getattr(cfg, "budget", None),
+            llm_client=getattr(cfg, "llm_client", None),
+            llm_config=getattr(cfg, "llm_config", None),
+            use_llm=getattr(cfg, "use_llm", True),
+        )
+
+        project_state = workflow.run(
+            project_id=pid,
+            goal=pname,
+            raw_brief=raw_brief,
+            requirements=requirements,
+            inputs={
+                "output_dir": cfg.output_dir,
+                "project_name": pname,
+                "num_alternatives": cfg.num_alternatives,
+            },
+        )
+
+        return self._create_result_from_agentic_state(project_state, pid, pname, cfg, event_log=workflow.event_log)
+
+    def generate_hierarchical(
+        self,
+        raw_brief: Optional[str] = None,
+        requirements: Optional[Requirements] = None,
+        project_name: str = "",
+        project_id: Optional[str] = None,
+        config: Optional[OrchestrationConfig] = None,
+    ) -> PipelineResult:
+        """Execute floor plan generation using Phase 6 Hierarchical Multi-Agent Coordination."""
+        from app.orchestration.hierarchical import HierarchicalOrchestrator
+
+        cfg = config or OrchestrationConfig()
+        pid = project_id or generate_id("proj")
+        pname = project_name or (requirements.project_name if requirements else "PlanForge Project")
+
+        hierarchical = HierarchicalOrchestrator(
+            registry=self.tool_registry,
+            budget=getattr(cfg, "budget", None),
+            llm_client=getattr(cfg, "llm_client", None),
+            llm_config=getattr(cfg, "llm_config", None),
+            use_llm=getattr(cfg, "use_llm", True),
+            interactive=getattr(cfg, "interactive", False),
+        )
+
+        project_state = hierarchical.run(
+            project_id=pid,
+            goal=pname,
+            raw_brief=raw_brief,
+            requirements=requirements,
+            inputs={
+                "output_dir": cfg.output_dir,
+                "project_name": pname,
+                "num_alternatives": cfg.num_alternatives,
+            },
+        )
+
+        return self._create_result_from_agentic_state(project_state, pid, pname, cfg, event_log=hierarchical.event_log)
+
+    # Alias for multi_agent mode
+    generate_multi_agent = generate_hierarchical
+
+
+    def _create_result_from_agentic_state(
+        self,
+        project_state: ProjectState,
+        project_id: str,
+        project_name: str,
+        cfg: OrchestrationConfig,
+        event_log: Optional[InMemoryEventLog] = None,
+    ) -> PipelineResult:
+        req = project_state.get_artifact("requirements")
+        spec = project_state.get_artifact("planning_spec")
+        alloc = project_state.get_artifact("allocation_set")
+        arch = project_state.get_artifact("architectural_design_set")
+        fp = project_state.get_artifact("floor_plan_set")
+        alts = project_state.get_artifact("alternative_set")
+        val_rep = getattr(fp, "validation_report", None) if fp else None
+
+        records: Dict[str, StageRecord] = {}
+        stage_map = {
+            "parse_requirements": StageName.REQUIREMENT,
+            "plan_spatial_program": StageName.PLANNING,
+            "allocate_spatial_regions": StageName.ASAA,
+            "design_architecture": StageName.ARCHITECTURAL_DESIGN,
+            "construct_geometry": StageName.GEOMETRY,
+            "validate_design": StageName.VALIDATION,
+            "refine_design": StageName.REFINEMENT,
+            "generate_alternatives": StageName.MULTI_DESIGN,
+            "export_bundle": StageName.EXPORT,
+        }
+
+        for sn in StageName:
+            records[sn.value] = StageRecord(stage_name=sn, status=StageStatus.SKIPPED)
+
+        for tc in project_state.tool_calls:
+            sn = stage_map.get(tc.tool)
+            if sn:
+                st = StageStatus.COMPLETED if tc.ok else StageStatus.FAILED
+                records[sn.value] = StageRecord(stage_name=sn, status=st)
+
+        trace = None
+        if fp and val_rep:
+            try:
+                trace = self.trace_builder.build(
+                    requirements=req,
+                    planning_spec=spec,
+                    allocation_set=alloc,
+                    architectural_design_set=arch,
+                    geometry_set=fp,
+                    validation_report=val_rep,
+                    alternative_set=alts,
+                    project_name=project_name,
+                )
+                records[StageName.EXPLAINABILITY.value] = StageRecord(
+                    stage_name=StageName.EXPLAINABILITY, status=StageStatus.COMPLETED
+                )
+            except Exception:
+                pass
+
+        status = "completed"
+        if project_state.status == RunStatus.ACCEPTED:
+            status = "completed"
+        elif project_state.status == RunStatus.WAITING_FOR_CLARIFICATION:
+            status = "waiting_for_clarification"
+        elif project_state.status == RunStatus.NEEDS_CLARIFICATION:
+            status = "incomplete_requirements"
+        elif project_state.status == RunStatus.INFEASIBLE:
+            status = "failed"
+        elif project_state.status == RunStatus.BUDGET_EXHAUSTED:
+            status = "failed"
+        elif project_state.status == RunStatus.CANCELLED:
+            status = "cancelled"
+        elif val_rep and not val_rep.overall_valid:
+            status = "unresolved"
+        else:
+            status = project_state.status.value
+
+        clarification_qs = list(project_state.open_questions)
+        if project_state.pending_clarification and project_state.pending_clarification.question not in clarification_qs:
+            clarification_qs.append(project_state.pending_clarification.question)
+
+        return PipelineResult(
+            project_id=project_id,
+            project_name=project_name,
+            status=status,
+            requirements=req,
+            completeness_result=None,
+            planning_spec=spec,
+            allocation_set=alloc,
+            architectural_design_set=arch,
+            floor_plan_set=fp,
+            validation_report=val_rep,
+            refinement_result=None,
+            alternative_set=alts,
+            decision_trace=trace,
+            export_bundle_path=project_state.facts.get("export_bundle_path"),
+            stage_records=records,
+            error_message=project_state.status_reason if status != "completed" else None,
+            clarification_questions=clarification_qs,
+            agentic_state={
+                **project_state.to_public_dict(),
+                "events": [e.to_dict() for e in event_log.events] if event_log else [],
+                "run_status": project_state.status.value,
+                "terminal_status": project_state.status.value,
+            },
+            decisions=[d.to_dict() for d in project_state.decisions],
+        )
 
     def _create_result(
         self,

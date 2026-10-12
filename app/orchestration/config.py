@@ -30,8 +30,15 @@ class OrchestrationConfig:
     render_options: Optional[RenderOptions] = None
 
     # Execution controls
+    mode: str = "pipeline"  # "pipeline" (default, original baseline) | "agentic" (opt-in foundation)
+    use_llm: bool = True  # In agentic mode, whether to use the LLM action selector
+    llm_client: Optional[Any] = None
+    llm_config: Optional[Any] = None
     timeout_seconds: float = 120.0
     allow_partial_results: bool = True
+    budget: Optional[Any] = None
+    interactive: bool = False  # Phase 7 interactive clarification mode
+    seed: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary."""
@@ -46,6 +53,10 @@ class OrchestrationConfig:
             "enable_exports": self.enable_exports,
             "create_zip": self.create_zip,
             "output_dir": self.output_dir,
+            "mode": self.mode,
+            "use_llm": self.use_llm,
             "timeout_seconds": self.timeout_seconds,
             "allow_partial_results": self.allow_partial_results,
+            "interactive": self.interactive,
+            "seed": self.seed,
         }

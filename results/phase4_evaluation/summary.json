@@ -1,0 +1,228 @@
+{
+  "evaluation_title": "Phase 4 Three-Way Mode Comparison",
+  "timestamp": "2026-10-10T07:34:04Z",
+  "cases_evaluated": [
+    "case_01_small_single_floor",
+    "case_04_two_floor_family",
+    "case_06_irregular_l_plot",
+    "case_15_feasibility_edge",
+    "case_16_infeasible_deficit"
+  ],
+  "modes": [
+    "pipeline",
+    "agentic_deterministic",
+    "agentic_llm"
+  ],
+  "comparison_table": [
+    {
+      "case_id": "case_01_small_single_floor",
+      "case_name": "Small Single-Floor Bungalow",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "duration_ms": 107.1,
+        "error": null
+      },
+      "agentic_deterministic": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "duration_ms": 43.9,
+        "decisions_count": 8,
+        "tool_calls_count": 7,
+        "error": null,
+        "infeasibility_evidence": []
+      },
+      "agentic_llm": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "duration_ms": 334.2,
+        "decisions_count": 12,
+        "decision_sources": {
+          "llm": 11,
+          "fallback": 1
+        },
+        "tool_calls_count": 10,
+        "llm_calls_count": 12,
+        "fallback_count": 1,
+        "error": null,
+        "infeasibility_evidence": []
+      }
+    },
+    {
+      "case_id": "case_04_two_floor_family",
+      "case_name": "Two-Floor Family Residence",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "duration_ms": 88.1,
+        "error": null
+      },
+      "agentic_deterministic": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "duration_ms": 54.3,
+        "decisions_count": 8,
+        "tool_calls_count": 7,
+        "error": null,
+        "infeasibility_evidence": []
+      },
+      "agentic_llm": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "duration_ms": 521.7,
+        "decisions_count": 12,
+        "decision_sources": {
+          "llm": 11,
+          "fallback": 1
+        },
+        "tool_calls_count": 10,
+        "llm_calls_count": 12,
+        "fallback_count": 1,
+        "error": null,
+        "infeasibility_evidence": []
+      }
+    },
+    {
+      "case_id": "case_06_irregular_l_plot",
+      "case_name": "Irregular L-Shaped Boundary Residence",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 85.0,
+        "hard_errors": 0,
+        "duration_ms": 195.9,
+        "error": null
+      },
+      "agentic_deterministic": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 79.0,
+        "hard_errors": 0,
+        "duration_ms": 86.5,
+        "decisions_count": 8,
+        "tool_calls_count": 7,
+        "error": null,
+        "infeasibility_evidence": []
+      },
+      "agentic_llm": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 79.0,
+        "hard_errors": 0,
+        "duration_ms": 365.6,
+        "decisions_count": 12,
+        "decision_sources": {
+          "llm": 11,
+          "fallback": 1
+        },
+        "tool_calls_count": 10,
+        "llm_calls_count": 12,
+        "fallback_count": 1,
+        "error": null,
+        "infeasibility_evidence": []
+      }
+    },
+    {
+      "case_id": "case_15_feasibility_edge",
+      "case_name": "High-Density Feasibility Edge Case",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 82.0,
+        "hard_errors": 0,
+        "duration_ms": 173.1,
+        "error": null
+      },
+      "agentic_deterministic": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 85.0,
+        "hard_errors": 0,
+        "duration_ms": 84.7,
+        "decisions_count": 8,
+        "tool_calls_count": 7,
+        "error": null,
+        "infeasibility_evidence": []
+      },
+      "agentic_llm": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 85.0,
+        "hard_errors": 0,
+        "duration_ms": 401.4,
+        "decisions_count": 12,
+        "decision_sources": {
+          "llm": 11,
+          "fallback": 1
+        },
+        "tool_calls_count": 10,
+        "llm_calls_count": 12,
+        "fallback_count": 1,
+        "error": null,
+        "infeasibility_evidence": []
+      }
+    },
+    {
+      "case_id": "case_16_infeasible_deficit",
+      "case_name": "Infeasible Room Deficit Program",
+      "pipeline": {
+        "status": "failed",
+        "is_valid": false,
+        "score": 0.0,
+        "hard_errors": 0,
+        "duration_ms": 7.6,
+        "error": "Floor 1: Total minimum room area (122.6 m\u00b2) exceeds available buildable area (4.4 m\u00b2) by deficit of 118.2 m\u00b2"
+      },
+      "agentic_deterministic": {
+        "status": "failed",
+        "is_valid": false,
+        "score": 0.0,
+        "hard_errors": 0,
+        "duration_ms": 10.1,
+        "decisions_count": 4,
+        "tool_calls_count": 4,
+        "error": "ASAA Allocation infeasible: Floor 1: Total minimum room area (122.6 m\u00b2) exceeds available buildable area (4.4 m\u00b2) by deficit of 118.2 m\u00b2",
+        "infeasibility_evidence": [
+          {
+            "reason": "asaa_infeasible",
+            "error": "Floor 1: Total minimum room area (122.6 m\u00b2) exceeds available buildable area (4.4 m\u00b2) by deficit of 118.2 m\u00b2"
+          }
+        ]
+      },
+      "agentic_llm": {
+        "status": "failed",
+        "is_valid": false,
+        "score": 0.0,
+        "hard_errors": 0,
+        "duration_ms": 12.1,
+        "decisions_count": 7,
+        "decision_sources": {
+          "llm": 6,
+          "fallback": 1
+        },
+        "tool_calls_count": 6,
+        "llm_calls_count": 7,
+        "fallback_count": 1,
+        "error": "ASAA Allocation infeasible: Floor 1: Total minimum room area (122.6 m\u00b2) exceeds available buildable area (4.4 m\u00b2) by deficit of 118.2 m\u00b2",
+        "infeasibility_evidence": [
+          {
+            "reason": "asaa_infeasible",
+            "error": "Floor 1: Total minimum room area (122.6 m\u00b2) exceeds available buildable area (4.4 m\u00b2) by deficit of 118.2 m\u00b2"
+          }
+        ]
+      }
+    }
+  ]
+}

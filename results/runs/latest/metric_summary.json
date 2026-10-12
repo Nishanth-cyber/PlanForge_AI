@@ -1,0 +1,382 @@
+{
+  "total_cases": 5,
+  "successful_executions": 4,
+  "valid_plans_count": 4,
+  "metrics": {
+    "req_room_coverage": {
+      "n": 4,
+      "mean": 100.0,
+      "median": 100.0,
+      "std_dev": 0.0,
+      "min": 100.0,
+      "max": 100.0
+    },
+    "req_rooms_requested": {
+      "n": 4,
+      "mean": 4.75,
+      "median": 5.0,
+      "std_dev": 0.5,
+      "min": 4.0,
+      "max": 5.0
+    },
+    "req_rooms_generated": {
+      "n": 4,
+      "mean": 5.75,
+      "median": 6.0,
+      "std_dev": 0.5,
+      "min": 5.0,
+      "max": 6.0
+    },
+    "req_floor_count_adherence": {
+      "n": 4,
+      "mean": 100.0,
+      "median": 100.0,
+      "std_dev": 0.0,
+      "min": 100.0,
+      "max": 100.0
+    },
+    "room_count_mae": {
+      "n": 4,
+      "mean": 0.05,
+      "median": 0.0,
+      "std_dev": 0.1,
+      "min": 0.0,
+      "max": 0.2
+    },
+    "room_count_accuracy": {
+      "n": 4,
+      "mean": 95.83,
+      "median": 100.0,
+      "std_dev": 8.35,
+      "min": 83.3,
+      "max": 100.0
+    },
+    "area_min_compliance": {
+      "n": 4,
+      "mean": 95.0,
+      "median": 100.0,
+      "std_dev": 10.0,
+      "min": 80.0,
+      "max": 100.0
+    },
+    "area_preferred_mae": {
+      "n": 4,
+      "mean": 5.46,
+      "median": 5.8,
+      "std_dev": 3.61,
+      "min": 1.5,
+      "max": 8.73
+    },
+    "area_max_violations": {
+      "n": 4,
+      "mean": 0.0,
+      "median": 0.0,
+      "std_dev": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "allocation_adjacency_compliance": {
+      "n": 4,
+      "mean": 83.35,
+      "median": 83.35,
+      "std_dev": 19.23,
+      "min": 66.7,
+      "max": 100.0
+    },
+    "allocation_adjacency_satisfied": {
+      "n": 4,
+      "mean": 2.0,
+      "median": 2.0,
+      "std_dev": 0.82,
+      "min": 1.0,
+      "max": 3.0
+    },
+    "allocation_adjacency_total": {
+      "n": 4,
+      "mean": 2.5,
+      "median": 3.0,
+      "std_dev": 1.0,
+      "min": 1.0,
+      "max": 3.0
+    },
+    "separation_compliance": {
+      "n": 4,
+      "mean": 100.0,
+      "median": 100.0,
+      "std_dev": 0.0,
+      "min": 100.0,
+      "max": 100.0
+    },
+    "attached_suite_compliance": {
+      "n": 4,
+      "mean": 100.0,
+      "median": 100.0,
+      "std_dev": 0.0,
+      "min": 100.0,
+      "max": 100.0
+    },
+    "boundary_compliance": {
+      "n": 4,
+      "mean": 100.0,
+      "median": 100.0,
+      "std_dev": 0.0,
+      "min": 100.0,
+      "max": 100.0
+    },
+    "boundary_violation_count": {
+      "n": 4,
+      "mean": 0.0,
+      "median": 0.0,
+      "std_dev": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "overlap_violation_count": {
+      "n": 4,
+      "mean": 0.0,
+      "median": 0.0,
+      "std_dev": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "connectivity_rate": {
+      "n": 4,
+      "mean": 100.0,
+      "median": 100.0,
+      "std_dev": 0.0,
+      "min": 100.0,
+      "max": 100.0
+    },
+    "disconnected_room_count": {
+      "n": 4,
+      "mean": 0.0,
+      "median": 0.0,
+      "std_dev": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "door_compliance": {
+      "n": 4,
+      "mean": 100.0,
+      "median": 100.0,
+      "std_dev": 0.0,
+      "min": 100.0,
+      "max": 100.0
+    },
+    "total_doors": {
+      "n": 4,
+      "mean": 6.0,
+      "median": 6.0,
+      "std_dev": 0.82,
+      "min": 5.0,
+      "max": 7.0
+    },
+    "total_windows": {
+      "n": 4,
+      "mean": 4.75,
+      "median": 5.0,
+      "std_dev": 0.5,
+      "min": 4.0,
+      "max": 5.0
+    },
+    "validation_error_count": {
+      "n": 5,
+      "mean": 0.0,
+      "median": 0.0,
+      "std_dev": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "validation_warning_count": {
+      "n": 5,
+      "mean": 3.4,
+      "median": 4.0,
+      "std_dev": 2.41,
+      "min": 0.0,
+      "max": 6.0
+    },
+    "validation_score": {
+      "n": 5,
+      "mean": 71.0,
+      "median": 85.0,
+      "std_dev": 40.05,
+      "min": 0.0,
+      "max": 94.0
+    },
+    "diversity_duplicate_count": {
+      "n": 5,
+      "mean": 0.0,
+      "median": 0.0,
+      "std_dev": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "alternative_validity_rate": {
+      "n": 4,
+      "mean": 0.0,
+      "median": 0.0,
+      "std_dev": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "alternatives_generated_count": {
+      "n": 4,
+      "mean": 1.0,
+      "median": 1.0,
+      "std_dev": 0.0,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "alternatives_valid_count": {
+      "n": 4,
+      "mean": 0.0,
+      "median": 0.0,
+      "std_dev": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "trace_stage_coverage": {
+      "n": 4,
+      "mean": 70.0,
+      "median": 70.0,
+      "std_dev": 0.0,
+      "min": 70.0,
+      "max": 70.0
+    },
+    "trace_entity_chain_completeness": {
+      "n": 4,
+      "mean": 552.5,
+      "median": 545.0,
+      "std_dev": 18.93,
+      "min": 540.0,
+      "max": 580.0
+    },
+    "trace_total_events": {
+      "n": 4,
+      "mean": 67.0,
+      "median": 65.5,
+      "std_dev": 11.97,
+      "min": 54.0,
+      "max": 83.0
+    },
+    "timing_requirement_ms": {
+      "n": 5,
+      "mean": 16.23,
+      "median": 12.37,
+      "std_dev": 12.1,
+      "min": 9.03,
+      "max": 37.69
+    },
+    "timing_planning_ms": {
+      "n": 5,
+      "mean": 0.1,
+      "median": 0.1,
+      "std_dev": 0.02,
+      "min": 0.07,
+      "max": 0.12
+    },
+    "timing_asaa_ms": {
+      "n": 5,
+      "mean": 97.92,
+      "median": 55.4,
+      "std_dev": 88.19,
+      "min": 0.81,
+      "max": 211.38
+    },
+    "timing_architectural_design_ms": {
+      "n": 5,
+      "mean": 0.32,
+      "median": 0.36,
+      "std_dev": 0.19,
+      "min": 0.0,
+      "max": 0.51
+    },
+    "timing_geometry_ms": {
+      "n": 5,
+      "mean": 12.14,
+      "median": 13.6,
+      "std_dev": 7.5,
+      "min": 0.0,
+      "max": 20.39
+    },
+    "timing_validation_ms": {
+      "n": 5,
+      "mean": 3.64,
+      "median": 3.3,
+      "std_dev": 2.66,
+      "min": 0.0,
+      "max": 6.63
+    },
+    "timing_refinement_ms": {
+      "n": 5,
+      "mean": 0.0,
+      "median": 0.0,
+      "std_dev": 0.0,
+      "min": 0.0,
+      "max": 0.01
+    },
+    "timing_multi_design_ms": {
+      "n": 5,
+      "mean": 0.01,
+      "median": 0.02,
+      "std_dev": 0.01,
+      "min": 0.0,
+      "max": 0.02
+    },
+    "timing_explainability_ms": {
+      "n": 5,
+      "mean": 0.52,
+      "median": 0.52,
+      "std_dev": 0.33,
+      "min": 0.0,
+      "max": 0.9
+    },
+    "timing_export_ms": {
+      "n": 5,
+      "mean": 0.0,
+      "median": 0.0,
+      "std_dev": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "timing_total_ms": {
+      "n": 5,
+      "mean": 130.88,
+      "median": 106.25,
+      "std_dev": 94.14,
+      "min": 13.27,
+      "max": 252.43
+    },
+    "asaa_duration_ms": {
+      "n": 5,
+      "mean": 97.92,
+      "median": 55.4,
+      "std_dev": 88.19,
+      "min": 0.81,
+      "max": 211.38
+    },
+    "asaa_allocation_rate": {
+      "n": 4,
+      "mean": 91.92,
+      "median": 77.05,
+      "std_dev": 68.98,
+      "min": 33.1,
+      "max": 180.5
+    },
+    "staircase_compliance": {
+      "n": 1,
+      "mean": 100.0,
+      "median": 100.0,
+      "std_dev": 0.0,
+      "min": 100.0,
+      "max": 100.0
+    }
+  },
+  "mean_room_coverage_pct": 100.0,
+  "mean_area_min_compliance_pct": 95.0,
+  "mean_area_preferred_mae_sqm": 5.46,
+  "mean_adjacency_compliance_pct": 83.35,
+  "mean_boundary_compliance_pct": 100.0,
+  "mean_connectivity_pct": 100.0,
+  "mean_total_pipeline_ms": 130.88
+}
