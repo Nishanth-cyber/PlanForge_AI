@@ -24,6 +24,12 @@ from app.explainability.models import (
 )
 from app.explainability.recorder import TraceRecorder
 from app.explainability.renderer import ExplanationRenderer
+from app.explainability.service import (
+    ExplainabilityService,
+    FailureDossier,
+    GroundedExplanation,
+    ProjectExplanationDossier,
+)
 
 __all__ = [
     "AlternativeTrace",
@@ -33,6 +39,10 @@ __all__ = [
     "DecisionType",
     "EntityTraceChain",
     "ExplanationRenderer",
+    "ExplainabilityService",
+    "FailureDossier",
+    "GroundedExplanation",
+    "ProjectExplanationDossier",
     "ProvenanceSource",
     "StageName",
     "StageTrace",

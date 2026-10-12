@@ -1,0 +1,315 @@
+{
+  "evaluation_title": "Phase 6 Hybrid Hierarchical Multi-Agent Coordination Comparison",
+  "timestamp": "2026-10-10T08:56:47Z",
+  "cases_evaluated": [
+    "case_01_small_single_floor",
+    "case_04_two_floor_family",
+    "case_06_irregular_l_plot",
+    "case_15_feasibility_edge",
+    "case_16_infeasible_deficit"
+  ],
+  "modes": [
+    "pipeline",
+    "agentic_phase3_det",
+    "agentic_phase4_llm",
+    "agentic_phase5_adaptive",
+    "agentic_phase6_multi_agent"
+  ],
+  "comparison_table": [
+    {
+      "case_id": "case_01_small_single_floor",
+      "case_name": "Small Single-Floor Bungalow",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "warnings": 2,
+        "tool_calls_count": 0,
+        "decisions_count": 0,
+        "events_count": 0,
+        "duration_ms": 113.3
+      },
+      "phase3": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "warnings": 2,
+        "tool_calls_count": 7,
+        "decisions_count": 8,
+        "events_count": 28,
+        "duration_ms": 43.7
+      },
+      "phase4": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "warnings": 2,
+        "tool_calls_count": 8,
+        "decisions_count": 9,
+        "events_count": 58,
+        "duration_ms": 349.5
+      },
+      "phase5": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "warnings": 2,
+        "tool_calls_count": 8,
+        "decisions_count": 9,
+        "events_count": 58,
+        "duration_ms": 325.8
+      },
+      "phase6": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "warnings": 2,
+        "tool_calls_count": 8,
+        "decisions_count": 8,
+        "events_count": 76,
+        "duration_ms": 373.5
+      }
+    },
+    {
+      "case_id": "case_04_two_floor_family",
+      "case_name": "Two-Floor Family Residence",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "warnings": 4,
+        "tool_calls_count": 0,
+        "decisions_count": 0,
+        "events_count": 0,
+        "duration_ms": 104.6
+      },
+      "phase3": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "warnings": 4,
+        "tool_calls_count": 7,
+        "decisions_count": 8,
+        "events_count": 28,
+        "duration_ms": 62.9
+      },
+      "phase4": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "warnings": 4,
+        "tool_calls_count": 8,
+        "decisions_count": 9,
+        "events_count": 58,
+        "duration_ms": 609.5
+      },
+      "phase5": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "warnings": 4,
+        "tool_calls_count": 8,
+        "decisions_count": 9,
+        "events_count": 58,
+        "duration_ms": 561.3
+      },
+      "phase6": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 94.0,
+        "hard_errors": 0,
+        "warnings": 4,
+        "tool_calls_count": 8,
+        "decisions_count": 8,
+        "events_count": 79,
+        "duration_ms": 623.7
+      }
+    },
+    {
+      "case_id": "case_06_irregular_l_plot",
+      "case_name": "Irregular L-Shaped Boundary Residence",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 85.0,
+        "hard_errors": 0,
+        "warnings": 5,
+        "tool_calls_count": 0,
+        "decisions_count": 0,
+        "events_count": 0,
+        "duration_ms": 230.4
+      },
+      "phase3": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 79.0,
+        "hard_errors": 0,
+        "warnings": 7,
+        "tool_calls_count": 7,
+        "decisions_count": 8,
+        "events_count": 28,
+        "duration_ms": 96.8
+      },
+      "phase4": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 79.0,
+        "hard_errors": 0,
+        "warnings": 7,
+        "tool_calls_count": 8,
+        "decisions_count": 9,
+        "events_count": 58,
+        "duration_ms": 419.2
+      },
+      "phase5": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 79.0,
+        "hard_errors": 0,
+        "warnings": 7,
+        "tool_calls_count": 8,
+        "decisions_count": 9,
+        "events_count": 58,
+        "duration_ms": 410.7
+      },
+      "phase6": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 85.0,
+        "hard_errors": 0,
+        "warnings": 5,
+        "tool_calls_count": 8,
+        "decisions_count": 8,
+        "events_count": 76,
+        "duration_ms": 632.0
+      }
+    },
+    {
+      "case_id": "case_15_feasibility_edge",
+      "case_name": "High-Density Feasibility Edge Case",
+      "pipeline": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 82.0,
+        "hard_errors": 0,
+        "warnings": 6,
+        "tool_calls_count": 0,
+        "decisions_count": 0,
+        "events_count": 0,
+        "duration_ms": 208.1
+      },
+      "phase3": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 85.0,
+        "hard_errors": 0,
+        "warnings": 5,
+        "tool_calls_count": 7,
+        "decisions_count": 8,
+        "events_count": 28,
+        "duration_ms": 86.9
+      },
+      "phase4": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 85.0,
+        "hard_errors": 0,
+        "warnings": 5,
+        "tool_calls_count": 8,
+        "decisions_count": 9,
+        "events_count": 58,
+        "duration_ms": 422.9
+      },
+      "phase5": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 85.0,
+        "hard_errors": 0,
+        "warnings": 5,
+        "tool_calls_count": 8,
+        "decisions_count": 9,
+        "events_count": 58,
+        "duration_ms": 398.6
+      },
+      "phase6": {
+        "status": "completed",
+        "is_valid": true,
+        "score": 82.0,
+        "hard_errors": 0,
+        "warnings": 6,
+        "tool_calls_count": 8,
+        "decisions_count": 8,
+        "events_count": 76,
+        "duration_ms": 504.7
+      }
+    },
+    {
+      "case_id": "case_16_infeasible_deficit",
+      "case_name": "Infeasible Room Deficit Program",
+      "pipeline": {
+        "status": "failed",
+        "is_valid": false,
+        "score": 0.0,
+        "hard_errors": 0,
+        "warnings": 0,
+        "tool_calls_count": 0,
+        "decisions_count": 0,
+        "events_count": 0,
+        "duration_ms": 11.2
+      },
+      "phase3": {
+        "status": "failed",
+        "is_valid": false,
+        "score": 0.0,
+        "hard_errors": 0,
+        "warnings": 0,
+        "tool_calls_count": 2,
+        "decisions_count": 2,
+        "events_count": 8,
+        "duration_ms": 11.7
+      },
+      "phase4": {
+        "status": "failed",
+        "is_valid": false,
+        "score": 0.0,
+        "hard_errors": 0,
+        "warnings": 0,
+        "tool_calls_count": 2,
+        "decisions_count": 2,
+        "events_count": 14,
+        "duration_ms": 10.5
+      },
+      "phase5": {
+        "status": "failed",
+        "is_valid": false,
+        "score": 0.0,
+        "hard_errors": 0,
+        "warnings": 0,
+        "tool_calls_count": 2,
+        "decisions_count": 2,
+        "events_count": 14,
+        "duration_ms": 8.7
+      },
+      "phase6": {
+        "status": "failed",
+        "is_valid": false,
+        "score": 0.0,
+        "hard_errors": 0,
+        "warnings": 0,
+        "tool_calls_count": 2,
+        "decisions_count": 2,
+        "events_count": 18,
+        "duration_ms": 8.9
+      }
+    }
+  ]
+}

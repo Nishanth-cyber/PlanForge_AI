@@ -24,7 +24,18 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Callable, Optional
 
-from app.llm.client import HuggingFaceError, HuggingFaceTimeoutError, LLMClient
+from app.llm.client import (
+    GoogleGeminiError,
+    GoogleGeminiQuotaError,
+    GoogleGeminiRateLimitError,
+    GoogleGeminiTimeoutError,
+    HuggingFaceError,
+    HuggingFaceTimeoutError,
+    LLMClient,
+    OpenRouterError,
+    OpenRouterRateLimitError,
+    OpenRouterTimeoutError,
+)
 from app.llm.configuration import LLMConfig
 from app.llm.factory import create_llm_client
 
@@ -35,8 +46,14 @@ STATUS_UNAVAILABLE = "LLM_UNAVAILABLE"
 STATUS_TIMEOUT = "LLM_TIMEOUT"
 STATUS_NOT_CONFIGURED = "LLM_NOT_CONFIGURED"
 STATUS_EMPTY = "LLM_EMPTY_RESPONSE"
+STATUS_RATE_LIMITED = "LLM_RATE_LIMITED"
 
-_REAL_PROVIDERS = ("huggingface", "hf")
+MSG_RATE_LIMITED = (
+    "The AI model is temporarily rate-limited upstream. "
+    "Please try again in a moment, or switch to a fallback model."
+)
+
+_REAL_PROVIDERS = ("google", "gemini", "huggingface", "hf", "openrouter", "or")
 
 MSG_UNAVAILABLE = (
     "I couldn't reach the configured AI model right now. "
@@ -45,7 +62,10 @@ MSG_UNAVAILABLE = (
 MSG_TIMEOUT = "The configured AI model took too long to respond. Please try again in a moment."
 MSG_EMPTY = "The AI model returned an empty response. Please try again."
 
-_SECRET_RE = re.compile(r"(hf_[A-Za-z0-9]{6,}|Bearer\s+[A-Za-z0-9._\-]+|api[_-]?key\s*[=:]\s*\S+)", re.I)
+_SECRET_RE = re.compile(
+    r"(AIzaSy[A-Za-z0-9_-]{33}|sk-or-v1-[A-Za-z0-9._-]+|hf_[A-Za-z0-9]{6,}|Bearer\s+[A-Za-z0-9._\-]+|api[_-]?key\s*[=:]\s*\S+)",
+    re.I,
+)
 _THINK_BLOCK_RE = re.compile(r"<think>.*?</think>", re.S | re.I)
 
 
@@ -120,7 +140,7 @@ class ConversationalLLMService:
                     ok=False, status=STATUS_NOT_CONFIGURED,
                     user_message=(
                         f"The conversational AI is not enabled: PLANFORGE_LLM_PROVIDER is set to '{cfg.provider}'. "
-                        "Set it to 'huggingface' (with a valid PLANFORGE_HF_API_KEY) to enable AI answers."
+                        "Set it to 'google' (with PLANFORGE_GOOGLE_API_KEY), 'openrouter', or 'huggingface' to enable AI answers."
                     ),
                 )
             try:
@@ -134,13 +154,19 @@ class ConversationalLLMService:
         # 2. The actual, observable LLM invocation.
         try:
             raw = client.generate(prompt=prompt, system_prompt=system_prompt)
-        except HuggingFaceTimeoutError as exc:
+        except (HuggingFaceTimeoutError, OpenRouterTimeoutError, GoogleGeminiTimeoutError) as exc:
             provider, model = self._labels(client, provider, model)
             return self._finish(
                 started, turn_id, project_id, intent, provider, model,
                 ok=False, status=STATUS_TIMEOUT, user_message=MSG_TIMEOUT, error=exc,
             )
-        except (HuggingFaceError, Exception) as exc:  # noqa: BLE001 - any provider failure is non-fatal
+        except (OpenRouterRateLimitError, GoogleGeminiRateLimitError, GoogleGeminiQuotaError) as exc:
+            provider, model = self._labels(client, provider, model)
+            return self._finish(
+                started, turn_id, project_id, intent, provider, model,
+                ok=False, status=STATUS_RATE_LIMITED, user_message=MSG_RATE_LIMITED, error=exc,
+            )
+        except (HuggingFaceError, OpenRouterError, GoogleGeminiError, Exception) as exc:  # noqa: BLE001 - any provider failure is non-fatal
             provider, model = self._labels(client, provider, model)
             return self._finish(
                 started, turn_id, project_id, intent, provider, model,

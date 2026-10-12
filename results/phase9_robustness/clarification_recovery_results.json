@@ -1,0 +1,7 @@
+{
+  "initial_workflow_paused_for_clarification": true,
+  "initial_status": "waiting_for_clarification",
+  "resume_executed_atomically": false,
+  "final_workflow_status": "waiting_for_clarification",
+  "state_version_incremented": true
+}

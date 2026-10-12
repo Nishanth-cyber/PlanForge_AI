@@ -22,7 +22,11 @@ export interface GenerationRequest {
   create_zip: boolean;
   output_dir?: string;
   plot_shape?: Point2D[];
+  mode?: "standard" | "agentic" | "multi_agent" | "hierarchical";
+  interactive?: boolean;
+  conversation_id?: string;
 }
+
 
 export interface ValidationSummarySchema {
   overall_valid: boolean;
@@ -43,7 +47,7 @@ export interface AlternativeSummarySchema {
 export interface GenerationResponse {
   project_id: string;
   project_name: string;
-  status: "completed" | "incomplete_requirements" | "failed" | string;
+  status: "completed" | "incomplete_requirements" | "failed" | "waiting_for_clarification" | "cancelled" | string;
   is_success: boolean;
   is_valid: boolean;
   stage_statuses: Record<string, string>;
@@ -54,7 +58,10 @@ export interface GenerationResponse {
   missing_fields: string[];
   missing_floors: number[];
   clarification_questions: string[];
+  pending_clarification?: ClarificationRequest;
   error_message?: string;
+  agentic_state?: Record<string, any>;
+  decisions?: Array<Record<string, any>>;
 }
 
 export interface ProjectDetailResponse {
@@ -97,6 +104,20 @@ export interface RequirementProgressItem {
   value?: string;
 }
 
+export interface QuickReplyItem {
+  label: string;
+  value: string;
+}
+
+export interface ChatActionData {
+  type: string;
+  label?: string;
+  status?: string;
+  action_id?: string;
+  auto_execute?: boolean;
+  payload?: Record<string, any>;
+}
+
 export interface ChatHistoryItem {
   role: string;
   text: string;
@@ -107,6 +128,7 @@ export interface ChatTurnRequest {
   existing_brief?: string;
   project_name?: string;
   project_id?: string;
+  conversation_id?: string;
   history?: ChatHistoryItem[];
   active_floor?: number;
   alternative_index?: number;
@@ -130,7 +152,18 @@ export interface ChatTurnResponse {
   llm_latency_ms?: number;
   turn_id?: string;
   plan_modified?: boolean;
+  // --- Structured Response Contract (Section 9) ---
+  response_type?: "text" | "quick_replies" | "clarification" | "requirement_summary" | "generation_progress" | "generation_result" | "action_result" | string;
+  intent?: string;
+  conversation_stage?: string;
+  quick_replies?: QuickReplyItem[];
+  missing_requirements?: string[];
+  requirements_updated?: string[];
+  action?: ChatActionData;
+  conversation_id?: string;
+  project_id?: string;
 }
+
 
 export type Point2D = [number, number];
 
@@ -398,3 +431,112 @@ export interface ProjectData {
   alternatives?: DesignAlternative[];
   decision_trace?: DecisionTrace;
 }
+
+// ==============================================================================
+// Phase 7: Interactive Clarification Interfaces
+// ==============================================================================
+
+export type FeasibilityType =
+  | "verified_feasible"
+  | "suggested_alternative"
+  | "unverified_hypothetical";
+
+export interface ClarificationOption {
+  option_id: string;
+  title: string;
+  description: string;
+  feasibility_type: FeasibilityType;
+  affected_rooms: string[];
+  numeric_changes: Record<string, number>;
+  requires_confirmation: boolean;
+}
+
+export interface ClarificationRequest {
+  request_id: string;
+  project_id: string;
+  state_version: number;
+  category: "PROCEED" | "CLARIFY" | "OFFER_ALTERNATIVES" | "REQUEST_CONSTRAINT_REVISION" | "TERMINATE" | string;
+  question: string;
+  evidence: string;
+  measured_deficit_sqm?: number;
+  available_sqm?: number;
+  required_sqm?: number;
+  options: ClarificationOption[];
+  allow_free_text: boolean;
+  allow_numeric_input: boolean;
+  affected_constraints: string[];
+  is_mandatory: boolean;
+  created_at: string;
+  status: "pending" | "resolved" | "cancelled" | "expired" | string;
+}
+
+export interface ClarificationResponsePayload {
+  selected_option_id?: string;
+  user_response_text?: string;
+  numeric_overrides?: Record<string, number>;
+  expected_state_version?: number;
+}
+
+export interface ClarificationSubmitResponse {
+  success: boolean;
+  message: string;
+  status: string;
+  state_version: number;
+  pending_clarification?: ClarificationRequest;
+}
+
+export interface ClarificationListResponse {
+  project_id: string;
+  status: string;
+  state_version: number;
+  pending_clarification?: ClarificationRequest;
+  clarification_history: Array<Record<string, any>>;
+  requirement_changes: Array<Record<string, any>>;
+}
+
+export interface ValidationSummary {
+  overall_valid: boolean;
+  overall_score: number;
+  total_errors: number;
+  total_warnings: number;
+}
+
+export interface EditDesignRequest {
+  instruction: string;
+  floor_number?: number;
+  alternative_index?: number;
+}
+
+export interface EditDesignResponse {
+  success: boolean;
+  project_id: string;
+  version_id: string;
+  instruction: string;
+  summary: string;
+  is_valid: boolean;
+  validation_summary?: ValidationSummary;
+  affected_rooms: string[];
+  affected_elements: string[];
+  can_undo: boolean;
+  clarification_required: boolean;
+  clarification_question?: string;
+  new_design_requested: boolean;
+  error_message?: string;
+  feasible_alternatives: string[];
+}
+
+export interface VersionSummary {
+  version_id: string;
+  project_id: string;
+  parent_version_id?: string;
+  instruction: string;
+  summary: string;
+  timestamp: number;
+  affected_room_ids: string[];
+  affected_element_ids: string[];
+  is_valid: boolean;
+  validation_score: number;
+  total_errors: number;
+  total_warnings: number;
+}
+

@@ -42,11 +42,13 @@ class PlanningAgent:
         self.relationship_builder = RelationshipGraphBuilder()
         self.circulation_planner = CirculationPlanner()
 
-    def plan(self, requirements: Requirements) -> PlanningSpec:
+    def plan(self, requirements: Requirements, strategy: Optional[str] = None) -> PlanningSpec:
         """Create a PlanningSpec from validated Requirements.
 
         Args:
             requirements: Validated, complete Requirements from Requirement Agent.
+            strategy: Optional strategic planning directive (e.g. 'compact', 'open_plan', 'circulation_prioritized').
+
 
         Returns:
             A structured PlanningSpec ready for ASAA spatial allocation.
@@ -86,6 +88,8 @@ class PlanningAgent:
 
         # 3. Formulate global architectural constraints for downstream ASAA
         spec.global_constraints = self._build_global_constraints(requirements, is_multi_floor)
+        if strategy:
+            spec.global_constraints["planning_strategy"] = strategy
 
         return spec
 

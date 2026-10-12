@@ -150,44 +150,59 @@ class DoorBuilder:
                 f"'{door_intent.connects_to}'): no wall with sufficient width (>= {req_width}m) found"
             )
 
-        # Place door at midpoint of wall
+        # Ensure target wall is sufficiently long for a physical door opening
         w_start = target_wall.start
         w_end = target_wall.end
         w_len = segment_length((w_start, w_end))
-        pos = point_along_segment((w_start, w_end), 0.5)
+        if w_len < 0.65:
+            raise DoorPlacementError(
+                f"Cannot place door intent {door_intent.id}: wall length {w_len:.2f}m is too short (< 0.65m)"
+            )
 
-        # Compute hinge point (at midpoint minus half width)
-        half_frac = (req_width / 2.0) / w_len
-        hinge = point_along_segment((w_start, w_end), max(0.05, 0.5 - half_frac))
+        # Determine effective door width that safely fits within the host wall
+        effective_width = min(req_width, max(0.6, w_len - 0.1))
+
+        # Position door and hinge strictly within wall segment with end clearances
+        span_frac = effective_width / w_len
+        margin_frac = min(0.05, max(0.01, (1.0 - span_frac) / 2.0))
+        min_hinge_frac = margin_frac
+        max_hinge_frac = max(margin_frac, 1.0 - span_frac - margin_frac)
+        hinge_frac = max(min_hinge_frac, min(max_hinge_frac, 0.5 - span_frac / 2.0))
+
+        hinge = point_along_segment((w_start, w_end), hinge_frac)
+        pos = point_along_segment((w_start, w_end), hinge_frac + span_frac / 2.0)
 
         # Compute swing arc: orient swing inward towards room interior
         swing_inside = True
         ref_room = source_room or target_room
-        if ref_room and ref_room.usable_polygon:
+        if ref_room and (ref_room.usable_polygon or ref_room.built_polygon):
             from shapely.geometry import Polygon
-            p = Polygon(ref_room.usable_polygon)
-            rcx, rcy = p.centroid.x, p.centroid.y
-            to_rcx = rcx - pos[0]
-            to_rcy = rcy - pos[1]
-            wx = w_end[0] - w_start[0]
-            wy = w_end[1] - w_start[1]
-            # Inward normal (+pi/2) has vector (-wy, wx)
-            dot_in = -wy * to_rcx + wx * to_rcy
-            swing_inside = (dot_in >= 0)
+            poly_coords = ref_room.usable_polygon or ref_room.built_polygon
+            if len(poly_coords) >= 3:
+                p = Polygon(poly_coords)
+                rcx, rcy = p.centroid.x, p.centroid.y
+                to_rcx = rcx - pos[0]
+                to_rcy = rcy - pos[1]
+                wx = w_end[0] - w_start[0]
+                wy = w_end[1] - w_start[1]
+                # Inward normal (+pi/2) has vector (-wy, wx)
+                dot_in = -wy * to_rcx + wx * to_rcy
+                swing_inside = (dot_in >= 0)
 
-        swing_arc = compute_swing_arc(
+        raw_arc = compute_swing_arc(
             hinge=hinge,
             wall_start=w_start,
             wall_end=w_end,
-            width=req_width,
+            width=effective_width,
             swing_inside=swing_inside,
         )
+        swing_arc = raw_arc if raw_arc and len(raw_arc) >= 3 else None
 
         geo_door = GeoDoor(
             id=generate_id("geodoor"),
             wall_id=target_wall.id,
             position=(round(pos[0], 4), round(pos[1], 4)),
-            width=req_width,
+            width=round(effective_width, 4),
             height=req_height,
             type=door_type,
             connects_from=door_intent.connects_from,

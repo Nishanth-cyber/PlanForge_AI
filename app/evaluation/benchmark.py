@@ -354,6 +354,91 @@ BENCHMARK_CASES: List[BenchmarkCase] = [
             "min_rooms": 5,
         },
     ),
+    BenchmarkCase(
+        case_id="case_17_contradictory_setbacks",
+        name="Contradictory Boundary Setbacks",
+        description="Synthetic case with setbacks geometrically exceeding plot dimensions, causing an empty buildable polygon.",
+        difficulty="high",
+        tags=[BenchmarkCategory.SINGLE_FLOOR, BenchmarkCategory.CONTRADICTORY, BenchmarkCategory.INFEASIBLE],
+        brief="""
+        Single floor house on a 30 feet by 30 feet plot (approx 9m x 9m) with front setback: 5.0m, rear setback: 5.0m, side setback: 5.0m.
+        Floor 1:
+        - 1 living room of 200 sq ft
+        - 1 bedroom of 150 sq ft
+        - 1 kitchen of 100 sq ft
+        """,
+        expected_properties={
+            "expected_floors": 1,
+            "expected_feasibility": False,
+            "expected_infeasible": True,
+            "synthetic_stress_fixture": True,
+            "min_rooms": 3,
+        },
+    ),
+    BenchmarkCase(
+        case_id="case_18_missing_mandatory_rooms",
+        name="Ambiguous Program Missing Mandatory Rooms",
+        description="Synthetic brief lacking concrete room counts and types, requiring clarification before spatial allocation.",
+        difficulty="medium",
+        tags=[BenchmarkCategory.SINGLE_FLOOR, BenchmarkCategory.MISSING_REQUIREMENTS],
+        brief="""
+        Single floor contemporary residential cottage on a 40 feet by 50 feet plot with front setback: 2m, rear setback: 2m, side setback: 2m.
+        Please provide a pleasant family living space with lots of natural light.
+        """,
+        expected_properties={
+            "expected_floors": 1,
+            "expected_feasibility": False,
+            "requires_clarification": True,
+            "synthetic_stress_fixture": True,
+        },
+    ),
+    BenchmarkCase(
+        case_id="case_19_irregular_t_plot",
+        name="Irregular T-Shaped Boundary Program",
+        description="Synthetic non-convex T-shaped polygon plot testing multi-wing zoning and envelope containment.",
+        difficulty="high",
+        tags=[BenchmarkCategory.SINGLE_FLOOR, BenchmarkCategory.IRREGULAR_PLOT],
+        brief="""
+        Single floor residence on a 50 feet by 60 feet plot with front setback: 2m, rear setback: 2m, side setback: 2m.
+        Floor 1:
+        - 1 living room of 240 sq ft
+        - 1 dining room of 140 sq ft
+        - 1 kitchen of 130 sq ft
+        - 2 bedrooms of 150 sq ft each
+        - 1 bathroom of 55 sq ft
+        """,
+        expected_properties={
+            "expected_floors": 1,
+            "expected_feasibility": True,
+            "plot_shape": "t-shaped",
+            "synthetic_stress_fixture": True,
+            "min_rooms": 6,
+        },
+    ),
+    BenchmarkCase(
+        case_id="case_20_tight_multifloor_deficit",
+        name="Constrained Multi-Floor Ground Floor Deficit",
+        description="Two-floor program where the ground floor program exceeds the available footprint, requiring vertical redistribution.",
+        difficulty="high",
+        tags=[BenchmarkCategory.MULTI_FLOOR, BenchmarkCategory.STAIRCASE, BenchmarkCategory.TIGHT_SPACE],
+        brief="""
+        Two floor compact residence on a 30 feet by 35 feet plot with front setback: 2m, rear setback: 2m, side setback: 2m.
+        Floor 1:
+        - 1 living room of 320 sq ft
+        - 1 dining room of 200 sq ft
+        - 1 kitchen of 180 sq ft
+        Floor 2:
+        - 2 bedrooms of 160 sq ft each
+        - 1 bathroom of 60 sq ft
+        """,
+        expected_properties={
+            "expected_floors": 2,
+            "expected_feasibility": True,
+            "requires_staircase": True,
+            "synthetic_stress_fixture": True,
+            "min_rooms": 5,
+        },
+    ),
 ]
 
 

@@ -1,0 +1,72 @@
+{
+  "audit": "cad_dxf_structural_verification",
+  "dxf_verification_count": 3,
+  "all_files_opened_successfully": true,
+  "standard_r2018_or_r2013_compliance": true,
+  "zero_missing_mandatory_layers": false,
+  "invalid_designs_blocked_from_export": true,
+  "records": [
+    {
+      "case_id": "case_01_small_single_floor",
+      "dxf_file": "case_01_small_single_floor_audit.dxf",
+      "file_size_bytes": 36271,
+      "acad_version": "AC1032",
+      "layers_present_count": 14,
+      "missing_mandatory_layers": [],
+      "total_entities_count": 57,
+      "entities_by_type": {
+        "LWPOLYLINE": 36,
+        "MTEXT": 5,
+        "CIRCLE": 5,
+        "LINE": 9,
+        "DIMENSION": 2
+      },
+      "fps_room_count": 5,
+      "dxf_room_poly_count": 4,
+      "coordinate_precision_verified": true
+    },
+    {
+      "case_id": "case_04_two_floor_family",
+      "dxf_file": "case_04_two_floor_family_audit.dxf",
+      "file_size_bytes": 57093,
+      "acad_version": "AC1032",
+      "layers_present_count": 24,
+      "missing_mandatory_layers": [
+        "WALLS_EXTERIOR",
+        "WALLS_INTERIOR",
+        "ROOM_BOUNDARIES",
+        "DOORS"
+      ],
+      "total_entities_count": 117,
+      "entities_by_type": {
+        "LWPOLYLINE": 54,
+        "MTEXT": 8,
+        "CIRCLE": 7,
+        "LINE": 42,
+        "DIMENSION": 6
+      },
+      "fps_room_count": 6,
+      "dxf_room_poly_count": 5,
+      "coordinate_precision_verified": true
+    },
+    {
+      "case_id": "case_06_irregular_l_plot",
+      "dxf_file": "case_06_irregular_l_plot_audit.dxf",
+      "file_size_bytes": 38923,
+      "acad_version": "AC1032",
+      "layers_present_count": 14,
+      "missing_mandatory_layers": [],
+      "total_entities_count": 70,
+      "entities_by_type": {
+        "LWPOLYLINE": 43,
+        "MTEXT": 6,
+        "CIRCLE": 7,
+        "LINE": 12,
+        "DIMENSION": 2
+      },
+      "fps_room_count": 6,
+      "dxf_room_poly_count": 5,
+      "coordinate_precision_verified": true
+    }
+  ]
+}

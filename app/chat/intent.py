@@ -109,9 +109,12 @@ _AGENT_DECIDE_RE = re.compile(
 )
 
 _GREETING_RE = re.compile(
-    r"^(?:hi|hello|hey|hiya|hola|namaste|yo|good\s+(?:morning|afternoon|evening)|"
+    r"^(?:hi|hello|hey|hiya|howdy|hola|namaste|yo|greetings|good\s+(?:morning|afternoon|evening|day)|"
     r"thanks|thank\s+you|thx|ok|okay|cool|great|nice|awesome|got\s+it|bye|goodbye)"
-    r"(?:\s+(?:there|planforge|planforge\s+ai))?\s*[!.?,]*$"
+    r"(?:[\s,]+(?:there|planforge|planforge\s+ai|assistant|friend|everyone))?"
+    r"(?:[\s,]+(?:how\s+are\s+you|how\s+r\s+u|how's\s+it\s+going|what's\s+up|sup))?"
+    r"\s*[!.?,]*$",
+    re.IGNORECASE,
 )
 
 _QUESTION_START_RE = re.compile(
@@ -152,7 +155,7 @@ _NEGATION_ROOM_RE = re.compile(
 _MODIFY_RE = re.compile(
     r"\b(?:move|swap|switch|relocate|shift|resize|enlarge|expand|shrink|reduce|widen|narrow|"
     r"rotate|reposition|rearrange|reorient|flip|mirror|modify|redesign|rework|revise|change|"
-    r"alter|adjust|improve|optimi[sz]e|bring|push|place)\b"
+    r"alter|adjust|improve|optimi[sz]e|bring|push|place|make|increase|decrease)\b"
 )
 
 # Requirement-shaped content (dimensions, plot/floor words, counted rooms).
@@ -246,7 +249,7 @@ def classify_intent(message: str, *, source: str = "text") -> IntentDecision:
             return IntentDecision(ChatIntent.PLAN_MODIFICATION, "design_preference")
         return IntentDecision(ChatIntent.REQUIREMENT, "requirement_statement")
 
-    if _MODIFY_RE.search(norm) and (has_room or has_layout):
+    if (_MODIFY_RE.search(norm) or _PREFERENCE_RE.search(norm)) and (has_room or has_layout):
         return IntentDecision(ChatIntent.PLAN_MODIFICATION, "modify_existing_plan")
 
     # Default: keep the existing deterministic requirement flow.

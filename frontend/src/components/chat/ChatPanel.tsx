@@ -12,6 +12,7 @@ interface ChatPanelProps {
   isReadyForGeneration: boolean;
   isLoading: boolean;
   onSendMessage: (msg: string) => void;
+  onExecuteAction?: (action: import('../../api/types').ChatActionData) => void;
   onResetConversation: () => void;
   projectName?: string;
   onOpenCustomPlot?: () => void;
@@ -24,6 +25,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   isReadyForGeneration,
   isLoading,
   onSendMessage,
+  onExecuteAction,
   onResetConversation,
   projectName = 'PlanForge AI',
   onOpenCustomPlot,
@@ -88,10 +90,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             message={msg}
             isLatestAssistant={idx === latestAssistantIndex}
             onAnswerCard={onSendMessage}
+            onExecuteAction={onExecuteAction}
             disabled={isLoading}
             onOpenCustomPlot={onOpenCustomPlot}
           />
         ))}
+
 
         {isLoading && (
           <div className="chat-message-row assistant">

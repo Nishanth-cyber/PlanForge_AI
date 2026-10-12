@@ -6,12 +6,15 @@ architectural design proposals (HOW) using the Architectural LLM.
 
 from __future__ import annotations
 import json
+import logging
 from typing import Any, Optional
 from app.agents.architectural_agent.context import (
     ArchitecturalContext,
     ContextBuilder,
     FloorDesignContext,
 )
+
+logger = logging.getLogger(__name__)
 from app.agents.architectural_agent.prompts import (
     ARCHITECTURAL_SYSTEM_PROMPT,
     build_floor_prompt,
@@ -118,10 +121,20 @@ class ArchitecturalAgent:
 
         # Build prompt and execute LLM call
         prompt = build_floor_prompt(floor_ctx)
-        response_text = self.llm_client.generate(
-            prompt=prompt,
-            system_prompt=ARCHITECTURAL_SYSTEM_PROMPT,
-        )
+        fallback_invoked = False
+        try:
+            response_text = self.llm_client.generate(
+                prompt=prompt,
+                system_prompt=ARCHITECTURAL_SYSTEM_PROMPT,
+            )
+        except Exception as e:
+            logger.warning(
+                "Architectural LLM call failed (%s: %s). Activating bounded deterministic fallback.",
+                type(e).__name__,
+                e,
+            )
+            response_text = self._deterministic_mock_generator(prompt, ARCHITECTURAL_SYSTEM_PROMPT)
+            fallback_invoked = True
 
         # Parse JSON from response
         try:
@@ -167,7 +180,7 @@ class ArchitecturalAgent:
         metadata = {
             "provider": self.config.provider,
             "model": self.config.model_name,
-            "endpoint": endpoint if self.config.provider in ("huggingface", "hf") else None,
+            "endpoint": endpoint if self.config.provider in ("huggingface", "hf", "openrouter", "or", "google", "gemini") else None,
             "status": "success",
             "output_schema_valid": True,
             "client_metadata": client_meta,
@@ -353,15 +366,14 @@ class ArchitecturalAgent:
                             "recommended_height": 2.1,
                             "rationale": "Direct dining to kitchen service flow",
                         })
-                    if not (has_living and "living" in adj_types):
-                        doors.append({
-                            "connects_to": "circulation",
-                            "door_type": "interior",
-                            "wall_orientation": "west",
-                            "recommended_width": 0.9,
-                            "recommended_height": 2.1,
-                            "rationale": "Circulation access",
-                        })
+                    doors.append({
+                        "connects_to": "circulation",
+                        "door_type": "interior",
+                        "wall_orientation": "west",
+                        "recommended_width": 0.9,
+                        "recommended_height": 2.1,
+                        "rationale": "Circulation access",
+                    })
                 elif rtype == "kitchen":
                     kit_connects = "dining" if (has_dining and "dining" in adj_types) else "circulation"
                     doors.append({
@@ -499,6 +511,15 @@ class ArchitecturalAgent:
                         "recommended_height": 2.1,
                         "rationale": "Entrance",
                     })
+                    if has_dining and "dining" in adj_types:
+                        doors.append({
+                            "connects_to": "dining",
+                            "door_type": "interior",
+                            "wall_orientation": "east",
+                            "recommended_width": 0.9,
+                            "recommended_height": 2.1,
+                            "rationale": "Direct social connection to dining",
+                        })
                     doors.append({
                         "connects_to": "circulation",
                         "door_type": "interior",
@@ -506,6 +527,24 @@ class ArchitecturalAgent:
                         "recommended_width": 0.9,
                         "recommended_height": 2.1,
                         "rationale": "Buffer corridor link",
+                    })
+                elif rtype == "dining":
+                    if has_kitchen and "kitchen" in adj_types:
+                        doors.append({
+                            "connects_to": "kitchen",
+                            "door_type": "interior",
+                            "wall_orientation": "north",
+                            "recommended_width": 0.9,
+                            "recommended_height": 2.1,
+                            "rationale": "Direct dining to kitchen service flow",
+                        })
+                    doors.append({
+                        "connects_to": "circulation",
+                        "door_type": "interior",
+                        "wall_orientation": "south",
+                        "recommended_width": 0.9,
+                        "recommended_height": 2.1,
+                        "rationale": "Access door",
                     })
                 elif rcat == "private":
                     doors.append({

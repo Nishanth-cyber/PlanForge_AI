@@ -277,16 +277,36 @@ def compute_swing_arc(
     """Compute 2D swing arc polygon vertices for a door leaf.
 
     Constructs a 90-degree sector polygon originating from hinge.
+    Validates that the host wall is non-degenerate and that the hinge
+    is physically located on the wall segment.
     """
-    hx, hy = hinge
+    if width <= 0.05 or math.isnan(width):
+        return []
+
     wx = wall_end[0] - wall_start[0]
     wy = wall_end[1] - wall_start[1]
     w_len = math.hypot(wx, wy)
-    if w_len < 1e-6:
-        # Default horizontal
-        wall_angle = 0.0
-    else:
-        wall_angle = math.atan2(wy, wx)
+    if w_len < 1e-4:
+        # Reject degenerate walls without valid orientation
+        return []
+
+    hx, hy = hinge
+    # Validate that hinge is situated on or very close to the host wall segment
+    t = ((hx - wall_start[0]) * wx + (hy - wall_start[1]) * wy) / (w_len * w_len)
+    proj_x = wall_start[0] + t * wx
+    proj_y = wall_start[1] + t * wy
+    dist_to_segment = math.hypot(hx - proj_x, hy - proj_y)
+
+    # Reject hinges not derived from the wall (e.g. centroids, plot vertices, arbitrary coordinates)
+    if dist_to_segment > 0.15 or t < -0.05 or t > 1.05:
+        return []
+
+    # Snap hinge coordinate to the exact wall line
+    t_clamped = max(0.0, min(1.0, t))
+    hx = wall_start[0] + t_clamped * wx
+    hy = wall_start[1] + t_clamped * wy
+
+    wall_angle = math.atan2(wy, wx)
 
     # Inward normal (+90 deg or -90 deg)
     swing_dir = 1.0 if swing_inside else -1.0

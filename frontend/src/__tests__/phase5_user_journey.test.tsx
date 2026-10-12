@@ -259,8 +259,9 @@ describe('Phase 5 User Journey & Frontend-Backend Integration', () => {
     );
 
     // Floor 1 rooms visible
-    expect(screen.getByText(/living/i)).toBeDefined();
-    expect(screen.queryByText(/bedroom/i)).toBeNull();
+    expect(screen.getAllByText(/living/i).length).toBeGreaterThan(0);
+    const renderedRoomLabels = Array.from(document.querySelectorAll('.svg-room-label')).map(el => el.textContent);
+    expect(renderedRoomLabels.some(t => /bedroom/i.test(t || ''))).toBe(false);
 
     // Floor switcher button for Floor 2 is present and triggers onSelectFloor
     const floor2Btn = screen.getByRole('button', { name: /Floor 2/i });

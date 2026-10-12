@@ -73,6 +73,7 @@ export const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
   const [viewMode, setViewMode] = useState<'svg' | 'png'>('svg');
   const [showPlot, setShowPlot] = useState<boolean>(true);
   const [showBuildable, setShowBuildable] = useState<boolean>(true);
+  const [showDoorSwings, setShowDoorSwings] = useState<boolean>(true);
   const [showDebug, setShowDebug] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -94,7 +95,22 @@ export const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
 
   const doors = useMemo(() => {
     if (!geometry?.doors) return [];
-    return geometry.doors.filter((d) => !d.floor_number || d.floor_number === currentFloorNumber);
+    const floorDoors = geometry.doors.filter(
+      (d) => !d.floor_number || d.floor_number === currentFloorNumber
+    );
+    // Deduplicate doors to ensure each physical door is rendered exactly once
+    const seen = new Set<string>();
+    const uniqueDoors: typeof floorDoors = [];
+    for (const d of floorDoors) {
+      const posKey = `${d.wall_id}_${d.position[0].toFixed(2)}_${d.position[1].toFixed(2)}`;
+      if (seen.has(d.id) || seen.has(posKey)) {
+        continue;
+      }
+      seen.add(d.id);
+      seen.add(posKey);
+      uniqueDoors.push(d);
+    }
+    return uniqueDoors;
   }, [geometry?.doors, currentFloorNumber]);
 
   const windows = useMemo(() => {
@@ -254,6 +270,15 @@ export const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
                   onChange={(e) => setShowBuildable(e.target.checked)}
                 />
                 Buildable Setback
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  data-testid="toggle-door-swings"
+                  checked={showDoorSwings}
+                  onChange={(e) => setShowDoorSwings(e.target.checked)}
+                />
+                Show Door Swing Arcs
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', color: showDebug ? 'var(--accent-sky)' : 'inherit' }}>
                 <input
@@ -588,17 +613,20 @@ export const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
 
             {/* 8. Doors (Leaf Line + Clean 90-Degree Swing Arc) */}
             {doors.map((door) => {
-              const hasArc = door.swing_arc && door.swing_arc.length >= 2;
+              const hasArc = Boolean(door.swing_arc && door.swing_arc.length >= 3);
               const hinge = hasArc ? door.swing_arc![0] : door.position;
               const leafTip = hasArc ? door.swing_arc![door.swing_arc!.length - 1] : door.position;
+              // Arc trajectory excludes hinge point [0] so only the curved path is drawn
+              const arcPoints = hasArc ? door.swing_arc!.slice(1) : [];
 
               return (
-                <g key={`door-${door.id}`}>
-                  {/* Swing Arc Path */}
-                  {hasArc && (
+                <g key={`door-${door.id}`} data-testid={`door-group-${door.id}`}>
+                  {/* Swing Arc Path (rendered only when toggle is enabled and arc is valid) */}
+                  {showDoorSwings && hasArc && arcPoints.length >= 2 && (
                     <polyline
-                      points={polyToSvgPoints(door.swing_arc!)}
+                      points={polyToSvgPoints(arcPoints)}
                       className="svg-door-arc"
+                      data-testid="door-swing-arc"
                     />
                   )}
 

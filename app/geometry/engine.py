@@ -7,6 +7,7 @@ assembles an unvalidated FloorPlanSet.
 
 from __future__ import annotations
 import logging
+import math
 from typing import List, Optional, Tuple
 
 from app.geometry.corridor_builder import CorridorBuilder
@@ -141,9 +142,50 @@ class GeometryEngine:
 
         # 4. Construct doors from DoorIntents
         constructed_doors: List[GeoDoor] = []
+        placed_door_intents: set[str] = set()
+        connected_room_pairs: set[frozenset[str]] = set()
+
+        def _is_door_duplicate_or_overlapping(candidate: GeoDoor) -> bool:
+            """Check whether candidate door is a duplicate or overlaps an existing door."""
+            if candidate.intent_id and candidate.intent_id in placed_door_intents:
+                return True
+            for existing in constructed_doors:
+                if existing.wall_id == candidate.wall_id:
+                    dist = math.hypot(
+                        existing.position[0] - candidate.position[0],
+                        existing.position[1] - candidate.position[1],
+                    )
+                    min_dist = max(0.4, min(existing.width, candidate.width) * 0.8)
+                    if dist < min_dist:
+                        return True
+            return False
+
+        def _register_door(door: GeoDoor) -> None:
+            """Register constructed door and its room connection."""
+            constructed_doors.append(door)
+            if door.intent_id:
+                placed_door_intents.add(door.intent_id)
+            if door.connects_from and door.connects_to and door.connects_to not in {"exterior", "balcony"}:
+                connected_room_pairs.add(frozenset({door.connects_from, door.connects_to}))
+
         for r_design in floor_design.rooms:
             geo_r = arch_to_georoom.get(r_design.id)
             for door_intent in r_design.doors:
+                # Skip duplicate intent
+                if door_intent.id in placed_door_intents:
+                    continue
+
+                # Skip duplicate reciprocal interior door between already connected rooms
+                if door_intent.connects_to not in {"exterior", "balcony"}:
+                    r_pair = frozenset({door_intent.connects_from, door_intent.connects_to})
+                    if r_pair in connected_room_pairs:
+                        logger.info(
+                            "Door connection between '%s' and '%s' already satisfied by existing door; skipping duplicate intent.",
+                            door_intent.connects_from,
+                            door_intent.connects_to,
+                        )
+                        continue
+
                 try:
                     geo_door = DoorBuilder.build_door(
                         door_intent=door_intent,
@@ -152,7 +194,14 @@ class GeometryEngine:
                         floor_number=floor_design.floor_number,
                         source_room_override=geo_r,
                     )
-                    constructed_doors.append(geo_door)
+                    if not _is_door_duplicate_or_overlapping(geo_door):
+                        _register_door(geo_door)
+                    else:
+                        logger.info(
+                            "Skipping door %s: overlaps existing door on wall %s",
+                            geo_door.id,
+                            geo_door.wall_id,
+                        )
                 except DoorPlacementError as e:
                     logger.warning(
                         "Door placement between '%s' and '%s' failed: %s. Applying automatic circulation fallback.",
@@ -171,12 +220,51 @@ class GeometryEngine:
                             floor_number=floor_design.floor_number,
                             source_room_override=geo_r,
                         )
-                        constructed_doors.append(geo_door)
+                        if not _is_door_duplicate_or_overlapping(geo_door):
+                            _register_door(geo_door)
+                        else:
+                            logger.info(
+                                "Fallback door %s overlaps existing door; skipping.",
+                                geo_door.id,
+                            )
                     except DoorPlacementError:
-                        logger.warning(
-                            "Skipping unplaceable door intent %s after circulation fallback.",
-                            door_intent.id,
-                        )
+                        placed = False
+                        if geo_r:
+                            # Secondary fallback: find ANY adjacent room sharing an interior partition wall
+                            shared_wall_candidates = [
+                                w for w in constructed_walls
+                                if geo_r.id in w.room_ids and w.type == "interior" and len(w.room_ids) > 1
+                            ]
+                            for sw in shared_wall_candidates:
+                                other_ids = [rid for rid in sw.room_ids if rid != geo_r.id]
+                                if other_ids:
+                                    other_r = next((rm for rm in constructed_rooms if rm.id == other_ids[0]), None)
+                                    if other_r:
+                                        adj_intent = dataclasses.replace(door_intent, connects_to=other_r.id)
+                                        try:
+                                            geo_door = DoorBuilder.build_door(
+                                                door_intent=adj_intent,
+                                                walls=constructed_walls,
+                                                rooms=constructed_rooms,
+                                                floor_number=floor_design.floor_number,
+                                                source_room_override=geo_r,
+                                            )
+                                            if not _is_door_duplicate_or_overlapping(geo_door):
+                                                _register_door(geo_door)
+                                                placed = True
+                                                logger.info(
+                                                    "Placed secondary fallback door between '%s' and adjacent room '%s'.",
+                                                    geo_r.room_type,
+                                                    other_r.room_type,
+                                                )
+                                                break
+                                        except DoorPlacementError:
+                                            continue
+                        if not placed:
+                            logger.warning(
+                                "Skipping unplaceable door intent %s after circulation fallback.",
+                                door_intent.id,
+                            )
 
         # 5. Construct windows from WindowIntents
         constructed_windows: List[GeoWindow] = []

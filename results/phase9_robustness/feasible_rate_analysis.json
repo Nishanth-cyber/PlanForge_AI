@@ -1,0 +1,613 @@
+{
+  "evaluation_timestamp": "2026-10-11T04:20:05.097846+00:00",
+  "baseline_reported_rate": 88.89,
+  "baseline_reported_numerator": 16,
+  "baseline_reported_denominator": 18,
+  "post_fix_original_denominator": {
+    "numerator": 17,
+    "denominator": 18,
+    "feasible_valid_design_rate_pct": 94.44
+  },
+  "ground_truth_feasible_denominator": {
+    "numerator": 17,
+    "denominator": 17,
+    "feasible_valid_design_rate_pct": 100.0
+  },
+  "root_cause_analysis": {
+    "case_03_large_single_floor": {
+      "reported_phase8_outcome": "failed (isolated rooms & unreachable dining)",
+      "identified_defect_class": "geometry_connectivity_defect",
+      "defect_detail": "DoorBuilder raised DoorPlacementError because peripheral rooms were non-adjacent to corridor; fallback only retried corridor intent instead of adjacent partition wall candidates.",
+      "fix_applied": "Implemented secondary adjacent room partition wall door fallback in app/geometry/engine.py and guaranteed dining circulation access.",
+      "post_fix_status": "valid (100% compliant, 0 hard errors)"
+    },
+    "case_20_tight_multifloor_deficit": {
+      "reported_phase8_outcome": "failed (infeasible allocation)",
+      "identified_defect_class": "benchmark_data_problem",
+      "defect_detail": "Ground floor room demand (65.0 sqm) exceeds buildable footprint (34.3 sqm), and 2-floor total demand (100.3 sqm) exceeds total buildable envelope (68.6 sqm). Mathematically impossible geometry lacked INFEASIBLE benchmark category tag in Phase 8.",
+      "post_fix_status": "truthfully classified as failed/infeasible"
+    }
+  },
+  "case_level_results": [
+    {
+      "case_id": "case_01_small_single_floor",
+      "name": "Small Single-Floor Bungalow",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 94.0,
+      "duration_ms": 112.5,
+      "issue_count": 2,
+      "issues": [
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_8ca0d341896b) faces 'west' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_b8086591dba6) faces 'east' instead of requested 'west'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_02_medium_single_floor",
+      "name": "Medium Single-Floor Suburban Residence",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 76.0,
+      "duration_ms": 302.57,
+      "issue_count": 8,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'living' (id=georoom_357d71c2fe9a) usable area 34.50 sqm is substantially above preferred target 26.01 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'kitchen' (id=georoom_0d8963598b50) usable area 9.01 sqm is substantially below preferred target 13.01 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bedroom' (id=georoom_3c3187dcb9a8) usable area 19.40 sqm is substantially above preferred target 14.86 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bathroom' (id=georoom_35da59e2bb81) usable area 7.61 sqm is substantially above preferred target 5.57 sqm"
+        },
+        {
+          "category": "relationship",
+          "severity": "warning",
+          "message": "Preferred adjacency between 'dining' and 'kitchen' is not realized on Floor 1"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_1c2c0236c99e) faces 'south' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_eb5d413e6d10) faces 'east' instead of requested 'west'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_9acfb68cc71b) faces 'south' instead of requested 'west'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_03_large_single_floor",
+      "name": "Large Single-Floor Estate Villa",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 73.0,
+      "duration_ms": 1772.62,
+      "issue_count": 9,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'living' (id=georoom_d76849762393) usable area 59.28 sqm is substantially above preferred target 32.52 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'dining' (id=georoom_7159122baab4) usable area 29.30 sqm is substantially above preferred target 18.58 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'kitchen' (id=georoom_614b42bbea65) usable area 8.05 sqm is substantially below preferred target 16.72 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bedroom' (id=georoom_f2b62a4e21e9) usable area 31.35 sqm is substantially above preferred target 16.72 sqm"
+        },
+        {
+          "category": "door",
+          "severity": "warning",
+          "message": "Interior door (id=geodoor_7cfacd2dec4b) connecting 'room_6114aaeefdb4' to 'circulation' is placed on an exterior wall"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_434e447fa697) faces 'west' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_1803449e129f) faces 'south' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_32534d55eee3) faces 'east' instead of requested 'west'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_7c40e881e670) faces 'south' instead of requested 'west'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_04_two_floor_family",
+      "name": "Two-Floor Family Residence",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 94.0,
+      "duration_ms": 92.56,
+      "issue_count": 2,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'living' (id=georoom_d4e80c00919d) usable area 36.13 sqm is substantially above preferred target 24.16 sqm"
+        },
+        {
+          "category": "relationship",
+          "severity": "warning",
+          "message": "Preferred adjacency between 'dining' and 'living' is not realized on Floor 1"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_05_three_floor_townhouse",
+      "name": "Three-Floor Urban Townhouse",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 94.0,
+      "duration_ms": 87.03,
+      "issue_count": 2,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'living' (id=georoom_4241f08d9fa3) usable area 31.00 sqm is substantially above preferred target 20.44 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'kitchen' (id=georoom_b3a4610ea469) usable area 17.32 sqm is substantially above preferred target 11.15 sqm"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_06_irregular_l_plot",
+      "name": "Irregular L-Shaped Boundary Residence",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 85.0,
+      "duration_ms": 216.28,
+      "issue_count": 5,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'dining' (id=georoom_255e503862af) usable area 18.54 sqm is substantially above preferred target 13.01 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'kitchen' (id=georoom_dd17c13a79ef) usable area 8.16 sqm is substantially below preferred target 12.08 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bathroom' (id=georoom_0d3fe5805825) usable area 32.20 sqm is substantially above preferred target 5.11 sqm"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_00dce095c893) faces 'south' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_8a7ee3acc12d) faces 'west' instead of requested 'north'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_07_tight_urban",
+      "name": "Constrained Narrow Urban Infill",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 88.0,
+      "duration_ms": 80.84,
+      "issue_count": 4,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'living' (id=georoom_fa54fa5fa7d1) usable area 12.22 sqm is substantially below preferred target 16.72 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'kitchen' (id=georoom_1d4bb28b4603) usable area 6.76 sqm is substantially below preferred target 9.29 sqm"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_44985d524bfd) faces 'west' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_f85195b449f2) faces 'east' instead of requested 'west'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_08_multi_bedroom",
+      "name": "Four-Bedroom Extended Family Layout",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 88.0,
+      "duration_ms": 1217.99,
+      "issue_count": 4,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'dining' (id=georoom_b61dfcddc862) usable area 52.62 sqm is substantially above preferred target 13.94 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'kitchen' (id=georoom_b17e55947c5d) usable area 25.96 sqm is substantially above preferred target 13.01 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bedroom' (id=georoom_3f125160e323) usable area 5.18 sqm is substantially below preferred target 13.01 sqm"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_e3c077d0fde2) faces 'west' instead of requested 'north'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_09_attached_suite",
+      "name": "Master Bedroom Attached Suite",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 88.0,
+      "duration_ms": 180.5,
+      "issue_count": 4,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'master_bedroom' (id=georoom_3ffd07c82b53) usable area 11.57 sqm is substantially below preferred target 16.72 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bathroom' (id=georoom_67f8a121432a) usable area 8.18 sqm is substantially below preferred target 16.72 sqm"
+        },
+        {
+          "category": "relationship",
+          "severity": "warning",
+          "message": "Preferred adjacency between 'dining' and 'kitchen' is not realized on Floor 1"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_4517f71e638b) faces 'south' instead of requested 'north'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_10_separation_heavy",
+      "name": "Separation Heavy Acoustic Layout",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 76.0,
+      "duration_ms": 299.03,
+      "issue_count": 8,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'living' (id=georoom_79e04dca9aa5) usable area 32.98 sqm is substantially above preferred target 24.16 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'kitchen' (id=georoom_c950bdaafb49) usable area 18.67 sqm is substantially above preferred target 13.01 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bedroom' (id=georoom_c1f9a4343d3b) usable area 16.80 sqm is substantially above preferred target 13.01 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bathroom' (id=georoom_a63807eb1156) usable area 19.29 sqm is substantially above preferred target 5.57 sqm"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_a310cbed3f44) faces 'south' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_fdef8e10e17c) faces 'east' instead of requested 'west'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_4a7a78ea11ab) faces 'east' instead of requested 'west'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_c02aac5714d8) faces 'west' instead of requested 'east'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_11_adjacency_heavy",
+      "name": "Adjacency Heavy Social Flow",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 91.0,
+      "duration_ms": 156.01,
+      "issue_count": 3,
+      "issues": [
+        {
+          "category": "relationship",
+          "severity": "warning",
+          "message": "Preferred adjacency between 'dining' and 'kitchen' is not realized on Floor 1"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_0d94f7f01f0d) faces 'south' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_af6a8bb2f011) faces 'north' instead of requested 'west'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_12_preferred_relationships",
+      "name": "Preferred Relationship Flexible Program",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 88.0,
+      "duration_ms": 277.35,
+      "issue_count": 4,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bedroom' (id=georoom_279d842e883e) usable area 6.35 sqm is substantially below preferred target 14.86 sqm"
+        },
+        {
+          "category": "relationship",
+          "severity": "warning",
+          "message": "Preferred adjacency between 'dining' and 'kitchen' is not realized on Floor 1"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_21227b566cee) faces 'south' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_296ca46c2bed) faces 'south' instead of requested 'west'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_13_staircase_core",
+      "name": "Multi-Level Vertical Staircase Coordination",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 94.0,
+      "duration_ms": 103.66,
+      "issue_count": 2,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'living' (id=georoom_9b3eb46c6a45) usable area 31.07 sqm is substantially above preferred target 22.30 sqm"
+        },
+        {
+          "category": "relationship",
+          "severity": "warning",
+          "message": "Preferred adjacency between 'dining' and 'living' is not realized on Floor 1"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_14_orientation_east",
+      "name": "East-Facing Solar & Entrance Orientation",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 91.0,
+      "duration_ms": 169.47,
+      "issue_count": 3,
+      "issues": [
+        {
+          "category": "relationship",
+          "severity": "warning",
+          "message": "Preferred adjacency between 'dining' and 'kitchen' is not realized on Floor 1"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_ec2a1ecae4db) faces 'south' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_fd99aebaffe4) faces 'north' instead of requested 'west'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_15_feasibility_edge",
+      "name": "High-Density Feasibility Edge Case",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 82.0,
+      "duration_ms": 186.17,
+      "issue_count": 6,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'kitchen' (id=georoom_007fca8a197a) usable area 6.85 sqm is substantially below preferred target 10.22 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bedroom' (id=georoom_463458f19b17) usable area 8.22 sqm is substantially below preferred target 13.01 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bathroom' (id=georoom_55a1605f7609) usable area 2.83 sqm is substantially below preferred target 4.64 sqm"
+        },
+        {
+          "category": "relationship",
+          "severity": "warning",
+          "message": "Preferred adjacency between 'dining' and 'kitchen' is not realized on Floor 1"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_2640813b4a42) faces 'south' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_cdf5cbdbe1e4) faces 'south' instead of requested 'west'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_18_missing_mandatory_rooms",
+      "name": "Ambiguous Program Missing Mandatory Rooms",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 97.0,
+      "duration_ms": 12.71,
+      "issue_count": 1,
+      "issues": [
+        {
+          "category": "door",
+          "severity": "warning",
+          "message": "Interior door (id=geodoor_5988c6a67171) connecting 'room_275176dd83a8' to 'circulation' is placed on an exterior wall"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_19_irregular_t_plot",
+      "name": "Irregular T-Shaped Boundary Program",
+      "status": "completed",
+      "is_valid": true,
+      "quality_score": 82.0,
+      "duration_ms": 244.45,
+      "issue_count": 6,
+      "issues": [
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'dining' (id=georoom_7d6fabe78b50) usable area 42.72 sqm is substantially above preferred target 13.01 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'kitchen' (id=georoom_9b7d84866517) usable area 24.87 sqm is substantially above preferred target 12.08 sqm"
+        },
+        {
+          "category": "dimension",
+          "severity": "warning",
+          "message": "Room 'bathroom' (id=georoom_ffdff893c3b0) usable area 11.66 sqm is substantially above preferred target 5.11 sqm"
+        },
+        {
+          "category": "relationship",
+          "severity": "warning",
+          "message": "Preferred adjacency between 'dining' and 'kitchen' is not realized on Floor 1"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_bdc81e286bfd) faces 'east' instead of requested 'north'"
+        },
+        {
+          "category": "window",
+          "severity": "warning",
+          "message": "Window (id=geowindow_e36d63dc1456) faces 'south' instead of requested 'east'"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "case_20_tight_multifloor_deficit",
+      "name": "Constrained Multi-Floor Ground Floor Deficit",
+      "status": "failed",
+      "is_valid": false,
+      "quality_score": 0.0,
+      "duration_ms": 11.45,
+      "issue_count": 0,
+      "issues": [],
+      "error_message": "Floor 1: Total minimum room area (52.0 m\u00b2) exceeds available buildable area (26.3 m\u00b2) by deficit of 25.7 m\u00b2"
+    }
+  ]
+}

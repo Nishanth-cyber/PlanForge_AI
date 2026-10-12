@@ -1,0 +1,7 @@
+{
+  "total_eval_wall_time_sec": 24.54,
+  "cases_evaluated_total": 41,
+  "mean_case_runtime_ms": 306.84,
+  "fastest_case_ms": 11.45,
+  "slowest_case_ms": 1772.62
+}

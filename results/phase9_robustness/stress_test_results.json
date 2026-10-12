@@ -1,0 +1,102 @@
+{
+  "fixtures_count": 8,
+  "truthful_classification_rate_pct": 100.0,
+  "results": [
+    {
+      "fixture_id": "stress_01_high_room_count",
+      "name": "12-Room High-Complexity Program",
+      "category": "complexity_stress",
+      "expected_feasibility": "feasible_but_difficult",
+      "actual_status": "unresolved",
+      "is_valid": false,
+      "quality_score": 55.0,
+      "classification_truthful": true,
+      "duration_ms": 12465.79,
+      "error_message": null
+    },
+    {
+      "fixture_id": "stress_02_dense_area_demand",
+      "name": "Dense 92% Buildable Envelope Packing",
+      "category": "complexity_stress",
+      "expected_feasibility": "feasible_but_difficult",
+      "actual_status": "completed",
+      "is_valid": true,
+      "quality_score": 88.0,
+      "classification_truthful": true,
+      "duration_ms": 323.41,
+      "error_message": null
+    },
+    {
+      "fixture_id": "stress_03_infeasible_area_overload",
+      "name": "Deterministic Infeasible Area Overload (150%)",
+      "category": "feasibility_limit",
+      "expected_feasibility": "infeasible",
+      "actual_status": "failed",
+      "is_valid": false,
+      "quality_score": 0.0,
+      "classification_truthful": true,
+      "duration_ms": 13.53,
+      "error_message": "Floor 1: Total minimum room area (92.9 m\u00b2) exceeds available buildable area (18.6 m\u00b2) by deficit of 74.3 m\u00b2"
+    },
+    {
+      "fixture_id": "stress_04_conflicting_adjacencies",
+      "name": "Directly Conflicting Adjacency & Separation",
+      "category": "conflicting_constraints",
+      "expected_feasibility": "feasible_but_difficult",
+      "actual_status": "unresolved",
+      "is_valid": false,
+      "quality_score": 70.0,
+      "classification_truthful": true,
+      "duration_ms": 1387.51,
+      "error_message": null
+    },
+    {
+      "fixture_id": "stress_05_extreme_aspect_rooms",
+      "name": "Constrained Aspect Ratio Room Program",
+      "category": "complexity_stress",
+      "expected_feasibility": "feasible_but_difficult",
+      "actual_status": "completed",
+      "is_valid": true,
+      "quality_score": 85.0,
+      "classification_truthful": true,
+      "duration_ms": 123.71,
+      "error_message": null
+    },
+    {
+      "fixture_id": "stress_06_three_floor_vertical_stress",
+      "name": "Three-Floor Residence with Vertical Circulation",
+      "category": "complexity_stress",
+      "expected_feasibility": "feasible",
+      "actual_status": "completed",
+      "is_valid": true,
+      "quality_score": 100.0,
+      "classification_truthful": true,
+      "duration_ms": 96.88,
+      "error_message": null
+    },
+    {
+      "fixture_id": "stress_07_ambiguous_brief",
+      "name": "Ambiguous Program Requiring Clarification",
+      "category": "feasibility_limit",
+      "expected_feasibility": "insufficient_information",
+      "actual_status": "incomplete_requirements",
+      "is_valid": false,
+      "quality_score": 0.0,
+      "classification_truthful": true,
+      "duration_ms": 11.92,
+      "error_message": "Requirements incomplete: floors_with_rooms; missing rooms for floor(s): [1]"
+    },
+    {
+      "fixture_id": "stress_08_unsupported_curved_geometry",
+      "name": "Explicitly Unsupported Curved Plot Boundary",
+      "category": "unsupported_input",
+      "expected_feasibility": "unsupported_input",
+      "actual_status": "failed",
+      "is_valid": false,
+      "quality_score": 0.0,
+      "classification_truthful": true,
+      "duration_ms": 13.04,
+      "error_message": "Floor 1: Total minimum room area (34.9 m\u00b2) exceeds available buildable area (18.6 m\u00b2) by deficit of 16.3 m\u00b2"
+    }
+  ]
+}

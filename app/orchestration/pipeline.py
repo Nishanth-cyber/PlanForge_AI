@@ -46,6 +46,8 @@ class PipelineResult:
     missing_fields: List[str] = field(default_factory=list)
     missing_floors: List[int] = field(default_factory=list)
     clarification_questions: List[str] = field(default_factory=list)
+    agentic_state: Optional[Dict[str, Any]] = None
+    decisions: Optional[List[Dict[str, Any]]] = None
 
     @property
     def is_success(self) -> bool:
@@ -71,6 +73,8 @@ class PipelineResult:
             "export_bundle_path": self.export_bundle_path,
             "decision_trace_available": self.decision_trace is not None,
             "error_message": self.error_message,
+            "agentic_state": self.agentic_state,
+            "decisions": self.decisions,
         }
 
         if self.completeness_result and not self.completeness_result.is_complete:

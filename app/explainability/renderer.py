@@ -146,7 +146,7 @@ class ExplanationRenderer:
         req_e = chain.requirement_event
         if req_e:
             ev = req_e.evidence
-            t_area = ev.get("target_area_sqm", 0.0)
+            t_area = float(ev.get("target_area_sqm") or 0.0)
             lines.append(f"1. **Requirement**: User requested {rtype} with target area {t_area:.2f} m².")
             if ev.get("required_adjacency"):
                 lines.append(f"   - User required adjacencies: {', '.join(ev['required_adjacency'])}.")
@@ -166,7 +166,7 @@ class ExplanationRenderer:
         asaa_e = chain.allocation_event
         if asaa_e:
             ev = asaa_e.evidence
-            alloc_area = ev.get("allocated_area_sqm", 0.0)
+            alloc_area = float(ev.get("allocated_area_sqm") or 0.0)
             reg_id = ev.get("allocated_region_id", "region")
             dims = ev.get("approximate_dimensions")
             dim_str = f" ({dims[0]:.2f}m × {dims[1]:.2f}m)" if dims else ""

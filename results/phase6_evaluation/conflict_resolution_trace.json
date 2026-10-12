@@ -1,0 +1,241 @@
+[
+  {
+    "seq": 1,
+    "ts": 1791778690.291434,
+    "type": "agent_delegated",
+    "agent": "hierarchical_orchestrator",
+    "summary": "Delegating 'evaluate_repair' to collaborative",
+    "data": {
+      "target_agent": "collaborative",
+      "task_id": "task_conflict_eval",
+      "state_version": 2
+    }
+  },
+  {
+    "seq": 2,
+    "ts": 1791778690.291453,
+    "type": "task_delegated",
+    "agent": "hierarchical_orchestrator",
+    "summary": "Delegating 'evaluate_repair' to collaborative",
+    "data": {
+      "target_agent": "collaborative",
+      "task_id": "task_conflict_eval",
+      "state_version": 2
+    }
+  },
+  {
+    "seq": 3,
+    "ts": 1791778690.291464,
+    "type": "proposal_submitted",
+    "agent": "aggressive_optimizer_agent",
+    "summary": "Proposed 'validate_design': Compresses floor plan footprint",
+    "data": {
+      "proposal_id": "prop_violating_mandatory_area",
+      "state_version": 2
+    }
+  },
+  {
+    "seq": 4,
+    "ts": 1791778690.2914717,
+    "type": "proposal_submitted",
+    "agent": "compliance_architect_agent",
+    "summary": "Proposed 'validate_design': Preserves statutory areas while maintaining code validity",
+    "data": {
+      "proposal_id": "prop_compliant_preserve_area",
+      "state_version": 2
+    }
+  },
+  {
+    "seq": 5,
+    "ts": 1791778690.2914836,
+    "type": "conflict_detected",
+    "agent": "hierarchical_orchestrator",
+    "summary": "Conflict detected between 2 agent proposals",
+    "data": {
+      "proposal_ids": [
+        "prop_violating_mandatory_area",
+        "prop_compliant_preserve_area"
+      ]
+    }
+  },
+  {
+    "seq": 6,
+    "ts": 1791778690.2917066,
+    "type": "conflict_resolved",
+    "agent": "hierarchical_orchestrator",
+    "summary": "Accepted proposal prop_compliant_preserve_area from compliance_architect_agent under Priority Level 1 (Preserves statutory areas while maintaining code validity).",
+    "data": {
+      "conflict_id": "conflict_8572bc0d56bf",
+      "task_id": "task_conflict_eval",
+      "disagreeing_agents": [
+        "aggressive_optimizer_agent",
+        "compliance_architect_agent"
+      ],
+      "proposals": [
+        {
+          "proposal_id": "prop_violating_mandatory_area",
+          "task_id": "task_conflict_eval",
+          "agent_id": "aggressive_optimizer_agent",
+          "state_version": 2,
+          "proposed_action": "validate_design",
+          "parameters": {},
+          "supporting_evidence": [
+            {
+              "constraint_id": "mandatory_area_breach",
+              "category": "mandatory_user",
+              "priority": 1,
+              "description": "Compresses bedroom to 6.2 sqm, violating mandatory 9.5 sqm minimum",
+              "is_hard": true,
+              "metric_value": null,
+              "threshold": null,
+              "source": "area_compression"
+            }
+          ],
+          "expected_benefit": "Compresses floor plan footprint",
+          "affected_components": [],
+          "dependencies": [],
+          "risks": [],
+          "confidence": 1.0,
+          "requires_review_by": null,
+          "status": "rejected",
+          "rejection_reason": "Violates hard constraint: Compresses bedroom to 6.2 sqm, violating mandatory 9.5 sqm minimum",
+          "evidence": [
+            {
+              "constraint_id": "mandatory_area_breach",
+              "category": "mandatory_user",
+              "priority": 1,
+              "description": "Compresses bedroom to 6.2 sqm, violating mandatory 9.5 sqm minimum",
+              "is_hard": true,
+              "metric_value": null,
+              "threshold": null,
+              "source": "area_compression"
+            }
+          ]
+        },
+        {
+          "proposal_id": "prop_compliant_preserve_area",
+          "task_id": "task_conflict_eval",
+          "agent_id": "compliance_architect_agent",
+          "state_version": 2,
+          "proposed_action": "validate_design",
+          "parameters": {},
+          "supporting_evidence": [
+            {
+              "constraint_id": "mandatory_area_respected",
+              "category": "mandatory_user",
+              "priority": 1,
+              "description": "Maintains statutory minimum area >= 9.5 sqm for all bedrooms",
+              "is_hard": false,
+              "metric_value": null,
+              "threshold": null,
+              "source": "statutory_compliance"
+            },
+            {
+              "constraint_id": "soft_daylight_tradeoff",
+              "category": "soft_preferences",
+              "priority": 5,
+              "description": "Slight daylight orientation compromise",
+              "is_hard": false,
+              "metric_value": null,
+              "threshold": null,
+              "source": "daylight_analysis"
+            }
+          ],
+          "expected_benefit": "Preserves statutory areas while maintaining code validity",
+          "affected_components": [],
+          "dependencies": [],
+          "risks": [],
+          "confidence": 1.0,
+          "requires_review_by": null,
+          "status": "accepted",
+          "rejection_reason": null,
+          "evidence": [
+            {
+              "constraint_id": "mandatory_area_respected",
+              "category": "mandatory_user",
+              "priority": 1,
+              "description": "Maintains statutory minimum area >= 9.5 sqm for all bedrooms",
+              "is_hard": false,
+              "metric_value": null,
+              "threshold": null,
+              "source": "statutory_compliance"
+            },
+            {
+              "constraint_id": "soft_daylight_tradeoff",
+              "category": "soft_preferences",
+              "priority": 5,
+              "description": "Slight daylight orientation compromise",
+              "is_hard": false,
+              "metric_value": null,
+              "threshold": null,
+              "source": "daylight_analysis"
+            }
+          ]
+        }
+      ],
+      "disputed_constraints": [
+        "mandatory_area_respected"
+      ],
+      "resolution_strategy": "priority_hierarchy_level_1",
+      "accepted_proposal_id": "prop_compliant_preserve_area",
+      "rejection_reasons": {
+        "prop_violating_mandatory_area": "Violates hard constraint: Compresses bedroom to 6.2 sqm, violating mandatory 9.5 sqm minimum"
+      },
+      "rationale": "Accepted proposal prop_compliant_preserve_area from compliance_architect_agent under Priority Level 1 (Preserves statutory areas while maintaining code validity).",
+      "evidence": [
+        "Maintains statutory minimum area >= 9.5 sqm for all bedrooms",
+        "Slight daylight orientation compromise"
+      ]
+    }
+  },
+  {
+    "seq": 7,
+    "ts": 1791778690.2918432,
+    "type": "tool_called",
+    "agent": "hierarchical_orchestrator",
+    "summary": "Executing 'validate_design' from compliance_architect_agent",
+    "data": {
+      "tool": "validate_design",
+      "args": {}
+    }
+  },
+  {
+    "seq": 8,
+    "ts": 1791778690.294118,
+    "type": "tool_result",
+    "agent": "hierarchical_orchestrator",
+    "summary": "Validation score: 100.0/100. Errors: 0, Warnings: 0.",
+    "data": {
+      "tool": "validate_design",
+      "ok": true,
+      "outcome": "ok"
+    }
+  },
+  {
+    "seq": 9,
+    "ts": 1791778690.294229,
+    "type": "candidate_evaluated",
+    "agent": "hierarchical_orchestrator",
+    "summary": "Candidate cand_1 evaluated: accepted_best",
+    "data": {
+      "candidate_id": "cand_1",
+      "is_valid": true,
+      "score": 100.0,
+      "hard_errors": 0,
+      "warnings": 0,
+      "decision": "accepted_best",
+      "reason": "Initial baseline candidate established"
+    }
+  },
+  {
+    "seq": 10,
+    "ts": 1791778690.2942429,
+    "type": "best_candidate_updated",
+    "agent": "hierarchical_orchestrator",
+    "summary": "New best candidate cand_1 (score 100.0, valid=True)",
+    "data": {
+      "candidate_id": "cand_1",
+      "score": 100.0
+    }
+  }
+]

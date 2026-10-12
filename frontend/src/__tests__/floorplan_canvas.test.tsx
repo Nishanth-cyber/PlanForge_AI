@@ -295,4 +295,91 @@ describe('PlanForge Web UI — Interactive Floor Plan Canvas & Visualization', (
     fireEvent.click(traceBtn);
     expect(onViewTrace).toHaveBeenCalledWith('room_living_01');
   });
+
+  it('renders door-swing arcs when enabled and hides them when Show Door Swing Arcs toggle is unchecked', () => {
+    const { container } = render(
+      <FloorPlanCanvas
+        floorPlan={MOCK_FLOOR_PLAN}
+        selectedRoom={null}
+        onSelectRoom={vi.fn()}
+        projectId="proj_test"
+      />
+    );
+
+    // Initial state: Show Door Swing Arcs is checked
+    const toggleCheckbox = screen.getByTestId('toggle-door-swings') as HTMLInputElement;
+    expect(toggleCheckbox.checked).toBe(true);
+
+    // Door swing arc polyline is rendered
+    const arcsBefore = container.querySelectorAll('.svg-door-arc');
+    expect(arcsBefore.length).toBe(1);
+
+    // Door leaf line and hinge are also rendered
+    const doorLinesBefore = container.querySelectorAll('.svg-door-line');
+    expect(doorLinesBefore.length).toBe(1);
+
+    // Uncheck Show Door Swing Arcs toggle
+    fireEvent.click(toggleCheckbox);
+    expect(toggleCheckbox.checked).toBe(false);
+
+    // Swing arc is hidden
+    const arcsAfter = container.querySelectorAll('.svg-door-arc');
+    expect(arcsAfter.length).toBe(0);
+
+    // Door leaf line remains preserved
+    const doorLinesAfter = container.querySelectorAll('.svg-door-line');
+    expect(doorLinesAfter.length).toBe(1);
+  });
+
+  it('renders zero swing arcs when floor plan contains no doors', () => {
+    const noDoorsFloorPlan: FloorPlan = {
+      ...MOCK_FLOOR_PLAN,
+      geometry: {
+        ...MOCK_FLOOR_PLAN.geometry!,
+        doors: [],
+      },
+    };
+
+    const { container } = render(
+      <FloorPlanCanvas
+        floorPlan={noDoorsFloorPlan}
+        selectedRoom={null}
+        onSelectRoom={vi.fn()}
+        projectId="proj_test"
+      />
+    );
+
+    expect(container.querySelectorAll('.svg-door-arc').length).toBe(0);
+    expect(container.querySelectorAll('.svg-door-line').length).toBe(0);
+  });
+
+  it('deduplicates doors so each valid physical door is rendered exactly once', () => {
+    const duplicateDoorsFloorPlan: FloorPlan = {
+      ...MOCK_FLOOR_PLAN,
+      geometry: {
+        ...MOCK_FLOOR_PLAN.geometry!,
+        doors: [
+          MOCK_FLOOR_PLAN.geometry!.doors[0],
+          // Duplicate door at same position on same wall
+          {
+            ...MOCK_FLOOR_PLAN.geometry!.doors[0],
+            id: 'door_1_duplicate',
+          },
+        ],
+      },
+    };
+
+    const { container } = render(
+      <FloorPlanCanvas
+        floorPlan={duplicateDoorsFloorPlan}
+        selectedRoom={null}
+        onSelectRoom={vi.fn()}
+        projectId="proj_test"
+      />
+    );
+
+    // Even with 2 doors in data, deduplication renders only 1 door arc and line
+    expect(container.querySelectorAll('.svg-door-arc').length).toBe(1);
+    expect(container.querySelectorAll('.svg-door-line').length).toBe(1);
+  });
 });

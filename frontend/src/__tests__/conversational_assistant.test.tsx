@@ -326,5 +326,154 @@ describe('Conversational AI Floor-Plan Assistant UI', () => {
     expect(onSave).not.toHaveBeenCalled();
     expect(screen.getByTestId('plot-validation-error')).toBeDefined();
   });
+
+  describe('MessageBubble structured response rendering', () => {
+    it('renders response_type "text" purely as message without cards or chips', async () => {
+      const { MessageBubble } = await import('../components/chat/MessageBubble');
+      const onAnswerCard = vi.fn();
+
+      render(
+        <MessageBubble
+          message={{
+            id: 'm1',
+            role: 'assistant',
+            text: 'I can help you design single-floor bungalows, duplexes, or custom homes.',
+            response_type: 'text',
+            intent: 'CAPABILITY_QUERY',
+            quick_replies: [],
+          }}
+          isLatestAssistant={true}
+          onAnswerCard={onAnswerCard}
+        />
+      );
+
+      expect(screen.getByText(/I can help you design single-floor bungalows/i)).toBeDefined();
+      expect(screen.queryByTestId('quick-replies')).toBeNull();
+      expect(screen.queryByTestId('action-result-card')).toBeNull();
+      expect(screen.queryByTestId('confirm-generate-btn')).toBeNull();
+    });
+
+    it('renders response_type "quick_replies" and calls onAnswerCard when clicked', async () => {
+      const { MessageBubble } = await import('../components/chat/MessageBubble');
+      const onAnswerCard = vi.fn();
+
+      render(
+        <MessageBubble
+          message={{
+            id: 'm2',
+            role: 'assistant',
+            text: 'What type of home are you planning?',
+            response_type: 'quick_replies',
+            intent: 'PROJECT_TYPE_SELECTION',
+            quick_replies: [
+              { label: 'Bungalow', value: 'Bungalow' },
+              { label: 'Duplex', value: 'Duplex' },
+            ],
+          }}
+          isLatestAssistant={true}
+          onAnswerCard={onAnswerCard}
+        />
+      );
+
+      expect(screen.getByText(/What type of home are you planning\?/i)).toBeDefined();
+      const bungalowBtn = screen.getByRole('button', { name: 'Bungalow' });
+      const duplexBtn = screen.getByRole('button', { name: 'Duplex' });
+      expect(bungalowBtn).toBeDefined();
+      expect(duplexBtn).toBeDefined();
+
+      fireEvent.click(duplexBtn);
+      expect(onAnswerCard).toHaveBeenCalledWith('Duplex');
+    });
+
+    it('renders response_type "action_result" with export payload and triggers download', async () => {
+      const { MessageBubble } = await import('../components/chat/MessageBubble');
+      const onExecuteAction = vi.fn();
+
+      render(
+        <MessageBubble
+          message={{
+            id: 'm3',
+            role: 'assistant',
+            text: 'Your DXF export is ready.',
+            response_type: 'action_result',
+            intent: 'EXPORT_REQUEST',
+            action: {
+              type: 'export',
+              label: 'Export Complete',
+              payload: {
+                format: 'dxf',
+                items: [
+                  {
+                    format: 'dxf',
+                    label: 'CAD Drawing (DXF)',
+                    url: 'http://localhost:8000/api/projects/proj-1/export/dxf',
+                    available: true,
+                    note: 'Ready',
+                  },
+                ],
+              },
+            },
+          }}
+          isLatestAssistant={true}
+          onExecuteAction={onExecuteAction}
+        />
+      );
+
+      expect(screen.getByText(/Your DXF export is ready/i)).toBeDefined();
+      expect(screen.getByTestId('export-action-card')).toBeDefined();
+      expect(screen.getByText(/1 Available/i)).toBeDefined();
+      const downloadBtn = screen.getByTestId('export-btn-dxf');
+      expect(downloadBtn).toBeDefined();
+      expect(downloadBtn.getAttribute('href')).toBe('http://localhost:8000/api/projects/proj-1/export/dxf');
+    });
+
+    it('renders response_type "requirement_summary" with generation trigger button', async () => {
+      const { MessageBubble } = await import('../components/chat/MessageBubble');
+      const onAnswerCard = vi.fn();
+
+      render(
+        <MessageBubble
+          message={{
+            id: 'm4',
+            role: 'assistant',
+            text: 'All requirements are captured. Plot: 30x40 ft, Type: Duplex.',
+            response_type: 'requirement_summary',
+            intent: 'PROJECT_SUMMARY',
+            is_ready_for_generation: true,
+          }}
+          isLatestAssistant={true}
+          onAnswerCard={onAnswerCard}
+        />
+      );
+
+      expect(screen.getByTestId('requirement-summary-card')).toBeDefined();
+      const genBtn = screen.getByRole('button', { name: /✓ Generate Floor Plan/i });
+      expect(genBtn).toBeDefined();
+
+      fireEvent.click(genBtn);
+      expect(onAnswerCard).toHaveBeenCalledWith('Generate Floor Plan');
+    });
+
+    it('renders response_type "generation_progress" with live status indicator', async () => {
+      const { MessageBubble } = await import('../components/chat/MessageBubble');
+
+      render(
+        <MessageBubble
+          message={{
+            id: 'm5',
+            role: 'assistant',
+            text: 'Generating your floor plan...',
+            response_type: 'generation_progress',
+            intent: 'PROJECT_STATUS',
+          }}
+          isLatestAssistant={true}
+        />
+      );
+
+      expect(screen.getByTestId('generation-progress-card')).toBeDefined();
+      expect(screen.getByText(/Generation In Progress/i)).toBeDefined();
+    });
+  });
 });
+
 
