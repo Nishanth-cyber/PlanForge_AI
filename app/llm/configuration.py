@@ -117,7 +117,18 @@ class LLMConfig:
             default_timeout = 60.0
             api_key = os.getenv("PLANFORGE_LLM_API_KEY")
 
-        model_name = os.getenv("PLANFORGE_LLM_MODEL", default_model).strip()
+        model_name = (
+            os.getenv("PLANFORGE_LLM_MODEL")
+            or (os.getenv("GOOGLE_MODEL") if provider in ("google", "gemini") else None)
+            or (os.getenv("GEMINI_MODEL") if provider in ("google", "gemini") else None)
+            or default_model
+        ).strip()
+
+        if provider in ("google", "gemini"):
+            for prefix in ("google-gla:", "google-vertex:", "google:"):
+                if model_name.startswith(prefix):
+                    model_name = model_name[len(prefix):]
+                    break
         base_url = default_base_url
 
         try:

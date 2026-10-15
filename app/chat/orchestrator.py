@@ -306,6 +306,15 @@ class ChatOrchestrator:
                     alternative_index=alternative_index,
                     state=state,
                 )
+            if legacy is not None and legacy.intent == ChatIntent.PLAN_MODIFICATION:
+                text = self._fallback_conversational_reply(
+                    message=clean,
+                    decision=legacy,
+                    context={},
+                    existing_brief=brief,
+                    project_name=pname,
+                )
+                return self._text_result(text, brief, pname, turn_id, route="plan_modification")
             return self._text_result(
                 "You don't have a generated floor plan yet to modify. Complete your requirements and generate a design first, and then you can modify it right here.",
                 brief,

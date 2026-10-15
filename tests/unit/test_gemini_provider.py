@@ -147,6 +147,18 @@ def test_1_gemini_alias_and_alternative_env_keys(monkeypatch):
     assert cfg.api_key == "AIzaSy_gemini_alt_key"
 
 
+def test_1_gemini_google_model_env_variable(monkeypatch):
+    """Verify GOOGLE_MODEL env variable and google-gla: prefix stripping."""
+    monkeypatch.setattr("app.llm.configuration.load_dotenv_file", lambda *a, **k: None)
+    monkeypatch.delenv("PLANFORGE_LLM_MODEL", raising=False)
+    monkeypatch.setenv("PLANFORGE_LLM_PROVIDER", "google")
+    monkeypatch.setenv("PLANFORGE_GOOGLE_API_KEY", "AIzaSy_test_key")
+    monkeypatch.setenv("GOOGLE_MODEL", "google-gla:gemini-3.8-flash")
+
+    cfg = LLMConfig.from_env()
+    assert cfg.model_name == "gemini-3.8-flash"
+
+
 # ==============================================================================
 # 2. Factory Construction
 # ==============================================================================

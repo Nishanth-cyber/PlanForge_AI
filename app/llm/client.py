@@ -207,7 +207,23 @@ class HuggingFaceClient:
     DEFAULT_MODEL = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 
     def __init__(self, config: Optional[LLMConfig] = None):
-        self.config = config or LLMConfig(provider="huggingface", model_name=self.DEFAULT_MODEL)
+        if config is None:
+            self.config = LLMConfig(
+                provider="huggingface",
+                model_name=self.DEFAULT_MODEL,
+                api_base_url="https://api-inference.huggingface.co/models",
+            )
+        else:
+            self.config = config
+            if self.config.provider in ("huggingface", "hf"):
+                if self.config.model_name in (
+                    "gemini-2.0-flash",
+                    "gemini-flash-latest",
+                    "gemini-3.8-flash",
+                ):
+                    self.config.model_name = self.DEFAULT_MODEL
+                if self.config.api_base_url in ("https://generativelanguage.googleapis.com", None):
+                    self.config.api_base_url = "https://api-inference.huggingface.co/models"
         base_url = (self.config.api_base_url or "https://api-inference.huggingface.co/models").rstrip("/")
         if base_url.endswith("/v1") or "/chat/completions" in base_url:
             self.endpoint = base_url
@@ -845,9 +861,15 @@ class GoogleGeminiClient:
                         f"Google Gemini request timed out after {timeout_seconds}s across {total_attempts} attempts."
                     )
 
+                clean_model = candidate_model
+                for prefix in ("google-gla:", "google-vertex:", "google:"):
+                    if clean_model.startswith(prefix):
+                        clean_model = clean_model[len(prefix):]
+                        break
+
                 try:
                     response = client.models.generate_content(
-                        model=candidate_model,
+                        model=clean_model,
                         contents=prompt,
                         config=config,
                     )
